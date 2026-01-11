@@ -4,10 +4,10 @@ PyKeycloak is a library for working with Keycloak that provides asynchronous met
 
 ## Installation
 
-To install dependencies, use the following command:
+For local development to install dependencies, use the following command:
 
 ```bash
-pip install -r requirements.txt
+make install
 ```
 
 ## Usage Examples
