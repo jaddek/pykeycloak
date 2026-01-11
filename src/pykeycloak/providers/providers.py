@@ -52,7 +52,7 @@ class KeycloakProviderAsync:
             "client_secret": self._realm_client.client_secret,
         }
 
-        with self._headers.override_with_form_urlencoded_headers():
+        with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
                 method="POST",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_AUTH_DEVICE),
@@ -63,7 +63,7 @@ class KeycloakProviderAsync:
         return response
 
     async def get_certs_async(self) -> Response:
-        with self._headers.override_with_form_urlencoded_headers():
+        with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
                 method="GET",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_CERTS),
@@ -83,7 +83,7 @@ class KeycloakProviderAsync:
                 "client_secret": self._realm_client.client_secret,
             }
 
-        with self._headers.override_with_form_urlencoded_headers():
+        with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
                 method="POST",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_LOGOUT),
@@ -107,7 +107,7 @@ class KeycloakProviderAsync:
                 "client_secret": self._realm_client.client_secret,
             }
 
-        with self._headers.override_with_form_urlencoded_headers():
+        with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
                 method="POST",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),
@@ -121,8 +121,7 @@ class KeycloakProviderAsync:
         self,
         access_token: str,
     ) -> Response:
-        #  error="insufficient_scope", error_description="Missing openid scope" in headers
-        with self._headers.override_with_form_urlencoded_headers(
+        with self._headers.override_with_openid_headers(
             access_token=access_token
         ):
             response = await self._wrapper.request(
@@ -143,7 +142,7 @@ class KeycloakProviderAsync:
             "client_secret": self._realm_client.client_secret,
         }
 
-        with self._headers.override_with_form_urlencoded_headers():
+        with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
                 method="POST",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),
@@ -173,7 +172,7 @@ class KeycloakProviderAsync:
         if isinstance(_payload, RTPIntrospectionPayload):
             access_token = payload.token
 
-        with self._headers.override_with_form_urlencoded_headers(
+        with self._headers.override_with_openid_headers(
             access_token=access_token
         ):
             response = await self._wrapper.request(
@@ -190,7 +189,7 @@ class KeycloakProviderAsync:
         payload: UMAAuthorizationPayload,
         access_token: str,
     ) -> Response:
-        with self._headers.override_with_form_urlencoded_headers(access_token):
+        with self._headers.override_with_openid_headers(access_token):
             response = await self._wrapper.request(
                 method="POST",
                 url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),

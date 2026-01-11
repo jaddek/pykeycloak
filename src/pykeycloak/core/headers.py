@@ -53,7 +53,7 @@ class Headers(Mapping[str, str]):
         finally:
             self.restore_headers_from_stack()
 
-    def override_with_form_urlencoded_headers(
+    def override_with_openid_headers(
         self, access_token: str | None = None
     ) -> AbstractContextManager["Headers"]:
         data = {"Content-Type": "application/x-www-form-urlencoded"}

@@ -40,6 +40,16 @@ The library can be used in 3 different ways:
 
 - `KeycloakProviderAsync` - Asynchronous provider for working with Keycloak that provides methods for authentication, token refresh, user information retrieval, logout, token introspection, device authentication, and certificate retrieval.
 
+```python
+from pykeycloak.providers.providers import KeycloakProviderAsync
+from pykeycloak.core.entities import RealmClient
+
+provider = KeycloakProviderAsync(
+    realm="kc_realm",
+    realm_client=RealmClient.from_env(),
+)
+```
+
 #### Services
 
 `AuthService` - Service that provides methods for authentication, token refresh, user information retrieval, logout, token introspection, device authentication, and certificate retrieval.
