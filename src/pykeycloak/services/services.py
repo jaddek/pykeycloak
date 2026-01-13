@@ -13,6 +13,7 @@ from pykeycloak.providers.payloads import (
     UserCredentialsLoginPayload,
 )
 from pykeycloak.providers.providers import KeycloakProviderAsync
+from pykeycloak.providers.queries import GetUsersQuery
 from pykeycloak.services.representations import (
     IntrospectRepresentation,
     R,
@@ -32,6 +33,121 @@ class BaseService:
             raise TypeError(f"Expected JSON object, got {type(data).__name__}")
         return data
 
+
+class UsersService(BaseService):
+    def get_user(self, user_id: str) -> dict[str, Any]:
+        ...
+
+    async def get_users_async(
+            self,
+            query: GetUsersQuery | None = None,
+    ) -> list[Response]:
+        users_count_response = await self._provider.get_users_count_async(query=query)
+
+        try:
+            users_count = int(users_count_response.text)
+        except ValueError as e:
+            raise RuntimeError("Invalid users count response") from e
+
+        return await self.get_paginated_users_async(
+            users_count=int(users_count),
+            query=query
+        )
+
+    async def get_paginated_users_async(
+            self,
+            users_count: int,
+            query: GetUsersQuery | None = None,
+    ) -> list[Response]:
+        _query = query or GetUsersQuery(max=DEFAULT_PAGE_SIZE)
+
+        total_pages = math.ceil(users_count / query.max)
+        concurrency_limit = 10
+        queue = asyncio.Queue()
+
+        if users_count <= _query.max:
+            response = await self._wrapper.request(
+                method="GET",
+                url=self._get_path(path=REALM_USERS),
+                headers=self._headers,
+                query=_query,
+            )
+            return [response]
+
+        for page in range(total_pages):
+            first = page * query.max
+            remaining = users_count - first
+            current_max = min(query.max, remaining)
+            page_query = GetUsersQuery(first=first, max=current_max, search=query.search)
+            queue.put_nowait(page_query)
+
+        responses: list[Response] = []
+
+        async def worker():
+            while not queue.empty():
+                page_query = await queue.get()
+                try:
+                    resp = await self._wrapper.request(
+                        method="GET",
+                        url=self._get_path(path=REALM_USERS),
+                        headers=self._headers,
+                        query=page_query,
+                    )
+                    responses.append(resp)
+                finally:
+                    queue.task_done()
+
+        async with asyncio.TaskGroup() as tg:
+            for _ in range(concurrency_limit):
+                tg.create_task(worker())
+
+        return responses
+
+    def get_users_by_role(self):
+        ...
+
+    def create_user(self):
+        ...
+
+    def update_user(self, user_id: str):
+        ...
+
+    def delete_user(self, user_id: str):
+        ...
+
+
+class RolesService(BaseService):
+    async def get_public_roles(self):
+        ...
+
+    async def get_role_by_id(self):
+        ...
+
+    async def update_role_by_id(self):
+        ...
+
+    async def delete_client_role(self):
+        ...
+
+    async def deep_role_copy(self):
+        ...
+
+
+class SessionService(BaseService):
+    async def get_user_sessions(self):
+        ...
+
+    async def get_sessions(self):
+        ...
+
+    async def delete_session_by_id(self):
+        ...
+
+    async def delete_user_sessions(self):
+        ...
+
+    async def delete_all_sessions(self):
+        ...
 
 class AuthService(BaseService):
 

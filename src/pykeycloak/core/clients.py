@@ -15,6 +15,17 @@ from .settings import ClientSettings, HttpTransportSettings
 
 logger = logging.getLogger(__name__)
 
+from enum import Enum
+
+
+class HttpMethod(Enum):
+    GET = "GET"
+    POST = "POST"
+    PUT = "PUT"
+    DELETE = "DELETE"
+    PATCH = "PATCH"
+    HEAD = "HEAD"
+    OPTIONS = "OPTIONS"
 
 class KeycloakHttpClientWrapperSync: ...
 
@@ -45,7 +56,7 @@ class KeycloakHttpClientWrapperAsync:
         return KeycloakHttpClientWrapperAsync()
 
     async def request(
-        self, method: str, raise_exception: bool = False, **kwargs: Any
+        self, method: HttpMethod, raise_exception: bool = False, **kwargs: Any
     ) -> Response:
         try:
 
@@ -55,7 +66,7 @@ class KeycloakHttpClientWrapperAsync:
                 self._sanitizer.sanitize(kwargs),
             )
 
-            response = await self.client.request(method=method, **kwargs)
+            response = await self.client.request(method=method.value, **kwargs)
 
             logger.debug(
                 "Response method: %s, url: %s, content: %s, headers: %s",

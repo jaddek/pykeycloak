@@ -25,6 +25,9 @@ class RealmClient:
         if not self.is_confidential and self.client_secret:
             raise ValueError("Public client must not have client_secret")
 
+    def resolve_client_id(self, client_id: str | None = None) -> str:
+        return client_id if client_id else self.client_id
+
     @classmethod
     def from_env(cls) -> "RealmClient":
         client_uuid = os.getenv("KEYCLOAK_REALM_CLIENT_UUID")

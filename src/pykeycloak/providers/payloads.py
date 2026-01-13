@@ -1,6 +1,8 @@
 import json
 from dataclasses import asdict, dataclass, field
 from typing import Any
+from uuid import UUID
+
 
 from pykeycloak.core.enums import (
     GrantTypeEnum,
@@ -155,3 +157,26 @@ class UMAAuthorizationPayload(Payload):
                 result.add(f"{resource}#{scope}")
 
         return list(result)
+
+
+@dataclass(frozen=True)
+class CreateUserPayload(Payload):
+    id: UUID | None = None
+    username: str = ""
+    first_name: str | None = None
+    last_name: str | None = None
+    email: str = ""
+    enabled: bool | None = None
+    credentials: list[dict[str, Any]] = field(default_factory=list)
+    location_id: UUID | None = None
+    role_ids: list[UUID] | None = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class UserUpdateEnablePayload(Payload):
+    enabled: bool = True
+
+
+@dataclass(frozen=True)
+class UserUpdatePasswordPayload(Payload):
+    credentials: list[dict[str, Any]] = field(default_factory=list)
