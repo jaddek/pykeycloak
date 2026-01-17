@@ -86,7 +86,6 @@ class RefreshTokenPayload(ObtainTokenPayload):
     def grant_type(self) -> str:
         return GrantTypeEnum.REFRESH_TOKEN
 
-
 #
 # @dataclass(frozen=True)
 # class FullPayload(ObtainTokenPayload):

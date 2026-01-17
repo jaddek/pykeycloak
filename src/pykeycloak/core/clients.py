@@ -12,6 +12,7 @@ from httpx import (
 
 from .sanitizer import SensitiveDataSanitizer, get_sanitizer
 from .settings import ClientSettings, HttpTransportSettings
+from .token_manager import TokenManagerProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class KeycloakHttpClientWrapperAsync:
         client_settings: ClientSettings | None = None,
         transport_settings: HttpTransportSettings | None = None,
         sanitizer: SensitiveDataSanitizer | None = None,
+        token_manager: TokenManagerProtocol | None = None,
     ):
         transport_settings = transport_settings or HttpTransportSettings()
         transport = AsyncHTTPTransport(**transport_settings.to_dict())
@@ -46,6 +48,7 @@ class KeycloakHttpClientWrapperAsync:
         self._sanitizer = sanitizer or get_sanitizer()
 
         self._client = AsyncClient(**client_settings.to_dict())
+        self._token_manager = token_manager
 
     @property
     def client(self) -> AsyncClient:
@@ -55,11 +58,11 @@ class KeycloakHttpClientWrapperAsync:
     def init_default_client() -> "KeycloakHttpClientWrapperAsync":
         return KeycloakHttpClientWrapperAsync()
 
+
     async def request(
         self, method: HttpMethod, raise_exception: bool = False, **kwargs: Any
     ) -> Response:
         try:
-
             logger.debug(
                 "Request method: %s, kwargs %s",
                 method,

@@ -154,7 +154,7 @@ from pykeycloak.providers.payloads import TokenIntrospectionPayload
 
 introspect = await auth_service.introspect_async(
     payload=TokenIntrospectionPayload(
-        token=refresh.access_token,
+        token=refresh.auth_token,
     )
 )
 ```
@@ -167,7 +167,7 @@ To retrieve UMA permissions, use the `get_uma_permissions_async` method:
 from pykeycloak.providers.payloads import UMAAuthorizationPayload
 
 permissions = await uma_service.get_uma_permissions_async(
-    access_token=token.access_token, # user token
+    access_token=token.auth_token,  # user token
     payload=UMAAuthorizationPayload(
         audience=client.client_id,
         permissions={'/otago/users': ['view']}
@@ -181,7 +181,7 @@ To retrieve user information, use the `get_user_info_async` method:
 
 ```python
 user_info = await auth_service.get_user_info_async(
-    access_token=refresh.access_token
+    access_token=refresh.auth_token
 )
 ```
 

@@ -1,6 +1,7 @@
-import logging
 import json
-from typing import Any
+import logging
+from abc import ABC
+from typing import Any, Protocol
 from uuid import UUID
 
 from httpx import Response
@@ -20,6 +21,7 @@ from .payloads import (
 from .queries import GetUsersQuery, RoleMembersListQuery, PaginationQuery, BriefRepresentationQuery
 from ..core.constants import DEFAULT_PAGE_SIZE
 from ..core.entities import RealmClient
+from ..core.token_manager import TokenManager, mark_need_token_verification, TokenAutoRefresher, RefreshTokenSchema
 from ..core.urls import (
     REALM_LOGOUT_ALL,
     REALM_CLIENT_OPENID_URL_TOKEN,
@@ -35,8 +37,14 @@ from ..core.urls import (
 
 logger = logging.getLogger(__name__)
 
+class KeycloakAuthProviderProtocol(Protocol):
+    async def refresh_token_async(
+            self,
+            payload: RefreshTokenPayload,
+    ) -> Response:
+        ...
 
-class KeycloakProviderAsync:
+class KeycloakProviderAsync(ABC):
     def __init__(
             self,
             *,
@@ -57,6 +65,7 @@ class KeycloakProviderAsync:
     #  Auth/OpenID endpoints
     ##############################################################
 
+    @mark_need_token_verification
     async def auth_device_async(self) -> Response:
         payload = {
             "client_id": self._realm_client.client_id,
@@ -73,6 +82,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_certs_async(self) -> Response:
         with self._headers.override_with_openid_headers():
             response = await self._wrapper.request(
@@ -83,6 +93,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def logout_async(self, refresh_token: str) -> Response:
         payload = {
             "client_id": self._realm_client.client_id,
@@ -128,6 +139,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_user_info_async(
             self,
             access_token: str,
@@ -143,6 +155,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def obtain_token_async(
             self,
             payload: ObtainTokenPayload,
@@ -163,6 +176,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def introspect_token_async(
             self, payload: RTPIntrospectionPayload | TokenIntrospectionPayload
     ) -> Response:
@@ -218,6 +232,7 @@ class KeycloakProviderAsync:
     #  Users
     ##############################################################
 
+    @mark_need_token_verification
     async def get_users_count_async(
             self,
             query: GetUsersQuery | None = None
@@ -229,6 +244,7 @@ class KeycloakProviderAsync:
             query=query,
         )
 
+    @mark_need_token_verification
     async def get_users_async(
             self,
             query: GetUsersQuery | None = None,
@@ -242,6 +258,7 @@ class KeycloakProviderAsync:
             query=_query,
         )
 
+    @mark_need_token_verification
     async def get_user_async(self, user_id: str):
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -251,6 +268,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_user_async(self, user_id: str):
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -260,16 +278,18 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def create_user_async(self, payload: CreateUserPayload) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.POST,
-            url=self._get_path(path=REALM_USER),
+            url=self._get_path(path=REALM_USERS_LIST),
             headers=self._headers,
             data=payload
         )
 
         return response
 
+    @mark_need_token_verification
     async def update_user_by_id_async(
             self,
             user_id: str,
@@ -284,6 +304,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def update_user_enable_by_id_async(
             self,
             user_id: str,
@@ -298,6 +319,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def update_user_password_by_id_async(
             self,
             user_id: str,
@@ -315,6 +337,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_users_by_role_async(
             self,
             role_name: str,
@@ -336,6 +359,7 @@ class KeycloakProviderAsync:
     #  Sessions
     ##############################################################
 
+    @mark_need_token_verification
     async def get_user_sessions_async(
             self,
             user_id: str,
@@ -348,6 +372,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_session_by_id_async(self, session_id: str, is_offline: bool) -> Response:
         offline_status = "true" if is_offline else "false"
 
@@ -360,6 +385,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_client_user_sessions_async(
             self,
             request_query: PaginationQuery | None = None,
@@ -373,6 +399,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_client_sessions_count_async(self) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -382,6 +409,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_offline_sessions_async(
             self,
             request_query: PaginationQuery | None = None,
@@ -395,6 +423,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_offline_sessions_count_async(
             self,
     ) -> Response:
@@ -406,6 +435,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def remove_user_sessions_async(self, user_id: str) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -415,6 +445,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def logout_all_users_async(self):
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -424,6 +455,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_client_session_stats_async(
             self,
     ) -> Response:
@@ -435,6 +467,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_client_user_offline_sessions_async(
             self, user_id: str,
     ) -> Response:
@@ -450,16 +483,18 @@ class KeycloakProviderAsync:
     #  Roles
     ##############################################################
 
+    @mark_need_token_verification
     async def get_client_roles_async(self) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.GET,
-            url=self._get_path(path=REALM_CLIENT_ROLES),
+            url=self._get_path(path=REALM_CLIENT_ROLES, client_id=self._realm_client.client_uuid),
             headers=self._headers,
         )
 
         return response
 
-    async def get_client_role_id_async(self, role_name:str) -> Response:
+    @mark_need_token_verification
+    async def get_client_role_id_async(self, role_name: str) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_ROLE, role_name=role_name),
@@ -468,7 +503,7 @@ class KeycloakProviderAsync:
 
         return response
 
-
+    @mark_need_token_verification
     async def get_role_by_name_async(self, role_name: str) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -478,6 +513,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def create_role(self, payload: dict) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -488,7 +524,8 @@ class KeycloakProviderAsync:
 
         return response
 
-    async def update_role_by_id_async(self, role_id: UUID, payload:dict) -> Response:
+    @mark_need_token_verification
+    async def update_role_by_id_async(self, role_id: UUID, payload: dict) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=role_id),
@@ -498,8 +535,8 @@ class KeycloakProviderAsync:
 
         return response
 
-
-    async def update_role_by_name_async(self, role_name: str, payload:dict) -> Response:
+    @mark_need_token_verification
+    async def update_role_by_name_async(self, role_name: str, payload: dict) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_ROLES_ROLE_BY_NAME, role_name=role_name),
@@ -509,6 +546,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_role_by_id_async(self, role_id: UUID) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -518,6 +556,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_role_by_name_async(self, role_name: str) -> Response:
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -527,7 +566,8 @@ class KeycloakProviderAsync:
 
         return response
 
-    async def assign_client_role_async(self, user_id:UUID, roles: list[str]):
+    @mark_need_token_verification
+    async def assign_client_role_async(self, user_id: UUID, roles: list[str]):
         response = await self._wrapper.request(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
@@ -537,6 +577,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_client_roles_of_user_async(
             self,
             user_id: str,
@@ -549,6 +590,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_composite_client_roles_of_user_async(
             self,
             user_id: str,
@@ -563,6 +605,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_available_client_roles_of_user_async(
             self,
             user_id: str,
@@ -575,11 +618,11 @@ class KeycloakProviderAsync:
 
         return response
 
-
+    @mark_need_token_verification
     async def delete_client_roles_of_user_async(
-        self,
-        user_id: str,
-        roles: list[str],
+            self,
+            user_id: str,
+            roles: list[str],
     ):
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -590,6 +633,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_user_roles_async(self, user_id: str):
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -609,3 +653,22 @@ class KeycloakProviderAsync:
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {"realm": self._realm, "client_id": self._realm_client.client_id, **kwargs}
         return path.format(**params)
+
+
+@TokenAutoRefresher(TokenManager())
+class KeycloakInMemoryProviderAsync(KeycloakProviderAsync):
+    @classmethod
+    def refresh_token_schema(cls) -> RefreshTokenSchema:
+        return RefreshTokenSchema(
+            refresh_token_method=cls.refresh_token_async,
+            refresh_token_payload=RefreshTokenPayload,
+        )
+
+# @TokenAutoRefresher(TokenManager())
+# class KeycloakSharedProviderAsync(KeycloakProviderAsync):
+#     @classmethod
+#     def refresh_token_schema(cls) -> RefreshTokenSchema:
+#         return RefreshTokenSchema(
+#             refresh_token_method=cls.refresh_token_async,
+#             refresh_token_payload=RefreshTokenPayload,
+#         )

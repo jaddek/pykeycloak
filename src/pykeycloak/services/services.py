@@ -133,7 +133,7 @@ class RolesService(BaseService):
         ...
 
 
-class SessionService(BaseService):
+class SessionsService(BaseService):
     async def get_user_sessions(self):
         ...
 

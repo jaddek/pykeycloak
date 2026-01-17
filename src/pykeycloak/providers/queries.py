@@ -47,7 +47,8 @@ class GetUsersCountQuery(SearchQuery): ...
 @dataclass
 class GetUsersQuery(SearchQuery, PaginationQuery):
     def __post_init__(self):
-        max_allowed = int(os.getenv('KEYCLOAK_MAX_USERS_QUERY_LIMIT', '1000'))
+        max_limit_str = os.getenv('KEYCLOAK_MAX_USERS_QUERY_LIMIT', '1000')
+        max_allowed = int(max_limit_str) if max_limit_str.strip() != '' else 1000
         if self.max > max_allowed:
             raise ValueError(f"Max value {self.max} exceeds allowed limit of {max_allowed}")
 

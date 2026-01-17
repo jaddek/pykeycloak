@@ -98,6 +98,9 @@ disallow_untyped_defs = false
 minversion = "8.0"
 addopts = "-ra -q --strict-markers --strict-config"
 testpaths = [
+    "tests/unit",
+    "tests/integration",
+    "tests/functional",
     "tests",
     "tnkeycloak/tests",
 ]
@@ -108,11 +111,13 @@ markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: integration tests",
     "unit: unit tests",
+    "functional: functional tests",
 ]
 filterwarnings = [
     "error",
     "ignore::DeprecationWarning",
 ]
+asyncio_mode = "auto"
 
 [build-system]
 requires = ["uv_build>=0.9.9,<0.10.0"]
@@ -131,4 +136,5 @@ lint = [
 ]
 test = [
     "pytest>=9.0.2",
+    "pytest-asyncio>=0.23.0",
 ]

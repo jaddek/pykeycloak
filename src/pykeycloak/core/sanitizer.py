@@ -12,12 +12,12 @@ class SensitiveDataSanitizer:
     sensitive_keys: frozenset[str] = field(
         default_factory=lambda: frozenset(
             {
-                "client_secret",
-                "refresh_token",
-                "access_token",
-                "id_token",
-                "password",
-                "authorization",
+                # "client_secret",
+                # "refresh_token",
+                # "access_token",
+                # "id_token",
+                # "password",
+                # "authorization",
             }
         )
     )
