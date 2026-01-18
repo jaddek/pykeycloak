@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Any
 
+from pykeycloak.core.helpers import getenv_bool
+
 JSONType = dict[str, Any] | list[Any] | str | int | float | bool | None
 
 
@@ -12,12 +14,12 @@ class SensitiveDataSanitizer:
     sensitive_keys: frozenset[str] = field(
         default_factory=lambda: frozenset(
             {
-                # "client_secret",
-                # "refresh_token",
-                # "access_token",
-                # "id_token",
-                # "password",
-                # "authorization",
+                "client_secret",
+                "refresh_token",
+                "access_token",
+                "id_token",
+                "password",
+                "authorization",
             }
         )
     )
@@ -67,7 +69,8 @@ class SensitiveDataSanitizer:
 
     @classmethod
     def from_env(cls) -> "SensitiveDataSanitizer":
-        extra_keys = os.getenv("EXTRA_SENSITIVE_KEYS", None)
+        extra_keys: str |None = os.getenv("DATA_SANITIZER_EXTRA_SENSITIVE_KEYS", None)
+        is_debug_mode:bool = getenv_bool("DATA_SANITIZER_DEBUG", False)
         combined_keys = cls().sensitive_keys
 
         if extra_keys is not None:
@@ -75,6 +78,9 @@ class SensitiveDataSanitizer:
                 k.strip() for k in extra_keys.split(",") if k.strip()
             )
             combined_keys |= extra_keys_set
+
+        if is_debug_mode:
+            combined_keys = frozenset()
 
         return cls(sensitive_keys=combined_keys)
 

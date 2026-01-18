@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Any
 
 from httpx import Response
+from mypy.nodes import TypeAlias
 
 from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import (
@@ -20,6 +21,7 @@ from pykeycloak.services.representations import (
     TokenRepresentation,
     UserInfoRepresentation,
 )
+from pykeycloak.core.aliases import JsonData
 
 
 class BaseService:
@@ -27,10 +29,15 @@ class BaseService:
         self._provider = provider
 
     @staticmethod
-    def validate_response(response: Response) -> dict[str, Any]:
-        data = response.json()
-        if not isinstance(data, dict):
-            raise TypeError(f"Expected JSON object, got {type(data).__name__}")
+    def validate_response(response: Response) -> JsonData:
+        try:
+            data = response.json()
+        except Exception as e:
+            raise ValueError(f"Failed to decode JSON response: {e}") from e
+
+        if not isinstance(data, (dict, list)):
+            raise TypeError(f"Expected JSON dict or list, got {type(data).__name__}")
+
         return data
 
 
@@ -291,10 +298,10 @@ class AuthService(BaseService):
 
 class UmaService(BaseService):
     async def get_uma_permissions_async(
-        self, payload: UMAAuthorizationPayload, access_token: str
+        self, payload: UMAAuthorizationPayload
     ) -> dict[str, Any]:
         response = await self._provider.get_uma_permission_async(
-            payload=payload, access_token=access_token
+            payload=payload
         )
 
         return self.validate_response(response)

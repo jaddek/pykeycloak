@@ -12,7 +12,6 @@ from httpx import (
 
 from .sanitizer import SensitiveDataSanitizer, get_sanitizer
 from .settings import ClientSettings, HttpTransportSettings
-from .token_manager import TokenManagerProtocol
 
 logger = logging.getLogger(__name__)
 
@@ -28,16 +27,16 @@ class HttpMethod(Enum):
     HEAD = "HEAD"
     OPTIONS = "OPTIONS"
 
+
 class KeycloakHttpClientWrapperSync: ...
 
 
 class KeycloakHttpClientWrapperAsync:
     def __init__(
-        self,
-        client_settings: ClientSettings | None = None,
-        transport_settings: HttpTransportSettings | None = None,
-        sanitizer: SensitiveDataSanitizer | None = None,
-        token_manager: TokenManagerProtocol | None = None,
+            self,
+            client_settings: ClientSettings | None = None,
+            transport_settings: HttpTransportSettings | None = None,
+            sanitizer: SensitiveDataSanitizer | None = None,
     ):
         transport_settings = transport_settings or HttpTransportSettings()
         transport = AsyncHTTPTransport(**transport_settings.to_dict())
@@ -48,7 +47,6 @@ class KeycloakHttpClientWrapperAsync:
         self._sanitizer = sanitizer or get_sanitizer()
 
         self._client = AsyncClient(**client_settings.to_dict())
-        self._token_manager = token_manager
 
     @property
     def client(self) -> AsyncClient:
@@ -58,24 +56,24 @@ class KeycloakHttpClientWrapperAsync:
     def init_default_client() -> "KeycloakHttpClientWrapperAsync":
         return KeycloakHttpClientWrapperAsync()
 
-
     async def request(
-        self, method: HttpMethod, raise_exception: bool = False, **kwargs: Any
+            self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
     ) -> Response:
         try:
             logger.debug(
-                "Request method: %s, kwargs %s",
+                "Request method: %s, url: %s kwargs %s",
                 method,
+                url,
                 self._sanitizer.sanitize(kwargs),
             )
 
-            response = await self.client.request(method=method.value, **kwargs)
+            response = await self.client.request(method=method.value, url=url, **kwargs)
 
             logger.debug(
                 "Response method: %s, url: %s, content: %s, headers: %s",
                 method,
-                kwargs.get("url"),
-                self._sanitizer.sanitize(response.text),
+                url,
+                self._sanitizer.sanitize(response.json()),
                 self._sanitizer.sanitize(dict(response.headers)),
             )
 
@@ -95,10 +93,10 @@ class KeycloakHttpClientWrapperAsync:
         return self
 
     async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None = None,
-        exc_value: BaseException | None = None,
-        traceback: TracebackType | None = None,
+            self,
+            exc_type: type[BaseException] | None = None,
+            exc_value: BaseException | None = None,
+            traceback: TracebackType | None = None,
     ) -> None:
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
@@ -115,10 +113,10 @@ def get_keycloak_client_wrapper_from_env() -> KeycloakHttpClientWrapperAsync:
 
 
 def get_keycloak_client_wrapper(
-    *,
-    client_settings: ClientSettings | None = None,
-    transport_settings: HttpTransportSettings | None = None,
-    sanitizer: SensitiveDataSanitizer | None = None,
+        *,
+        client_settings: ClientSettings | None = None,
+        transport_settings: HttpTransportSettings | None = None,
+        sanitizer: SensitiveDataSanitizer | None = None,
 ) -> KeycloakHttpClientWrapperAsync:
     return KeycloakHttpClientWrapperAsync(
         client_settings=client_settings,
