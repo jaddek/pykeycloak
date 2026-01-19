@@ -10,17 +10,16 @@ from pykeycloak.core.clients import (
     KeycloakHttpClientWrapperAsync,
     get_keycloak_client_wrapper_from_env, HttpMethod,
 )
-from pykeycloak.core.headers import Headers, get_headers, HeaderFactory
+from pykeycloak.core.headers import HeaderFactory
 from .payloads import (
     ObtainTokenPayload,
     RefreshTokenPayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload, CreateUserPayload, UserUpdateEnablePayload, UserUpdatePasswordPayload,
-    ClientCredentialsLoginPayload, RTPExchangeTokenPayload, ConfidentialClientRevokePayload, PublicClientRevokePayload,
+    RTPExchangeTokenPayload, ConfidentialClientRevokePayload, PublicClientRevokePayload,
 )
 from .queries import GetUsersQuery, RoleMembersListQuery, PaginationQuery, BriefRepresentationQuery
-from ..core.constants import DEFAULT_PAGE_SIZE
 from ..core.entities import RealmClient
 from ..core.token_manager import TokenManager, mark_need_token_verification, TokenAutoRefresher, \
     mark_need_access_token_initialization
@@ -282,7 +281,7 @@ class KeycloakProviderAsync(ABC):
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USERS_COUNT),
             headers=headers,
-            query=query,
+            params=query,
         )
 
     @mark_need_token_verification
@@ -293,13 +292,13 @@ class KeycloakProviderAsync(ABC):
     ) -> Response:
         headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
 
-        _query = query or GetUsersQuery(max=DEFAULT_PAGE_SIZE)
+        _query = query or GetUsersQuery()
 
         return await self._wrapper.request(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USERS_LIST),
             headers=headers,
-            query=_query,
+            params=_query,
         )
 
     @mark_need_token_verification
@@ -424,7 +423,7 @@ class KeycloakProviderAsync(ABC):
                 role_name=role_name,
             ),
             headers=headers,
-            query=request_query if request_query else {},
+            params=request_query if request_query else {},
         )
 
         return response
@@ -464,7 +463,7 @@ class KeycloakProviderAsync(ABC):
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_DELETE_SESSION, session_id=session_id),
             headers=headers,
-            query={"isOffline": offline_status},
+            params={"isOffline": offline_status},
         )
 
         return response
@@ -481,7 +480,7 @@ class KeycloakProviderAsync(ABC):
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_USER_SESSIONS),
             headers=headers,
-            query=request_query
+            params=request_query
         )
 
         return response
@@ -513,7 +512,7 @@ class KeycloakProviderAsync(ABC):
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OFFLINE_SESSIONS),
             headers=headers,
-            query=request_query
+            params=request_query
         )
 
         return response
@@ -778,7 +777,7 @@ class KeycloakProviderAsync(ABC):
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE, user_id=user_id),
             headers=headers,
-            query=request_query
+            params=request_query
         )
 
         return response
