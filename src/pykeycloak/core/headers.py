@@ -1,6 +1,4 @@
-from collections.abc import Iterator, Mapping
 from enum import StrEnum
-from typing import NamedTuple
 
 
 class ContentTypesEnums(StrEnum):

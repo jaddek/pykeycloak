@@ -1,10 +1,10 @@
 import asyncio
+import inspect
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, UTC
 from functools import wraps
 from typing import Protocol, Callable
-import logging
-import inspect
 
 from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
