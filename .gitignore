@@ -13,3 +13,4 @@ wheels/
 src/keycloak
 main.py
 .python-version
+.coverage

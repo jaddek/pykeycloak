@@ -41,10 +41,10 @@ The library can be used in 3 different ways:
 - `KeycloakProviderAsync` - Asynchronous provider for working with Keycloak that provides methods for authentication, token refresh, user information retrieval, logout, token introspection, device authentication, and certificate retrieval.
 
 ```python
-from pykeycloak.providers.providers import KeycloakProviderAsync
-from pykeycloak.core.entities import RealmClient
+from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
+from pykeycloak.core.realm import RealmClient
 
-provider = KeycloakProviderAsync(
+provider = KeycloakInMemoryProviderAsync(
     realm="kc_realm",
     realm_client=RealmClient.from_env(),
 )
@@ -56,6 +56,13 @@ provider = KeycloakProviderAsync(
 
 ```python
 from pykeycloak.services.services import AuthService
+from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
+from pykeycloak.core.realm import RealmClient
+
+provider = KeycloakInMemoryProviderAsync(
+    realm="kc_realm",
+    realm_client=RealmClient.from_env(),
+)
 
 auth = AuthService(provider)
 ```
@@ -66,6 +73,13 @@ auth = AuthService(provider)
 
 ```python
 from pykeycloak.services.services import UmaService
+from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
+from pykeycloak.core.realm import RealmClient
+
+provider = KeycloakInMemoryProviderAsync(
+    realm="kc_realm",
+    realm_client=RealmClient.from_env(),
+)
 
 uma = UmaService(provider)
 ```
@@ -88,7 +102,7 @@ Representations duplicate the data from Keycloak documentation based on the actu
 
 ```python
 import os
-from pykeycloak.core.entities import RealmClient
+from pykeycloak.core.realm import RealmClient
 
 RealmClient.from_env()
 
@@ -154,7 +168,7 @@ from pykeycloak.providers.payloads import TokenIntrospectionPayload
 
 introspect = await auth_service.introspect_async(
     payload=TokenIntrospectionPayload(
-        token=refresh.access_token,
+        token=refresh.auth_token,
     )
 )
 ```
@@ -167,7 +181,7 @@ To retrieve UMA permissions, use the `get_uma_permissions_async` method:
 from pykeycloak.providers.payloads import UMAAuthorizationPayload
 
 permissions = await uma_service.get_uma_permissions_async(
-    access_token=token.access_token, # user token
+    access_token=token.auth_token,  # user token
     payload=UMAAuthorizationPayload(
         audience=client.client_id,
         permissions={'/otago/users': ['view']}
@@ -181,7 +195,7 @@ To retrieve user information, use the `get_user_info_async` method:
 
 ```python
 user_info = await auth_service.get_user_info_async(
-    access_token=refresh.access_token
+    access_token=refresh.auth_token
 )
 ```
 
