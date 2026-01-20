@@ -2,7 +2,6 @@
 Unit tests for the clients module.
 """
 
-import pytest
 from pykeycloak.core.clients import HttpMethod
 
 
@@ -23,7 +22,7 @@ class TestHttpMethod:
         """Test that all expected HTTP methods are present."""
         expected_methods = {"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
         actual_methods = {method.value for method in HttpMethod}
-        
+
         assert actual_methods == expected_methods
 
     def test_http_method_can_be_used_as_string(self):

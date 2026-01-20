@@ -2,15 +2,14 @@
 Unit tests for the exceptions module.
 """
 
-import pytest
 from pykeycloak.core.exceptions import (
-    PyKeycloakException,
     PyKeycloakAuthenticationError,
     PyKeycloakConnectionError,
-    PyKeycloakOperationError,
     PyKeycloakDeprecationError,
+    PyKeycloakException,
+    PyKeycloakOperationError,
+    PyKeycloakRPTNotFound,
     PyKeycloakSecretNotFound,
-    PyKeycloakRPTNotFound
 )
 
 
@@ -62,7 +61,7 @@ class TestPyKeycloakException:
     def test_pykeycloak_exception_inheritance(self):
         """Test that PyKeycloakException inherits from Exception."""
         exception = PyKeycloakException("Test message")
-        
+
         assert isinstance(exception, Exception)
 
 
@@ -134,16 +133,16 @@ class TestPyKeycloakSubExceptions:
         conn_error = PyKeycloakConnectionError()
         op_error = PyKeycloakOperationError()
         dep_error = PyKeycloakDeprecationError()
-        
+
         assert isinstance(auth_error, PyKeycloakException)
         assert isinstance(conn_error, PyKeycloakException)
         assert isinstance(op_error, PyKeycloakException)
         assert isinstance(dep_error, PyKeycloakException)
-        
+
         # PyKeycloakSecretNotFound and PyKeycloakRPTNotFound inherit from PyKeycloakOperationError
         secret_error = PyKeycloakSecretNotFound()
         rpt_error = PyKeycloakRPTNotFound()
-        
+
         assert isinstance(secret_error, PyKeycloakOperationError)
         assert isinstance(rpt_error, PyKeycloakOperationError)
         assert isinstance(secret_error, PyKeycloakException)

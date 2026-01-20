@@ -2,13 +2,12 @@
 Unit tests for the queries module.
 """
 
-import pytest
 from pykeycloak.providers.queries import (
     BaseQuery,
-    PaginationQuery,
     BriefRepresentationQuery,
     GetUsersQuery,
-    RoleMembersListQuery
+    PaginationQuery,
+    RoleMembersListQuery,
 )
 
 
@@ -17,12 +16,13 @@ class TestBaseQuery:
 
     def test_base_query_to_dict_empty(self):
         """Test converting an empty BaseQuery to dictionary."""
+
         class EmptyQuery(BaseQuery):
             pass
-        
+
         query = EmptyQuery()
         result = query.to_dict()
-        
+
         # Should return an empty dictionary since there are no fields
         assert result == {}
 
@@ -144,7 +144,7 @@ class TestPaginationQuery:
         max_val = 50
         first_val = 10
         query = PaginationQuery(max=max_val, first=first_val)
-        
+
         result = query.to_dict()
         assert result["max"] == str(max_val)
         assert result["first"] == str(first_val)
@@ -153,7 +153,7 @@ class TestPaginationQuery:
         """Test PaginationQuery with only max specified."""
         max_val = 75
         query = PaginationQuery(max=max_val)
-        
+
         result = query.to_dict()
         assert result["max"] == str(max_val)
         # first should still be 0
@@ -163,7 +163,7 @@ class TestPaginationQuery:
         """Test PaginationQuery with only first specified."""
         first_val = 20
         query = PaginationQuery(first=first_val)
-        
+
         result = query.to_dict()
         # max should be the default value
         assert "max" in result
@@ -176,7 +176,7 @@ class TestBriefRepresentationQuery:
     def test_brief_representation_query_default_false(self):
         """Test BriefRepresentationQuery with default false value."""
         query = BriefRepresentationQuery()
-        
+
         result = query.to_dict()
         # Since brief_representation is False by default, it should not appear in the dict
         assert "brief_representation" not in result
@@ -185,7 +185,7 @@ class TestBriefRepresentationQuery:
     def test_brief_representation_query_true(self):
         """Test BriefRepresentationQuery with true value."""
         query = BriefRepresentationQuery(brief_representation=True)
-        
+
         result = query.to_dict()
         # Should use the alias "briefRepresentation" and be "true"
         assert result["briefRepresentation"] == "true"
@@ -194,7 +194,7 @@ class TestBriefRepresentationQuery:
     def test_brief_representation_query_false_explicit(self):
         """Test BriefRepresentationQuery with explicitly set false value."""
         query = BriefRepresentationQuery(brief_representation=False)
-        
+
         result = query.to_dict()
         # Even though explicitly set to False, it should still be skipped
         assert "brief_representation" not in result
@@ -229,10 +229,18 @@ class TestGetUsersQuery:
             first_name: str | None = None
             last_name: str | None = None
             email: str | None = None
-            brief_representation: bool = field(default=False, metadata={"alias": "briefRepresentation"})
-            first_name_field: str | None = field(default=None, metadata={"alias": "firstName"})
-            last_name_field: str | None = field(default=None, metadata={"alias": "lastName"})
-            email_verified_field: bool = field(default=False, metadata={"alias": "emailVerified"})
+            brief_representation: bool = field(
+                default=False, metadata={"alias": "briefRepresentation"}
+            )
+            first_name_field: str | None = field(
+                default=None, metadata={"alias": "firstName"}
+            )
+            last_name_field: str | None = field(
+                default=None, metadata={"alias": "lastName"}
+            )
+            email_verified_field: bool = field(
+                default=False, metadata={"alias": "emailVerified"}
+            )
 
         query = CustomGetUsersQuery(
             username="testuser",
@@ -241,7 +249,7 @@ class TestGetUsersQuery:
             email="john.doe@example.com",
             brief_representation=True,
             first=0,
-            max=10
+            max=10,
         )
 
         result = query.to_dict()
@@ -262,15 +270,21 @@ class TestGetUsersQuery:
         @dataclass(kw_only=True)
         class CustomGetUsersQuery(GetUsersQuery):
             username: str | None = None
-            first_name_field: str | None = field(default=None, metadata={"alias": "firstName"})
-            email_verified_field: bool = field(default=False, metadata={"alias": "emailVerified"})
-            brief_representation: bool = field(default=False, metadata={"alias": "briefRepresentation"})
+            first_name_field: str | None = field(
+                default=None, metadata={"alias": "firstName"}
+            )
+            email_verified_field: bool = field(
+                default=False, metadata={"alias": "emailVerified"}
+            )
+            brief_representation: bool = field(
+                default=False, metadata={"alias": "briefRepresentation"}
+            )
 
         query = CustomGetUsersQuery(
             username="testuser",
             first_name_field=None,  # firstName is None, should be skipped
             email_verified_field=False,  # Should be skipped
-            brief_representation=True  # Should be included
+            brief_representation=True,  # Should be included
         )
 
         result = query.to_dict()
@@ -278,7 +292,9 @@ class TestGetUsersQuery:
         assert "username" in result
         assert "firstName" not in result  # None value should be skipped
         assert "emailVerified" not in result  # False value should be skipped
-        assert "briefRepresentation" in result  # True value should be included as "true"
+        assert (
+            "briefRepresentation" in result
+        )  # True value should be included as "true"
 
 
 class TestRoleMembersListQuery:
@@ -301,11 +317,7 @@ class TestRoleMembersListQuery:
         class CustomRoleMembersListQuery(RoleMembersListQuery):
             search: str | None = None
 
-        query = CustomRoleMembersListQuery(
-            first=5,
-            max=20,
-            search="search_term"
-        )
+        query = CustomRoleMembersListQuery(first=5, max=20, search="search_term")
 
         result = query.to_dict()
 
