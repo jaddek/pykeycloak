@@ -65,9 +65,7 @@ REALM_USER_CONSENTS = BASE_ADMIN_REALMS + "/users/{user_id}/consents"
 REALM_USER_CONSENT = REALM_USER_CONSENTS + "/{client_id}"
 REALM_SEND_UPDATE_ACCOUNT = BASE_ADMIN_REALMS + "/users/{user_id}/execute-actions-email"
 REALM_SEND_VERIFY_EMAIL = BASE_ADMIN_REALMS + "/users/{user_id}/send-verify-email"
-REALM_RESET_PASSWORD = (
-    BASE_ADMIN_REALMS + "/users/{user_id}/reset-password"
-)  # noqa: S105
+REALM_RESET_PASSWORD = BASE_ADMIN_REALMS + "/users/{user_id}/reset-password"  # noqa: S105
 REALM_GET_SESSIONS = BASE_ADMIN_REALMS + "/users/{user_id}/sessions"
 REALM_USER_ALL_ROLES = BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings"
 REALM_USER_CLIENT_ROLES = (

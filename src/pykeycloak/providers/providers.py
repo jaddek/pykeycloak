@@ -331,7 +331,6 @@ class KeycloakProviderAsync:
     async def introspect_token_async(
         self, payload: RTPIntrospectionPayload | TokenIntrospectionPayload
     ) -> Response:
-
         if not self._realm_client.is_confidential:
             raise ValueError(
                 "Introspection could be invoked only by confidential clients"
@@ -364,7 +363,6 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def auth_device_async(self, access_token: str) -> Response:
-
         headers: dict[str, str] = self._headers.openid_basic(basic_token=access_token)
 
         response = await self._wrapper.request(
@@ -378,7 +376,6 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def get_certs_async(self, access_token: str) -> Response:
-
         headers: dict[str, str] = self._headers.openid_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
@@ -489,7 +486,6 @@ class KeycloakProviderAsync:
         access_token: str,
         query: GetUsersQuery | None = None,
     ) -> Response:
-
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         return await self._wrapper.request(

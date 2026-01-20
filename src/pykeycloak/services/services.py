@@ -204,7 +204,6 @@ class SessionsService(BaseService):
 
 
 class AuthService(BaseService):
-
     ###
     # Client Login
     ###

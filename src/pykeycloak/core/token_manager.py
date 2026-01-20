@@ -24,17 +24,13 @@ class TokenUpdater(Protocol):
     async def __call__(self, refresh_token: str | None) -> Response: ...
 
 
-# P = ParamSpec("P")
-# R = TypeVar("R", bound=Response)
-
-
 def mark_need_token_verification[F: AnyCallable](func: F) -> F:
-    func._need_token_verification = True
+    setattr(func, "_need_token_verification", True)
     return func
 
 
 def mark_need_access_token_initialization[F: AnyCallable](func: F) -> F:
-    func._need_access_token_initialization = True
+    setattr(func, "_need_access_token_initialization", True)
     return func
 
 
@@ -162,7 +158,7 @@ class TokenAutoRefresher:
         self.token_manager: TokenManagerProtocol = token_manager
 
     def __call__(self, cls: type) -> type:
-        orig_init = cls.__init__
+        orig_init = getattr(cls, "__init__")  # noqa: B009
 
         def fallback_init(*args: Any, **kwargs: Any) -> None:
             pass
@@ -177,7 +173,7 @@ class TokenAutoRefresher:
             update_access_token_method = instance.token_manager_update_access_token()
             self.token_manager.init_update_access_token_api(update_access_token_method)
 
-        cls.__init__ = init_with_setting_refresh_token_api
+        setattr(cls, "__init__", init_with_setting_refresh_token_api)  # noqa: B010
 
         for name, attr in inspect.getmembers(cls, predicate=inspect.isroutine):
             if getattr(attr, "_need_token_verification", False):

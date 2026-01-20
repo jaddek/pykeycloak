@@ -12,7 +12,7 @@ from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
 from pykeycloak.services.services import AuthService, UmaService
 
 logging.basicConfig(level=logging.DEBUG)
-kc_realm = os.getenv("KEYCLOAK_REALM_NAME")
+kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "Some name")
 
 username = "admin"
 password = "password"  # noqa: S105

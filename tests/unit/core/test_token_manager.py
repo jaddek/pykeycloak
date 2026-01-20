@@ -115,7 +115,8 @@ class TestAuthToken:
     def test_auth_token_partial_values(self):
         """Test AuthToken with partial values."""
         token = AuthToken(
-            access_token="access-token-123", expires_in=3600  # noqa: S106 S105
+            access_token="access-token-123",
+            expires_in=3600,  # noqa: S106 S105
         )
 
         assert token.access_token == "access-token-123"  # noqa: S106 S105
