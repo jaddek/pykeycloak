@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
+
 from abc import ABC
 from dataclasses import dataclass, field, fields
 from typing import Any

@@ -1,15 +1,15 @@
 [project]
 name = "pykeycloak"
-version = "0.2.0"
+version = "0.2.1"
 description = ""
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
 license = {text = "MIT"}
 authors = [
-    {name = "Tony Nazarov", email = "tonynazarov@gmail.com"},
+    {name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com"},
 ]
 maintainers = [
-    {name = "Tony Nazarov", email = "tonynazarov@gmail.com"},
+    {name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com"},
 ]
 classifiers = [
 ]
