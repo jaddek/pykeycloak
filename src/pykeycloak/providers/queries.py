@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
-
+from collections.abc import ItemsView, Iterator
 from dataclasses import dataclass, field, fields
 from typing import Any
 
@@ -28,10 +28,10 @@ class BaseQuery:
     def __call__(self) -> dict[str, Any]:
         return self.to_dict()
 
-    def items(self):
+    def items(self) -> ItemsView[str, Any]:
         return self.to_dict().items()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[str]:
         return iter(self.to_dict())
 
 

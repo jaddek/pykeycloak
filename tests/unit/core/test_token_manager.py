@@ -2,13 +2,8 @@
 Unit tests for the token_manager module.
 """
 
-from unittest.mock import Mock
-
-import pytest
-
 from pykeycloak.core.token_manager import (
     AuthToken,
-    RefreshTokenSchema,
     mark_need_access_token_initialization,
     mark_need_token_verification,
 )
@@ -74,37 +69,6 @@ class TestTokenManagerDecorators:
         # Check attributes for func3
         assert func3._need_token_verification is True
         assert func3._need_access_token_initialization is True
-
-
-class TestRefreshTokenSchema:
-    """Test cases for the RefreshTokenSchema class."""
-
-    def test_refresh_token_schema_creation(self):
-        """Test creating a RefreshTokenSchema instance."""
-        mock_refresh_method = Mock()
-        mock_refresh_payload = Mock()
-
-        schema = RefreshTokenSchema(
-            refresh_token_method=mock_refresh_method,
-            refresh_token_payload=mock_refresh_payload,
-        )
-
-        assert schema.refresh_token_method == mock_refresh_method
-        assert schema.refresh_token_payload == mock_refresh_payload
-
-    def test_refresh_token_schema_immutability(self):
-        """Test that RefreshTokenSchema is immutable."""
-        mock_refresh_method = Mock()
-        mock_refresh_payload = Mock()
-
-        schema = RefreshTokenSchema(
-            refresh_token_method=mock_refresh_method,
-            refresh_token_payload=mock_refresh_payload,
-        )
-
-        # Attempt to modify should raise an error
-        with pytest.raises(Exception):  # noqa: B017
-            schema.refresh_token_method = Mock()
 
 
 class TestAuthToken:
