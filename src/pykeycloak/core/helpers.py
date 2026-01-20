@@ -2,9 +2,12 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import os
-from dataclasses import dataclass
-from typing import Any
+from collections.abc import Callable
+from dataclasses import fields, is_dataclass
+from typing import Any, TypeGuard, cast
 from urllib.parse import urlparse
+
+from pykeycloak.core.aliases import JsonData
 
 
 def getenv_required_url(name: str) -> str:
@@ -44,10 +47,24 @@ def getenv_int(name: str, default: int) -> int:
         return default
 
 
-def dataclass_from_dict(data: dict[str, Any], cls: type[dataclass]) -> type[dataclass]:
-    init_kwargs = {}
-    for f in cls.__dataclass_fields__.values():
-        key = f.metadata.get("alias", f.name)
+def dataclass_from_dict[T](data: JsonData, cls: type[T]) -> T:
+    if not is_dataclass(cls):
+        raise TypeError(f"{cls} must be a dataclass")
+
+    if not isinstance(data, dict):
+        raise TypeError(f"Expected dict for dataclass conversion, got {type(data)}")
+
+    init_kwargs: dict[str, Any] = {}
+
+    for field in fields(cls):
+        key = field.metadata.get("alias", field.name)
+
         if key in data:
-            init_kwargs[f.name] = data[key]
-    return cls(**init_kwargs)
+            init_kwargs[field.name] = data[key]
+
+    constructor = cast(Callable[..., T], cls)
+    return constructor(**init_kwargs)
+
+
+def is_json_data(val: Any) -> TypeGuard[JsonData]:
+    return isinstance(val, (dict, list, str, int, float, bool)) or val is None

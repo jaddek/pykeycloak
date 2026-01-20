@@ -4,12 +4,15 @@
 import asyncio
 import inspect
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from functools import wraps
-from typing import Protocol
+from typing import Any, Protocol, cast
 
+from httpx import Response
+
+from pykeycloak.core.aliases import AnyCallable
 from pykeycloak.core.constants import KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECONDS
 from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
@@ -17,20 +20,18 @@ from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
 logger = logging.getLogger(__name__)
 
 
-def mark_need_token_verification(func):
-    func._need_token_verification = True
+class TokenUpdater(Protocol):
+    async def __call__(self, refresh_token: str | None) -> Response: ...
+
+
+def mark_need_token_verification[F: AnyCallable](func: F) -> F:
+    setattr(func, "_need_token_verification", True)
     return func
 
 
-def mark_need_access_token_initialization(func):
-    func._need_access_token_initialization = True
+def mark_need_access_token_initialization[F: AnyCallable](func: F) -> F:
+    setattr(func, "_need_access_token_initialization", True)
     return func
-
-
-@dataclass(frozen=True)
-class RefreshTokenSchema:
-    refresh_token_method: Callable
-    refresh_token_payload: Callable
 
 
 @dataclass
@@ -59,7 +60,7 @@ class AuthTokenValidator:
 
         now = datetime.now(UTC)
 
-        expires_at = now + timedelta(seconds=token.expires_in)
+        expires_at = now + timedelta(seconds=token.expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
         return now < expires_at - buffer
@@ -74,15 +75,15 @@ class AuthTokenValidator:
 
         now = datetime.now(UTC)
 
-        expires_at = now + timedelta(seconds=token.refresh_expires_in)
+        expires_at = now + timedelta(seconds=token.refresh_expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
         return now < expires_at - buffer
 
 
 class TokenManagerProtocol(Protocol):
-    _update_access_token_method: Callable | None = None
-    _auth_tokens: AuthToken | None = None
+    _update_access_token_method: TokenUpdater | None = None
+    _auth_tokens: AuthToken
 
     @property
     def auth_tokens(self) -> AuthToken | None: ...
@@ -93,7 +94,7 @@ class TokenManagerProtocol(Protocol):
 
     def init_update_access_token_api(
         self,
-        update_access_token_method: Callable,
+        update_access_token_method: TokenUpdater,
     ) -> None: ...
 
     async def fetch_access_token_using_refresh_token(self) -> AuthToken: ...
@@ -105,10 +106,10 @@ class TokenManager:
     Ручное управление локами через threading
     """
 
-    _update_access_token_method: Callable | None = None
-    _auth_tokens: AuthToken | None = None
+    _update_access_token_method: TokenUpdater | None = None
+    _auth_tokens: AuthToken
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._auth_tokens = AuthToken()
         self._lock = asyncio.Lock()
         self.full_inited: bool = False
@@ -125,7 +126,7 @@ class TokenManager:
 
     def init_update_access_token_api(
         self,
-        update_access_token_method: Callable,
+        update_access_token_method: TokenUpdater,
     ) -> None:
         self._update_access_token_method = update_access_token_method
 
@@ -140,6 +141,11 @@ class TokenManager:
         return self._auth_tokens
 
     async def fetch_access_token_using_refresh_token(self) -> AuthToken:
+        if self._update_access_token_method is None:
+            raise TypeError(
+                "Token manager must call init_update_access_token_api first"
+            )
+
         response = await self._update_access_token_method(
             refresh_token=self._auth_tokens.refresh_token,
         )
@@ -151,34 +157,39 @@ class TokenAutoRefresher:
     def __init__(self, token_manager: TokenManagerProtocol):
         self.token_manager: TokenManagerProtocol = token_manager
 
-    def __call__(self, cls):
-        orig_init = cls.__init__
+    def __call__(self, cls: type) -> type:
+        orig_init = getattr(cls, "__init__")  # noqa: B009
 
-        @wraps(orig_init)
-        def init_with_setting_refresh_token_api(instance, *args, **kwargs):
-            orig_init(instance, *args, **kwargs)
+        def fallback_init(*args: Any, **kwargs: Any) -> None:
+            pass
+
+        @wraps(orig_init or fallback_init)
+        def init_with_setting_refresh_token_api(
+            instance: Any, *args: Any, **kwargs: Any
+        ) -> None:
+            if callable(orig_init):
+                orig_init(instance, *args, **kwargs)
+
             update_access_token_method = instance.token_manager_update_access_token()
             self.token_manager.init_update_access_token_api(update_access_token_method)
 
-        cls.__init__ = init_with_setting_refresh_token_api
+        setattr(cls, "__init__", init_with_setting_refresh_token_api)  # noqa: B010
 
         for name, attr in inspect.getmembers(cls, predicate=inspect.isroutine):
-            if callable(attr) and getattr(attr, "_need_token_verification", False):
+            if getattr(attr, "_need_token_verification", False):
                 setattr(cls, name, self._wrap_method_by_token_verification(attr))
 
-            if callable(attr) and getattr(
-                attr, "_need_access_token_initialization", False
-            ):
+            elif getattr(attr, "_need_access_token_initialization", False):
                 setattr(cls, name, self._wrap_method_by_token_initialization(attr))
-
-        cls._token_manager = self.token_manager
 
         return cls
 
-    def _wrap_method_by_token_initialization(self, func):
-        @wraps(func)
-        async def wrapper(instance, *args, **kwargs):
-            result = await func(instance, *args, **kwargs)
+    def _wrap_method_by_token_initialization[**P, R: Response](
+        self, method: Callable[P, Awaitable[R]]
+    ) -> Callable[P, Awaitable[R]]:
+        @wraps(method)
+        async def wrapper(instance: Any, *args: P.args, **kwargs: P.kwargs) -> R:
+            result = await method(instance, *args, **kwargs)
 
             if isinstance(kwargs.get("payload", None), ClientCredentialsLoginPayload):
                 self.token_manager._auth_tokens = dataclass_from_dict(
@@ -187,18 +198,27 @@ class TokenAutoRefresher:
 
             return result
 
-        return wrapper
+        return cast(Callable[P, Awaitable[R]], wrapper)
 
-    def _wrap_method_by_token_verification(self, func):
-        @wraps(func)
-        async def wrapper(instance, *args, **kwargs):
+    def _wrap_method_by_token_verification[**P, R: Response](
+        self, method: Callable[P, Awaitable[R]]
+    ) -> Callable[P, Awaitable[R]]:
+        @wraps(method)
+        async def wrapper(instance: Any, *args: P.args, **kwargs: P.kwargs) -> R:
             if not self.token_manager.is_access_token_valid():
                 await self.token_manager.fetch_access_token_using_refresh_token()
-            return await func(
+
+            if self.token_manager.auth_tokens is None:
+                raise RuntimeError("Token manager must initialize access_token first")
+
+            if self.token_manager.auth_tokens.access_token is None:
+                raise ValueError("Access token is missing")
+
+            return await method(
                 instance,
                 *args,
-                access_token=self.token_manager.auth_tokens.access_token,
+                access_token=self.token_manager.auth_tokens.access_token,  # type: ignore[arg-type]
                 **kwargs,
             )
 
-        return wrapper
+        return cast(Callable[P, Awaitable[R]], wrapper)

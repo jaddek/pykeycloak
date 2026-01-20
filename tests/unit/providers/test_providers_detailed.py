@@ -291,7 +291,8 @@ class TestKeycloakProviderAsyncDetailed:
         """Test get_users_count_async method."""
         query = GetUsersQuery(first=0, max=10)
         await provider.get_users_count_async(
-            query=query, access_token="test_token"  # noqa: S106
+            query=query,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -304,7 +305,8 @@ class TestKeycloakProviderAsyncDetailed:
         """Test get_users_async method."""
         query = GetUsersQuery(first=0, max=10)
         await provider.get_users_async(
-            query=query, access_token="test_token"  # noqa: S106
+            query=query,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -316,7 +318,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_get_user_async(self, provider, mock_wrapper):
         """Test get_user_async method."""
         await provider.get_user_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -331,7 +334,8 @@ class TestKeycloakProviderAsyncDetailed:
             username="test_user", email="test@example.com", enabled=True
         )
         await provider.create_user_async(
-            payload=payload, access_token="test_token"  # noqa: S106
+            payload=payload,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -443,7 +447,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_get_client_roles_of_user_async(self, provider, mock_wrapper):
         """Test get_client_roles_of_user_async method."""
         await provider.get_client_roles_of_user_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -480,7 +485,8 @@ class TestKeycloakProviderAsyncDetailed:
     ):
         """Test get_available_client_roles_of_user_async method."""
         await provider.get_available_client_roles_of_user_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -495,7 +501,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_delete_user_async(self, provider, mock_wrapper):
         """Test delete_user_async method."""
         await provider.delete_user_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -523,7 +530,8 @@ class TestKeycloakProviderAsyncDetailed:
         """Test get_client_user_sessions_async method."""
         query = PaginationQuery(first=0, max=10)
         await provider.get_client_user_sessions_async(
-            request_query=query, access_token="test_token"  # noqa: S106
+            request_query=query,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -554,7 +562,8 @@ class TestKeycloakProviderAsyncDetailed:
         """Test get_offline_sessions_async method."""
         query = PaginationQuery(first=0, max=10)
         await provider.get_offline_sessions_async(
-            request_query=query, access_token="test_token"  # noqa: S106
+            request_query=query,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -584,7 +593,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_remove_user_sessions_async(self, provider, mock_wrapper):
         """Test remove_user_sessions_async method."""
         await provider.remove_user_sessions_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -618,7 +628,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_get_client_user_offline_sessions_async(self, provider, mock_wrapper):
         """Test get_client_user_offline_sessions_async method."""
         await provider.get_client_user_offline_sessions_async(
-            user_id=uuid.uuid4(), access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -633,7 +644,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_get_client_role_id_async(self, provider, mock_wrapper):
         """Test get_client_role_id_async method."""
         await provider.get_client_role_id_async(
-            role_name="test_role", access_token="test_token"  # noqa: S106
+            role_name="test_role",
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -649,7 +661,8 @@ class TestKeycloakProviderAsyncDetailed:
         """Test create_role method."""
         payload = {"name": "test_role", "description": "Test role"}
         await provider.create_role(
-            payload=payload, access_token="test_token"  # noqa: S106
+            payload=payload,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -666,7 +679,9 @@ class TestKeycloakProviderAsyncDetailed:
         role_id = UUID("12345678-1234-5678-1234-567812345678")
         payload = {"name": "updated_role", "description": "Updated role"}
         await provider.update_role_by_id_async(
-            role_id=role_id, payload=payload, access_token="test_token"  # noqa: S106
+            role_id=role_id,
+            payload=payload,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -698,7 +713,8 @@ class TestKeycloakProviderAsyncDetailed:
 
         role_id = UUID("12345678-1234-5678-1234-567812345678")
         await provider.delete_role_by_id_async(
-            role_id=role_id, access_token="test_token"  # noqa: S106
+            role_id=role_id,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -710,7 +726,8 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_delete_role_by_name_async(self, provider, mock_wrapper):
         """Test delete_role_by_name_async method."""
         await provider.delete_role_by_name_async(
-            role_name="test_role", access_token="test_token"  # noqa: S106
+            role_name="test_role",
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -726,7 +743,9 @@ class TestKeycloakProviderAsyncDetailed:
         user_id = UUID("12345678-1234-5678-1234-567812345678")
         roles = ["role1", "role2"]
         await provider.assign_client_role_async(
-            user_id=user_id, roles=roles, access_token="test_token"  # noqa: S106
+            user_id=user_id,
+            roles=roles,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
@@ -742,7 +761,9 @@ class TestKeycloakProviderAsyncDetailed:
         """Test delete_client_roles_of_user_async method."""
         roles = ["role1", "role2"]
         await provider.delete_client_roles_of_user_async(
-            user_id=uuid.uuid4(), roles=roles, access_token="test_token"  # noqa: S106
+            user_id=uuid.uuid4(),
+            roles=roles,
+            access_token="test_token",  # noqa: S106
         )
 
         mock_wrapper.request.assert_called_once()
