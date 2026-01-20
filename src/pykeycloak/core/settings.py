@@ -20,6 +20,17 @@ from httpx._types import (
     URLTypes,
 )
 
+from .constants import KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT, \
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS_DEFAULT, \
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS_DEFAULT, \
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING_DEFAULT, KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV_DEFAULT, \
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2_DEFAULT, KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1_DEFAULT, \
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_SSL_VERIFY_DEFAULT, KEYCLOAK_HTTPX_CLIENT_PARAMS_FOLLOW_REDIRECTS_DEFAULT, \
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT, \
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES_DEFAULT, KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP2_DEFAULT, \
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1_DEFAULT, KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV_DEFAULT, \
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY_DEFAULT, \
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT
 from .headers import Headers
 from .helpers import getenv_bool, getenv_int, getenv_optional, getenv_required_url
 
@@ -32,12 +43,12 @@ class HttpTransportSettings:
     http1: bool = True
     http2: bool = False
     limits: Limits = field(
-        default_factory=lambda: Limits(max_connections=10, max_keepalive_connections=10)
+        default_factory=lambda: Limits(max_connections=KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT, max_keepalive_connections=KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT)
     )
     proxy: ProxyTypes | None = None
     uds: str | None = None
     local_address: str | None = None
-    retries: int = 0
+    retries: int = KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES_DEFAULT
     socket_options: list["SOCKET_OPTION"] | None = field(
         init=False, repr=False, default=None
     )
@@ -68,12 +79,12 @@ class HttpTransportSettings:
     @classmethod
     def from_env(cls) -> "HttpTransportSettings":
         return cls(
-            verify=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY", True),
+            verify=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY_DEFAULT),
             cert=getenv_optional("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_CERT"),
-            trust_env=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV", True),
-            http1=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1", True),
-            http2=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP2", False),
-            retries=getenv_int("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES", 0),
+            trust_env=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV_DEFAULT),
+            http1=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1_DEFAULT),
+            http2=getenv_bool("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP2", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP2_DEFAULT),
+            retries=getenv_int("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES_DEFAULT),
             proxy=getenv_optional("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_PROXY"),
             uds=getenv_optional("KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_UDS"),
             local_address=getenv_optional(
@@ -81,10 +92,10 @@ class HttpTransportSettings:
             ),
             limits=Limits(
                 max_connections=getenv_int(
-                    "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS", 10
+                    "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT
                 ),
                 max_keepalive_connections=getenv_int(
-                    "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS", 10
+                    "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS", KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT
                 ),
             ),
         )
@@ -96,23 +107,26 @@ class ClientSettings:
     params: QueryParamTypes | None = None
     headers: HeaderTypes | Headers | None = None
     cookies: CookieTypes | None = None
-    verify: ssl.SSLContext | str | bool = True
+    verify: ssl.SSLContext | str | bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_SSL_VERIFY_DEFAULT
     cert: CertTypes | None = None
-    http1: bool = False
-    http2: bool = True
+    http1: bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1_DEFAULT
+    http2: bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2_DEFAULT
     proxy: ProxyTypes | None = None
     mounts: dict[str, BaseTransport | None] | None = None
-    timeout: TimeoutTypes = field(default_factory=lambda: Timeout(timeout=5.0))
+    timeout: TimeoutTypes = field(default_factory=lambda: Timeout(timeout=KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT))
     follow_redirects: bool = False
     limits: Limits = field(
-        default_factory=lambda: Limits(max_connections=10, max_keepalive_connections=10)
+        default_factory=lambda: Limits(
+            max_connections=KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS_DEFAULT,
+            max_keepalive_connections=KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS_DEFAULT
+        )
     )
     max_redirects: int = DEFAULT_MAX_REDIRECTS
     event_hooks: dict[str, list[Callable[..., Any]]] | None = None
     base_url: URLTypes = ""
     transport: AsyncHTTPTransport | HTTPTransport | None = None
-    trust_env: bool = True
-    default_encoding: str | Callable[[bytes], str] = "utf-8"
+    trust_env: bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV_DEFAULT
+    default_encoding: str | Callable[[bytes], str] = KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING_DEFAULT
 
     def __post_init__(self) -> None:
         for attr in ["params", "headers", "cookies", "mounts"]:
@@ -140,28 +154,29 @@ class ClientSettings:
         """Create ClientSettings using .env variables."""
         return cls(
             base_url=getenv_required_url("KEYCLOAK_BASE_URL"),
-            http1=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1", True),
-            http2=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2", False),
+            verify=getenv_bool("KEYCLOAK_HTTPX_HTTP_VERIFY", KEYCLOAK_HTTPX_CLIENT_PARAMS_SSL_VERIFY_DEFAULT),
+            http1=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1", KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1_DEFAULT),
+            http2=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2", KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2_DEFAULT),
             follow_redirects=getenv_bool(
-                "KEYCLOAK_HTTPX_CLIENT_PARAMS_FOLLOW_REDIRECTS", False
+                "KEYCLOAK_HTTPX_CLIENT_PARAMS_FOLLOW_REDIRECTS", KEYCLOAK_HTTPX_CLIENT_PARAMS_FOLLOW_REDIRECTS_DEFAULT
             ),
-            trust_env=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV", True),
+            trust_env=getenv_bool("KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV", KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV_DEFAULT),
             timeout=Timeout(
-                timeout=float(os.getenv("KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT", 5.0))
+                timeout=float(os.getenv("KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT", KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT))
             ),
             limits=Limits(
                 max_connections=getenv_int(
-                    "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS", 10
+                    "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS", KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS_DEFAULT
                 ),
                 max_keepalive_connections=getenv_int(
-                    "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS", 10
+                    "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS", KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS_DEFAULT
                 ),
             ),
             max_redirects=getenv_int(
                 "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_REDIRECTS", DEFAULT_MAX_REDIRECTS
             ),
             default_encoding=os.getenv(
-                "KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING", "utf-8"
+                "KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING", KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING_DEFAULT
             ),
         )
 

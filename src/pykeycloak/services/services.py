@@ -7,6 +7,7 @@ from httpx import Response
 
 from pykeycloak.core.aliases import JsonData
 from pykeycloak.core.helpers import dataclass_from_dict
+from pykeycloak.core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
 from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     RefreshTokenPayload,
@@ -68,7 +69,7 @@ class UsersService(BaseService):
     async def get_paginated_users_async(
             self,
             users_count: int,
-            concurrency_limit: int = 100,
+            concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
             query: GetUsersQuery | None = None,
     ) -> list[JsonData]:
         _query = query or GetUsersQuery()

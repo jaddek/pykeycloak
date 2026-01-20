@@ -137,4 +137,5 @@ lint = [
 test = [
     "pytest>=9.0.2",
     "pytest-asyncio>=0.23.0",
+    "pytest-cov>=7.0.0",
 ]

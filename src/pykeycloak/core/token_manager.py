@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, UTC
 from functools import wraps
 from typing import Protocol, Callable
 
+from pykeycloak.core.constants import KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECONDS
 from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
 
@@ -42,7 +43,7 @@ class AuthToken:
 
 class AuthTokenValidator:
     @staticmethod
-    def is_access_token_valid(token: AuthToken, available_time_frame: int = 30) -> bool:
+    def is_access_token_valid(token: AuthToken, available_time_frame: int = KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECONDS) -> bool:
         if not all([token.access_token, token.expires_in]):
             return False
 
@@ -53,7 +54,7 @@ class AuthTokenValidator:
 
         return now < expires_at - buffer
     @staticmethod
-    def is_refresh_token_valid(token: AuthToken, available_time_frame: int = 30) -> bool:
+    def is_refresh_token_valid(token: AuthToken, available_time_frame: int = KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECONDS) -> bool:
         if not all([token.refresh_token, token.refresh_expires_in]):
             return False
 

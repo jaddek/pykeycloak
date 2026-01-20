@@ -1,12 +1,12 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ContentTypesEnums(StrEnum):
+class ContentTypesEnums(str, Enum):
     FORM_URLENCODED = "application/x-www-form-urlencoded"
     JSON = "application/json"
 
 
-class HeaderKeys(StrEnum):
+class HeaderKeys(str, Enum):
     CONTENT_TYPE = "Content-Type"
     AUTHORIZATION = "Authorization"
 
@@ -14,34 +14,31 @@ class HeaderKeys(StrEnum):
 from typing import Self, Protocol
 
 
-class SupportsAuthHeaders(Protocol):
+class HeadersProtocol(Protocol):
     def openid_bearer(self, bearer_token: str) -> dict[str, str]: ...
-    def openid_basic(self, b64_auth: str) -> dict[str, str]: ...
+    def openid_basic(self, basic_token: str) -> dict[str, str]: ...
+    def keycloak_bearer(self, bearer_token: str) -> dict[str, str]: ...
 
 class HeaderFactory:
-    __slots__ = ()  # Класс вообще не хранит данных
+    __slots__ = ()
 
-    @staticmethod
-    def openid_basic(basic_token: str) -> dict[str, str]:
+    def openid_basic(self, basic_token: str) -> dict[str, str]:
         return {
-            "Authorization": f"Basic {basic_token}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            HeaderKeys.AUTHORIZATION.value: f"Basic {basic_token}",
+            HeaderKeys.CONTENT_TYPE.value: ContentTypesEnums.FORM_URLENCODED.value
         }
 
-    @staticmethod
-    def openid_bearer(bearer_token: str) -> dict[str, str]:
+    def openid_bearer(self, bearer_token: str) -> dict[str, str]:
         return {
-            "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            HeaderKeys.AUTHORIZATION.value: f"Bearer {bearer_token}",
+            HeaderKeys.CONTENT_TYPE.value: ContentTypesEnums.FORM_URLENCODED.value
         }
 
-    @staticmethod
-    def keycloak_bearer(bearer_token: str) -> dict[str, str]:
+    def keycloak_bearer(self, bearer_token: str) -> dict[str, str]:
         return {
-            "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/json"
+            HeaderKeys.AUTHORIZATION.value: f"Bearer {bearer_token}",
+            HeaderKeys.CONTENT_TYPE.value: ContentTypesEnums.JSON.value
         }
-
 
 
 class Headers:
@@ -51,27 +48,27 @@ class Headers:
         self._data: dict[str, str] = {}
 
     def bearer(self, token: str) -> Self:
-        self._data["Authorization"] = f"Bearer {token}"
+        self._data[HeaderKeys.AUTHORIZATION.value] = f"Bearer {token}"
         return self
 
     def basic(self, b64_auth: str) -> Self:
-        self._data["Authorization"] = f"Basic {b64_auth}"
+        self._data[HeaderKeys.AUTHORIZATION.value] = f"Basic {b64_auth}"
         return self
 
     def json(self) -> Self:
-        self._data["Content-Type"] = "application/json"
+        self._data["Content-Type"] = ContentTypesEnums.JSON.value
         return self
 
     def urlencoded(self) -> Self:
-        self._data["Content-Type"] = "application/x-www-form-urlencoded"
+        self._data["Content-Type"] = ContentTypesEnums.FORM_URLENCODED.value
         return self
 
     def build(self) -> dict[str, str]:
         return self._data.copy()
 
     def __repr__(self) -> str:
-        ct = self._data.get("Content-Type", "none")
-        auth = "<hidden>" if "Authorization" in self._data else "none"
+        ct = self._data.get(HeaderKeys.CONTENT_TYPE.value, "none")
+        auth = "<hidden>" if HeaderKeys.AUTHORIZATION.value in self._data else "none"
         return f"Headers(content_type={ct}, authorization={auth})"
 
 

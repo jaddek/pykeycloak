@@ -1,7 +1,7 @@
 import json
 import logging
 from abc import ABC
-from typing import Any, Protocol, Callable, Awaitable
+from typing import Any, Callable, Awaitable
 from uuid import UUID
 
 from httpx import Response
@@ -10,7 +10,7 @@ from pykeycloak.core.clients import (
     KeycloakHttpClientWrapperAsync,
     get_keycloak_client_wrapper_from_env, HttpMethod,
 )
-from pykeycloak.core.headers import HeaderFactory
+from pykeycloak.core.headers import HeadersProtocol, HeaderFactory
 from .payloads import (
     ObtainTokenPayload,
     RefreshTokenPayload,
@@ -20,7 +20,7 @@ from .payloads import (
     RTPExchangeTokenPayload, ConfidentialClientRevokePayload, PublicClientRevokePayload,
 )
 from .queries import GetUsersQuery, RoleMembersListQuery, PaginationQuery, BriefRepresentationQuery
-from ..core.entities import RealmClient
+from ..core.realm import RealmClient
 from ..core.token_manager import TokenManager, mark_need_token_verification, TokenAutoRefresher, \
     mark_need_access_token_initialization
 from ..core.urls import (
@@ -38,28 +38,20 @@ from ..core.urls import (
 
 logger = logging.getLogger(__name__)
 
-
-class KeycloakAuthProviderProtocol(Protocol):
-    async def refresh_token_async(
-            self,
-            payload: RefreshTokenPayload,
-    ) -> Response:
-        ...
-
-
 class KeycloakProviderAsync(ABC):
     def __init__(
             self,
             *,
             realm: str,
             realm_client: RealmClient,
+            headers: HeadersProtocol | None = None,
             wrapper: KeycloakHttpClientWrapperAsync | None = None,
     ) -> None:
         self._realm: str = realm
         self._realm_client: RealmClient = realm_client
 
+        self._headers = headers or HeaderFactory()
         self._wrapper = wrapper or get_keycloak_client_wrapper_from_env()
-
 
     ##############################################################
     #  Auth/OpenID endpoints
@@ -78,10 +70,10 @@ class KeycloakProviderAsync(ABC):
 
         match payload:
             case payload if isinstance(payload, RTPExchangeTokenPayload):
-                headers = HeaderFactory.openid_bearer(bearer_token=str(payload.refresh_token))
+                headers = self._headers.openid_bearer(bearer_token=str(payload.refresh_token))
 
             case payload if isinstance(payload, RefreshTokenPayload):
-                headers = HeaderFactory.openid_basic(basic_token=self._realm_client.base64_auth())
+                headers = self._headers.openid_basic(basic_token=self._realm_client.base64_auth())
 
             case _:
                 raise TypeError(
@@ -104,7 +96,7 @@ class KeycloakProviderAsync(ABC):
             *,
             payload: ObtainTokenPayload,
     ) -> Response:
-        headers = HeaderFactory.openid_basic(self._realm_client.base64_auth())
+        headers = self._headers.openid_basic(self._realm_client.base64_auth())
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -129,9 +121,9 @@ class KeycloakProviderAsync(ABC):
 
         match payload:
             case payload if isinstance(payload, RTPIntrospectionPayload):
-                headers = HeaderFactory.openid_bearer(bearer_token=str(payload.token))
+                headers = self._headers.openid_bearer(bearer_token=str(payload.token))
             case payload if isinstance(payload, TokenIntrospectionPayload):
-                headers = HeaderFactory.openid_basic(basic_token=self._realm_client.base64_auth())
+                headers = self._headers.openid_basic(basic_token=self._realm_client.base64_auth())
 
             case _:
                 raise TypeError(
@@ -154,7 +146,7 @@ class KeycloakProviderAsync(ABC):
             access_token: str | None = None,
     ) -> Response:
 
-        headers: dict = HeaderFactory.openid_basic(basic_token=access_token)
+        headers: dict = self._headers.openid_basic(basic_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -171,7 +163,7 @@ class KeycloakProviderAsync(ABC):
             access_token: str | None = None,
     ) -> Response:
 
-        headers: dict = HeaderFactory.openid_bearer(bearer_token=access_token)
+        headers: dict = self._headers.openid_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -192,7 +184,7 @@ class KeycloakProviderAsync(ABC):
                 "client_secret": self._realm_client.client_secret,
             }
 
-        headers: dict = HeaderFactory.openid_bearer(bearer_token=self._realm_client.base64_auth())
+        headers: dict = self._headers.openid_bearer(bearer_token=self._realm_client.base64_auth())
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -211,7 +203,7 @@ class KeycloakProviderAsync(ABC):
             case True:
                 payload = ConfidentialClientRevokePayload(token=refresh_token)
 
-                headers = HeaderFactory.openid_basic(basic_token=self._realm_client.base64_auth())
+                headers = self._headers.openid_basic(basic_token=self._realm_client.base64_auth())
 
             case False:
                 payload = PublicClientRevokePayload(
@@ -219,7 +211,7 @@ class KeycloakProviderAsync(ABC):
                     token=refresh_token
                 )
 
-                headers = HeaderFactory.openid_bearer(bearer_token=str(payload.token))
+                headers = self._headers.openid_bearer(bearer_token=str(payload.token))
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -235,7 +227,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str,
     ) -> Response:
-        headers = HeaderFactory.openid_bearer(bearer_token=str(access_token))
+        headers = self._headers.openid_bearer(bearer_token=str(access_token))
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -253,7 +245,7 @@ class KeycloakProviderAsync(ABC):
             self,
             payload: UMAAuthorizationPayload,
     ) -> Response:
-        headers = HeaderFactory.openid_basic(basic_token=self._realm_client.base64_auth())
+        headers = self._headers.openid_basic(basic_token=self._realm_client.base64_auth())
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -275,7 +267,7 @@ class KeycloakProviderAsync(ABC):
             access_token: str | None = None,
     ) -> Response:
 
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         return await self._wrapper.request(
             method=HttpMethod.GET,
@@ -290,7 +282,7 @@ class KeycloakProviderAsync(ABC):
             query: GetUsersQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         _query = query or GetUsersQuery()
 
@@ -307,7 +299,7 @@ class KeycloakProviderAsync(ABC):
             user_id: str,
             access_token: str | None = None,
     ):
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -323,7 +315,7 @@ class KeycloakProviderAsync(ABC):
             user_id: str,
             access_token: str | None = None,
     ):
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -339,7 +331,7 @@ class KeycloakProviderAsync(ABC):
             payload: CreateUserPayload,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -357,7 +349,7 @@ class KeycloakProviderAsync(ABC):
             payload: CreateUserPayload,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
@@ -375,7 +367,7 @@ class KeycloakProviderAsync(ABC):
             payload: UserUpdateEnablePayload,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
@@ -393,7 +385,7 @@ class KeycloakProviderAsync(ABC):
             payload: UserUpdatePasswordPayload,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
@@ -414,7 +406,7 @@ class KeycloakProviderAsync(ABC):
             request_query: RoleMembersListQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -438,7 +430,7 @@ class KeycloakProviderAsync(ABC):
             user_id: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -455,7 +447,7 @@ class KeycloakProviderAsync(ABC):
             is_offline: bool,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         offline_status = "true" if is_offline else "false"
 
@@ -474,7 +466,7 @@ class KeycloakProviderAsync(ABC):
             request_query: PaginationQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -490,7 +482,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -506,7 +498,7 @@ class KeycloakProviderAsync(ABC):
             request_query: PaginationQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -522,7 +514,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -538,7 +530,7 @@ class KeycloakProviderAsync(ABC):
             user_id: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -553,7 +545,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str | None = None,
     ):
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -568,7 +560,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -584,7 +576,7 @@ class KeycloakProviderAsync(ABC):
             user_id: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -603,7 +595,7 @@ class KeycloakProviderAsync(ABC):
             self,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -619,7 +611,7 @@ class KeycloakProviderAsync(ABC):
             role_name: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -635,7 +627,7 @@ class KeycloakProviderAsync(ABC):
             role_name: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -651,7 +643,7 @@ class KeycloakProviderAsync(ABC):
             payload: dict,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -669,7 +661,7 @@ class KeycloakProviderAsync(ABC):
             payload: dict,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
@@ -687,7 +679,7 @@ class KeycloakProviderAsync(ABC):
             payload: dict,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
@@ -704,7 +696,7 @@ class KeycloakProviderAsync(ABC):
             role_id: UUID,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -720,7 +712,7 @@ class KeycloakProviderAsync(ABC):
             role_name: str,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -736,8 +728,8 @@ class KeycloakProviderAsync(ABC):
             user_id: UUID,
             roles: list[str],
             access_token: str | None = None,
-    ) ->Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
@@ -753,8 +745,8 @@ class KeycloakProviderAsync(ABC):
             self,
             user_id: str,
             access_token: str | None = None,
-    )->Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -771,7 +763,7 @@ class KeycloakProviderAsync(ABC):
             request_query: BriefRepresentationQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -787,8 +779,8 @@ class KeycloakProviderAsync(ABC):
             self,
             user_id: str,
             access_token: str | None = None,
-    )->Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
@@ -805,7 +797,7 @@ class KeycloakProviderAsync(ABC):
             roles: list[str],
             access_token: str | None = None,
     ) -> Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
@@ -821,8 +813,8 @@ class KeycloakProviderAsync(ABC):
             self,
             user_id: str,
             access_token: str | None = None,
-    ) ->Response:
-        headers = HeaderFactory.keycloak_bearer(bearer_token=access_token)
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.GET,
