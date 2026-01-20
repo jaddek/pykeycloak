@@ -3,8 +3,10 @@ Unit tests for the entities module.
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from pykeycloak.core.realm import RealmClient
 
 
@@ -15,7 +17,7 @@ class TestRealmClient:
         """Test creating a RealmClient with valid data."""
         client_uuid = "test-uuid"
         client_id = "test-client-id"
-        client_secret = "test-secret"
+        client_secret = "test-secret"  # noqa: S105
 
         client = RealmClient(client_uuid, client_id, client_secret)
 
@@ -55,7 +57,7 @@ class TestRealmClient:
         """Test base64 authentication string creation for confidential client."""
         client_uuid = "test-uuid"
         client_id = "test-client-id"
-        client_secret = "test-secret"
+        client_secret = "test-secret"  # noqa: S105
 
         client = RealmClient(client_uuid, client_id, client_secret)
         expected_auth = "dGVzdC1jbGllbnQtaWQ6dGVzdC1zZWNyZXQ="  # base64 encoded "test-client-id:test-secret"
@@ -69,14 +71,16 @@ class TestRealmClient:
 
         client = RealmClient(client_uuid, client_id)
 
-        with pytest.raises(AttributeError, match="Public client has no secret for Basic Auth"):
+        with pytest.raises(
+            AttributeError, match="Public client has no secret for Basic Auth"
+        ):
             client.base64_auth()
 
     def test_resolve_id_with_override(self):
         """Test resolve_id method with an override ID."""
         client_uuid = "test-uuid"
         client_id = "test-client-id"
-        client_secret = "test-secret"
+        client_secret = "test-secret"  # noqa: S105
 
         client = RealmClient(client_uuid, client_id, client_secret)
         override_id = "override-id"
@@ -87,7 +91,7 @@ class TestRealmClient:
         """Test resolve_id method without an override ID."""
         client_uuid = "test-uuid"
         client_id = "test-client-id"
-        client_secret = "test-secret"
+        client_secret = "test-secret"  # noqa: S105
 
         client = RealmClient(client_uuid, client_id, client_secret)
 
@@ -97,31 +101,37 @@ class TestRealmClient:
         """Test resolve_id method with None as override ID."""
         client_uuid = "test-uuid"
         client_id = "test-client-id"
-        client_secret = "test-secret"
+        client_secret = "test-secret"  # noqa: S105
 
         client = RealmClient(client_uuid, client_id, client_secret)
 
         assert client.resolve_id(None) == client_id
 
-    @patch.dict(os.environ, {
-        "KEYCLOAK_REALM_CLIENT_UUID": "env-test-uuid",
-        "KEYCLOAK_REALM_CLIENT_ID": "env-test-client-id",
-        "KEYCLOAK_REALM_CLIENT_SECRET": "env-test-secret"
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "KEYCLOAK_REALM_CLIENT_UUID": "env-test-uuid",
+            "KEYCLOAK_REALM_CLIENT_ID": "env-test-client-id",
+            "KEYCLOAK_REALM_CLIENT_SECRET": "env-test-secret",
+        },
+    )
     def test_from_env_creates_client_with_environment_variables(self):
         """Test creating a RealmClient from environment variables."""
         client = RealmClient.from_env()
 
         assert client.client_uuid == "env-test-uuid"
         assert client.client_id == "env-test-client-id"
-        assert client.client_secret == "env-test-secret"
+        assert client.client_secret == "env-test-secret"  # noqa: S105
         assert client.is_confidential is True
 
-    @patch.dict(os.environ, {
-        "KEYCLOAK_REALM_CLIENT_UUID": "env-test-uuid",
-        "KEYCLOAK_REALM_CLIENT_ID": "env-test-client-id",
-        "KEYCLOAK_REALM_CLIENT_SECRET": ""
-    })
+    @patch.dict(
+        os.environ,
+        {
+            "KEYCLOAK_REALM_CLIENT_UUID": "env-test-uuid",
+            "KEYCLOAK_REALM_CLIENT_ID": "env-test-client-id",
+            "KEYCLOAK_REALM_CLIENT_SECRET": "",
+        },
+    )
     def test_from_env_creates_public_client_when_secret_is_empty(self):
         """Test creating a public RealmClient from environment variables when secret is empty."""
         client = RealmClient.from_env()
@@ -135,17 +145,13 @@ class TestRealmClient:
     @patch.dict(os.environ, {}, clear=True)
     def test_from_env_raises_error_when_required_variables_are_missing(self):
         """Test that from_env raises OSError when required environment variables are missing."""
-        with pytest.raises(OSError, match="Required Keycloak environment variables are missing"):
+        with pytest.raises(
+            OSError, match="Required Keycloak environment variables are missing"
+        ):
             RealmClient.from_env()
 
     def test_str_representation(self):
         """Test string representation of the RealmClient."""
-        client_uuid = "test-uuid"
-        client_id = "test-client-id"
-        client_secret = "test-secret"
-
-        client = RealmClient(client_uuid, client_id, client_secret)
-        expected_str = f"RealmClient(uuid={client_uuid}, id={client_id})"
 
         # Since we don't have the actual __str__ implementation, we'll skip this test
         # or implement it once the __str__ method is available in the class

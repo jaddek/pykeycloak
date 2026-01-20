@@ -3,14 +3,16 @@ Unit tests for the helpers module.
 """
 
 import os
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from pykeycloak.core.helpers import (
-    getenv_required_url,
-    getenv_required,
-    getenv_optional,
     getenv_bool,
-    getenv_int
+    getenv_int,
+    getenv_optional,
+    getenv_required,
+    getenv_required_url,
 )
 
 
@@ -46,8 +48,11 @@ class TestGetEnvRequiredUrl:
         # Remove the variable if it exists
         if "NONEXISTENT_VAR" in os.environ:
             del os.environ["NONEXISTENT_VAR"]
-            
-        with pytest.raises(RuntimeError, match="Required environment variable 'NONEXISTENT_VAR' is not set"):
+
+        with pytest.raises(
+            RuntimeError,
+            match="Required environment variable 'NONEXISTENT_VAR' is not set",
+        ):
             getenv_required_url("NONEXISTENT_VAR")
 
 
@@ -65,8 +70,11 @@ class TestGetEnvRequired:
         # Remove the variable if it exists
         if "NONEXISTENT_VAR" in os.environ:
             del os.environ["NONEXISTENT_VAR"]
-            
-        with pytest.raises(RuntimeError, match="Required environment variable 'NONEXISTENT_VAR' is not set"):
+
+        with pytest.raises(
+            RuntimeError,
+            match="Required environment variable 'NONEXISTENT_VAR' is not set",
+        ):
             getenv_required("NONEXISTENT_VAR")
 
     def test_getenv_required_with_empty_string(self):
@@ -96,7 +104,7 @@ class TestGetEnvOptional:
         # Remove the variable if it exists
         if "NONEXISTENT_VAR" in os.environ:
             del os.environ["NONEXISTENT_VAR"]
-            
+
         result = getenv_optional("NONEXISTENT_VAR")
         assert result is None
 
@@ -110,29 +118,32 @@ class TestGetEnvOptional:
 class TestGetEnvBool:
     """Test cases for the getenv_bool function."""
 
-    @pytest.mark.parametrize("value,expected", [
-        ("1", True),
-        ("true", True),
-        ("True", True),
-        ("TRUE", True),
-        ("yes", True),
-        ("Yes", True),
-        ("YES", True),
-        ("on", True),
-        ("On", True),
-        ("ON", True),
-        ("0", False),
-        ("false", False),
-        ("False", False),
-        ("FALSE", False),
-        ("no", False),
-        ("No", False),
-        ("NO", False),
-        ("off", False),
-        ("Off", False),
-        ("OFF", False),
-        ("invalid", False),
-    ])
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("1", True),
+            ("true", True),
+            ("True", True),
+            ("TRUE", True),
+            ("yes", True),
+            ("Yes", True),
+            ("YES", True),
+            ("on", True),
+            ("On", True),
+            ("ON", True),
+            ("0", False),
+            ("false", False),
+            ("False", False),
+            ("FALSE", False),
+            ("no", False),
+            ("No", False),
+            ("NO", False),
+            ("off", False),
+            ("Off", False),
+            ("OFF", False),
+            ("invalid", False),
+        ],
+    )
     def test_getenv_bool_variations(self, value, expected):
         """Test various string values for boolean conversion."""
         with patch.dict(os.environ, {"TEST_BOOL": value}):
@@ -144,7 +155,7 @@ class TestGetEnvBool:
         # Remove the variable if it exists
         if "NONEXISTENT_VAR" in os.environ:
             del os.environ["NONEXISTENT_VAR"]
-            
+
         result = getenv_bool("NONEXISTENT_VAR", True)
         assert result is True  # Should return the default value
 
@@ -175,7 +186,7 @@ class TestGetEnvInt:
         # Remove the variable if it exists
         if "NONEXISTENT_VAR" in os.environ:
             del os.environ["NONEXISTENT_VAR"]
-            
+
         result = getenv_int("NONEXISTENT_VAR", 123)
         assert result == 123  # Should return the default value
 

@@ -72,8 +72,8 @@ class SensitiveDataSanitizer:
 
     @classmethod
     def from_env(cls) -> "SensitiveDataSanitizer":
-        extra_keys: str |None = os.getenv("DATA_SANITIZER_EXTRA_SENSITIVE_KEYS", None)
-        is_debug_mode:bool = getenv_bool("DATA_SANITIZER_DEBUG", False)
+        extra_keys: str | None = os.getenv("DATA_SANITIZER_EXTRA_SENSITIVE_KEYS", None)
+        is_debug_mode: bool = getenv_bool("DATA_SANITIZER_DEBUG", False)
         combined_keys = cls().sensitive_keys
 
         if extra_keys is not None:

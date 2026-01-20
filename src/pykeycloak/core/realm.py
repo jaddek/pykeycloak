@@ -5,12 +5,10 @@ import base64
 import os
 from typing import Self
 
+
 class RealmClient:
     def __init__(
-            self,
-            client_uuid: str,
-            client_id: str,
-            client_secret: str | None = None
+        self, client_uuid: str, client_id: str, client_secret: str | None = None
     ) -> None:
         if not client_uuid or not client_id:
             raise ValueError("client_uuid and client_id are required")
@@ -45,6 +43,8 @@ class RealmClient:
         return f"RealmClient(client_id='{self.client_id}')"
 
     def __repr__(self) -> str:
-        return (f"RealmClient(id='{self.client_id}', "
-                f"uuid='{self.client_uuid}', "
-                f"confidential={self.is_confidential})")
+        return (
+            f"RealmClient(id='{self.client_id}', "
+            f"uuid='{self.client_uuid}', "
+            f"confidential={self.is_confidential})"
+        )

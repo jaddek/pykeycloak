@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
-from typing import TypeAlias, Any
+from typing import Any
 
-JsonData: TypeAlias = dict[str, Any] | list[dict[str, Any]]
+type JsonData = dict[str, Any] | list[Any] | str | int | float | bool | None

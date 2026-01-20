@@ -2,18 +2,18 @@
 Detailed unit tests for the services module to increase coverage.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 from httpx import Response
-from pykeycloak.services.services import (
-    BaseService,
-    AuthService,
-    UsersService,
-    RolesService,
-    SessionsService,
-    UmaService
-)
+
 from pykeycloak.providers.providers import KeycloakProviderAsync
+from pykeycloak.services.services import (
+    AuthService,
+    BaseService,
+    UmaService,
+    UsersService,
+)
 
 
 class TestServicesDetailed:
@@ -69,12 +69,17 @@ class TestServicesDetailed:
 
         # Mock the get_users_async response
         users_response = MagicMock(spec=Response)
-        users_response.json.return_value = [{"id": "1", "username": "user1"}, {"id": "2", "username": "user2"}]
+        users_response.json.return_value = [
+            {"id": "1", "username": "user1"},
+            {"id": "2", "username": "user2"},
+        ]
         mock_provider.get_users_async.return_value = users_response
 
         result = await users_service.get_users_async()
 
-        assert len(result) == 1  # Since count is 2 and default max is higher, it returns one response
+        assert (
+            len(result) == 1
+        )  # Since count is 2 and default max is higher, it returns one response
         assert mock_provider.get_users_count_async.called
         assert mock_provider.get_users_async.called
 
@@ -90,10 +95,12 @@ class TestServicesDetailed:
 
         # Mock the get_users_async response for each page
         users_response = MagicMock(spec=Response)
-        users_response.json.return_value = [{"id": f"{i}", "username": f"user{i}"} for i in range(100)]
+        users_response.json.return_value = [
+            {"id": f"{i}", "username": f"user{i}"} for i in range(100)
+        ]
         mock_provider.get_users_async.return_value = users_response
 
-        result = await users_service.get_users_async()
+        await users_service.get_users_async()
 
         assert mock_provider.get_users_count_async.called
         # For 150 users with default max=100, it should call get_users_async twice
@@ -109,7 +116,9 @@ class TestServicesDetailed:
         users_response.json.return_value = [{"id": "1", "username": "user1"}]
         mock_provider.get_users_async.return_value = users_response
 
-        result = await users_service.get_paginated_users_async(users_count=1, query=None)
+        result = await users_service.get_paginated_users_async(
+            users_count=1, query=None
+        )
 
         assert len(result) == 1
         assert mock_provider.get_users_async.called
@@ -120,7 +129,10 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         mock_response = MagicMock(spec=Response)
-        mock_response.json.return_value = {"access_token": "test_token", "expires_in": 3600}
+        mock_response.json.return_value = {
+            "access_token": "test_token",
+            "expires_in": 3600,
+        }
         mock_provider.obtain_token_async.return_value = mock_response
 
         result = await auth_service.client_login_raw_async()
@@ -134,10 +146,14 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         from pykeycloak.providers.payloads import RefreshTokenPayload
-        payload = RefreshTokenPayload(refresh_token="test_refresh_token")
+
+        payload = RefreshTokenPayload(refresh_token="test_refresh_token")  # noqa: S106
 
         mock_response = MagicMock(spec=Response)
-        mock_response.json.return_value = {"access_token": "new_token", "refresh_token": "new_refresh_token"}
+        mock_response.json.return_value = {
+            "access_token": "new_token",  # noqa: S106
+            "refresh_token": "new_refresh_token",  # noqa: S106
+        }
         mock_provider.refresh_token_async.return_value = mock_response
 
         result = await auth_service.refresh_token_raw_async(payload=payload)
@@ -151,10 +167,15 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         mock_response = MagicMock(spec=Response)
-        mock_response.json.return_value = {"sub": "user123", "email": "user@example.com"}
+        mock_response.json.return_value = {
+            "sub": "user123",
+            "email": "user@example.com",
+        }
         mock_provider.get_user_info_async.return_value = mock_response
 
-        result = await auth_service.get_user_info_raw_async(access_token="test_token")
+        result = await auth_service.get_user_info_raw_async(
+            access_token="test_token"  # noqa: S106
+        )
 
         assert "sub" in result
         assert mock_provider.get_user_info_async.called
@@ -165,11 +186,14 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         from http import HTTPStatus
+
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = HTTPStatus.NO_CONTENT
         mock_provider.logout_async.return_value = mock_response
 
-        await auth_service.logout_async(refresh_token="test_refresh_token")
+        await auth_service.logout_async(
+            refresh_token="test_refresh_token"  # noqa: S106
+        )
 
         assert mock_provider.logout_async.called
 
@@ -179,12 +203,15 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         from http import HTTPStatus
+
         mock_response = MagicMock(spec=Response)
         mock_response.status_code = HTTPStatus.BAD_REQUEST
         mock_provider.logout_async.return_value = mock_response
 
         with pytest.raises(ValueError, match="Unexpected response from Keycloak"):
-            await auth_service.logout_async(refresh_token="test_refresh_token")
+            await auth_service.logout_async(
+                refresh_token="test_refresh_token"  # noqa: S106
+            )
 
     @pytest.mark.asyncio
     async def test_auth_service_introspect_raw_async(self, mock_provider):
@@ -192,7 +219,8 @@ class TestServicesDetailed:
         auth_service = AuthService(provider=mock_provider)
 
         from pykeycloak.providers.payloads import TokenIntrospectionPayload
-        payload = TokenIntrospectionPayload(token="test_token")
+
+        payload = TokenIntrospectionPayload(token="test_token")  # noqa: S106
 
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = {"active": True, "username": "test_user"}
@@ -223,12 +251,11 @@ class TestServicesDetailed:
         uma_service = UmaService(provider=mock_provider)
 
         from pykeycloak.providers.payloads import UMAAuthorizationPayload
-        from pykeycloak.core.enums import UrnIetfOauthUmaTicketResponseModeEnum
-        from pykeycloak.core.enums import UrnIetfOauthUmaTicketPermissionResourceFormatEnum
+
         payload = UMAAuthorizationPayload(
             audience="test_audience",
             permissions={"resource_id": ["permission1", "permission2"]},
-            subject_token="test_subject_token"
+            subject_token="test_subject_token",  # noqa: S106
         )
 
         mock_response = MagicMock(spec=Response)
@@ -251,10 +278,15 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from uuid import UUID
+
         user_id = UUID(int=1)  # Create a valid UUID
 
         # Mock the get_user_async response
-        user_data = {"id": str(user_id), "username": "test_user", "email": "test@example.com"}
+        user_data = {
+            "id": str(user_id),
+            "username": "test_user",
+            "email": "test@example.com",
+        }
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = user_data
         mock_provider.get_user_async.return_value = mock_response
@@ -288,7 +320,10 @@ class TestServicesDetailed:
         role_name = "test_role"
 
         # Mock the get_users_by_role_async response
-        users_data = [{"id": "1", "username": "user1"}, {"id": "2", "username": "user2"}]
+        users_data = [
+            {"id": "1", "username": "user1"},
+            {"id": "2", "username": "user2"},
+        ]
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = users_data
         mock_provider.get_users_by_role_async.return_value = mock_response
@@ -296,7 +331,9 @@ class TestServicesDetailed:
         result = await users_service.get_users_by_role_async(role_name=role_name)
 
         assert result == users_data
-        mock_provider.get_users_by_role_async.assert_called_once_with(role_name=role_name, query=None)
+        mock_provider.get_users_by_role_async.assert_called_once_with(
+            role_name=role_name, query=None
+        )
 
     @pytest.mark.asyncio
     async def test_users_service_create_user_async(self, mock_provider):
@@ -304,11 +341,12 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from pykeycloak.providers.payloads import CreateUserPayload
+
         payload = CreateUserPayload(
             username="test_user",
             email="test@example.com",
             first_name="Test",
-            last_name="User"
+            last_name="User",
         )
 
         # Mock the create_user_async response
@@ -328,14 +366,16 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from uuid import UUID
+
         user_id = UUID(int=1)  # Create a valid UUID
 
         from pykeycloak.providers.payloads import CreateUserPayload
+
         payload = CreateUserPayload(
             username="updated_user",
             email="updated@example.com",
             first_name="Updated",
-            last_name="User"
+            last_name="User",
         )
 
         # Mock the update_user_by_id_async response
@@ -347,7 +387,9 @@ class TestServicesDetailed:
         result = await users_service.update_user_async(user_id=user_id, payload=payload)
 
         assert result == user_data
-        mock_provider.update_user_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+        mock_provider.update_user_by_id_async.assert_called_once_with(
+            user_id=user_id, payload=payload
+        )
 
     @pytest.mark.asyncio
     async def test_users_service_enable_user_async(self, mock_provider):
@@ -355,9 +397,11 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from uuid import UUID
+
         user_id = UUID(int=1)  # Create a valid UUID
 
         from pykeycloak.providers.payloads import UserUpdateEnablePayload
+
         payload = UserUpdateEnablePayload(enabled=True)
 
         # Mock the update_user_enable_by_id_async response
@@ -369,7 +413,9 @@ class TestServicesDetailed:
         result = await users_service.enable_user_async(user_id=user_id, payload=payload)
 
         assert result == user_data
-        mock_provider.update_user_enable_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+        mock_provider.update_user_enable_by_id_async.assert_called_once_with(
+            user_id=user_id, payload=payload
+        )
 
     @pytest.mark.asyncio
     async def test_users_service_update_user_password_async(self, mock_provider):
@@ -377,16 +423,14 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from uuid import UUID
+
         user_id = UUID(int=1)  # Create a valid UUID
 
         from pykeycloak.providers.payloads import UserUpdatePasswordPayload
+
         payload = UserUpdatePasswordPayload(
             credentials=[
-                {
-                    "temporary": False,
-                    "type": "password",
-                    "value": "new_password"
-                }
+                {"temporary": False, "type": "password", "value": "new_password"}
             ]
         )
 
@@ -396,10 +440,14 @@ class TestServicesDetailed:
         mock_response.json.return_value = result_data
         mock_provider.update_user_password_by_id_async.return_value = mock_response
 
-        result = await users_service.update_user_password_async(user_id=user_id, payload=payload)
+        result = await users_service.update_user_password_async(
+            user_id=user_id, payload=payload
+        )
 
         assert result == result_data
-        mock_provider.update_user_password_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+        mock_provider.update_user_password_by_id_async.assert_called_once_with(
+            user_id=user_id, payload=payload
+        )
 
     @pytest.mark.asyncio
     async def test_users_service_delete_user_async(self, mock_provider):
@@ -407,6 +455,7 @@ class TestServicesDetailed:
         users_service = UsersService(provider=mock_provider)
 
         from uuid import UUID
+
         user_id = UUID(int=1)  # Create a valid UUID
 
         # Mock the delete_user_async response

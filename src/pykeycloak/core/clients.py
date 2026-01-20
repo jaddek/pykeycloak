@@ -2,6 +2,7 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import logging
+from enum import Enum
 from types import TracebackType
 from typing import Any
 
@@ -17,8 +18,6 @@ from .sanitizer import SensitiveDataSanitizer, get_sanitizer
 from .settings import ClientSettings, HttpTransportSettings
 
 logger = logging.getLogger(__name__)
-
-from enum import Enum
 
 
 class HttpMethod(Enum):
@@ -36,10 +35,10 @@ class KeycloakHttpClientWrapperSync: ...
 
 class KeycloakHttpClientWrapperAsync:
     def __init__(
-            self,
-            client_settings: ClientSettings | None = None,
-            transport_settings: HttpTransportSettings | None = None,
-            sanitizer: SensitiveDataSanitizer | None = None,
+        self,
+        client_settings: ClientSettings | None = None,
+        transport_settings: HttpTransportSettings | None = None,
+        sanitizer: SensitiveDataSanitizer | None = None,
     ):
         transport_settings = transport_settings or HttpTransportSettings()
         transport = AsyncHTTPTransport(**transport_settings.to_dict())
@@ -60,7 +59,7 @@ class KeycloakHttpClientWrapperAsync:
         return KeycloakHttpClientWrapperAsync()
 
     async def request(
-            self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
+        self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
     ) -> Response:
         try:
             logger.debug(
@@ -96,10 +95,10 @@ class KeycloakHttpClientWrapperAsync:
         return self
 
     async def __aexit__(
-            self,
-            exc_type: type[BaseException] | None = None,
-            exc_value: BaseException | None = None,
-            traceback: TracebackType | None = None,
+        self,
+        exc_type: type[BaseException] | None = None,
+        exc_value: BaseException | None = None,
+        traceback: TracebackType | None = None,
     ) -> None:
         await self._client.__aexit__(exc_type, exc_value, traceback)
 
@@ -116,10 +115,10 @@ def get_keycloak_client_wrapper_from_env() -> KeycloakHttpClientWrapperAsync:
 
 
 def get_keycloak_client_wrapper(
-        *,
-        client_settings: ClientSettings | None = None,
-        transport_settings: HttpTransportSettings | None = None,
-        sanitizer: SensitiveDataSanitizer | None = None,
+    *,
+    client_settings: ClientSettings | None = None,
+    transport_settings: HttpTransportSettings | None = None,
+    sanitizer: SensitiveDataSanitizer | None = None,
 ) -> KeycloakHttpClientWrapperAsync:
     return KeycloakHttpClientWrapperAsync(
         client_settings=client_settings,
