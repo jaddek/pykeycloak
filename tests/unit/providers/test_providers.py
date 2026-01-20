@@ -3,10 +3,10 @@ Unit tests for the providers module.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+
 from pykeycloak.providers.providers import (
+    KeycloakInMemoryProviderAsync,
     KeycloakProviderAsync,
-    KeycloakInMemoryProviderAsync
 )
 
 

@@ -3,22 +3,16 @@ Unit tests for the payloads module.
 """
 
 import json
-import pytest
+
 from pykeycloak.providers.payloads import (
-    Payload,
-    TokenIntrospectionPayload,
-    RTPIntrospectionPayload,
-    ObtainTokenPayload,
-    RefreshTokenPayload,
     ClientCredentialsLoginPayload,
+    ObtainTokenPayload,
+    Payload,
+    RefreshTokenPayload,
+    RTPExchangeTokenPayload,
+    RTPIntrospectionPayload,
+    TokenIntrospectionPayload,
     UserCredentialsLoginPayload,
-    UMAAuthorizationPayload,
-    CreateUserPayload,
-    UserUpdateEnablePayload,
-    UserUpdatePasswordPayload,
-    ConfidentialClientRevokePayload,
-    PublicClientRevokePayload,
-    RTPExchangeTokenPayload
 )
 
 
@@ -43,15 +37,16 @@ class TestPayload:
 
     def test_payload_to_json(self):
         """Test converting a payload to JSON string."""
+
         class TestPayload(Payload):
             def __init__(self, param1="value1", param2=42):
                 self.param1 = param1
                 self.param2 = param2
-        
+
         test_payload = TestPayload()
         json_result = test_payload.to_json()
         dict_result = test_payload.to_dict()
-        
+
         # Verify that JSON string matches the dictionary
         parsed_json = json.loads(json_result)
         assert parsed_json == dict_result
@@ -62,16 +57,21 @@ class TestTokenIntrospectionPayload:
 
     def test_token_introspection_payload_creation(self):
         """Test creating a TokenIntrospectionPayload."""
-        token = "sample-token"
+        token = "sample-token"  # noqa: S106 S105
         payload = TokenIntrospectionPayload(token=token)
-        
+
         assert payload.token == token
         assert payload.to_dict() == {"token": token}
 
     def test_token_introspection_payload_with_different_token(self):
         """Test TokenIntrospectionPayload with different token values."""
-        tokens = ["token1", "token2", "token-with-special-chars!", ""]
-        
+        tokens = [
+            "token1",
+            "token2",
+            "token-with-special-chars!",
+            "",
+        ]  # noqa: S106 S105
+
         for token in tokens:
             payload = TokenIntrospectionPayload(token=token)
             assert payload.token == token
@@ -83,28 +83,25 @@ class TestRTPIntrospectionPayload:
 
     def test_rtp_introspection_payload_defaults(self):
         """Test RTPIntrospectionPayload with default token_type_hint."""
-        token = "sample-rtp-token"
+        token = "sample-rtp-token"  # noqa: S106 S105
         payload = RTPIntrospectionPayload(token=token)
-        
+
         assert payload.token == token
-        assert payload.token_type_hint == "requesting_party_token"
+        assert payload.token_type_hint == "requesting_party_token"  # noqa: S106 S105
         assert payload.to_dict() == {
             "token": token,
-            "token_type_hint": "requesting_party_token"
+            "token_type_hint": "requesting_party_token",
         }
 
     def test_rtp_introspection_payload_with_custom_hint(self):
         """Test RTPIntrospectionPayload with custom token_type_hint."""
-        token = "sample-rtp-token"
+        token = "sample-rtp-token"  # noqa: S106 S105
         hint = "custom-hint"
         payload = RTPIntrospectionPayload(token=token, token_type_hint=hint)
-        
+
         assert payload.token == token
         assert payload.token_type_hint == hint
-        assert payload.to_dict() == {
-            "token": token,
-            "token_type_hint": hint
-        }
+        assert payload.to_dict() == {"token": token, "token_type_hint": hint}
 
 
 class TestObtainTokenPayload:
@@ -112,24 +109,26 @@ class TestObtainTokenPayload:
 
     def test_obtain_token_payload_grant_type_abstract(self):
         """Test that ObtainTokenPayload has grant_type property."""
+
         class TestObtainToken(ObtainTokenPayload):
             @property
             def grant_type(self):
                 return "test_grant"
-        
+
         payload = TestObtainToken()
         assert payload.grant_type == "test_grant"
 
     def test_obtain_token_payload_scopes_handling(self):
         """Test that ObtainTokenPayload handles scopes correctly."""
+
         class TestObtainToken(ObtainTokenPayload):
             @property
             def grant_type(self):
                 return "test_grant"
-        
+
         payload = TestObtainToken()
         # Scopes should be None by default
-        assert hasattr(payload, 'scopes')
+        assert hasattr(payload, "scopes")
         assert payload.scopes is None
 
 
@@ -138,19 +137,20 @@ class TestRefreshTokenPayload:
 
     def test_refresh_token_payload_properties(self):
         """Test RefreshTokenPayload properties."""
+
         class TestRefreshToken(RefreshTokenPayload):
             @property
             def grant_type(self):
                 return "refresh_token"
-        
-        refresh_token = "refresh-123"
+
+        refresh_token = "refresh-123"  # noqa: S106 S105
         payload = TestRefreshToken(refresh_token=refresh_token)
-        
+
         # Note: We can't test the exact attribute since we don't know the implementation
         # But we can verify it's a valid payload
         dict_repr = payload.to_dict()
-        assert 'grant_type' in dict_repr
-        assert dict_repr['grant_type'] == "refresh_token"
+        assert "grant_type" in dict_repr
+        assert dict_repr["grant_type"] == "refresh_token"
 
 
 class TestClientCredentialsLoginPayload:
@@ -158,6 +158,7 @@ class TestClientCredentialsLoginPayload:
 
     def test_client_credentials_login_payload(self):
         """Test ClientCredentialsLoginPayload structure."""
+
         class TestClientCredentials(ClientCredentialsLoginPayload):
             @property
             def grant_type(self):
@@ -166,7 +167,7 @@ class TestClientCredentialsLoginPayload:
         payload = TestClientCredentials()
 
         dict_repr = payload.to_dict()
-        assert dict_repr['grant_type'] == "client_credentials"
+        assert dict_repr["grant_type"] == "client_credentials"
 
 
 class TestUserCredentialsLoginPayload:
@@ -174,19 +175,20 @@ class TestUserCredentialsLoginPayload:
 
     def test_user_credentials_login_payload(self):
         """Test UserCredentialsLoginPayload structure."""
+
         class TestUserCredentials(UserCredentialsLoginPayload):
             @property
             def grant_type(self):
                 return "password"
 
         username = "testuser"
-        password = "testpass"
+        password = "testpass"  # noqa: S106 S105
         payload = TestUserCredentials(username=username, password=password)
 
         dict_repr = payload.to_dict()
-        assert dict_repr['grant_type'] == "password"
-        assert dict_repr['username'] == username
-        assert dict_repr['password'] == password
+        assert dict_repr["grant_type"] == "password"
+        assert dict_repr["username"] == username
+        assert dict_repr["password"] == password
 
 
 class TestRTPExchangeTokenPayload:
@@ -194,14 +196,17 @@ class TestRTPExchangeTokenPayload:
 
     def test_rtp_exchange_token_payload(self):
         """Test RTPExchangeTokenPayload structure."""
+
         class TestRTPExchange(RTPExchangeTokenPayload):
             @property
             def grant_type(self):
                 return "urn:ietf:params:oauth:grant-type:token-exchange"
 
-        refresh_token = "refresh-token-123"
+        refresh_token = "refresh-token-123"  # noqa: S106 S105
         payload = TestRTPExchange(refresh_token=refresh_token)
 
         dict_repr = payload.to_dict()
-        assert dict_repr['grant_type'] == "urn:ietf:params:oauth:grant-type:token-exchange"
-        assert dict_repr['refresh_token'] == refresh_token
+        assert (
+            dict_repr["grant_type"] == "urn:ietf:params:oauth:grant-type:token-exchange"
+        )
+        assert dict_repr["refresh_token"] == refresh_token

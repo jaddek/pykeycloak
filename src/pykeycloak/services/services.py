@@ -10,15 +10,18 @@ from uuid import UUID
 from httpx import Response
 
 from pykeycloak.core.aliases import JsonData
-from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
+from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
+    CreateUserPayload,
     RefreshTokenPayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
-    UserCredentialsLoginPayload, CreateUserPayload, UserUpdateEnablePayload, UserUpdatePasswordPayload,
+    UserCredentialsLoginPayload,
+    UserUpdateEnablePayload,
+    UserUpdatePasswordPayload,
 )
 from pykeycloak.providers.providers import KeycloakProviderAsync
 from pykeycloak.providers.queries import GetUsersQuery, RoleMembersListQuery
@@ -59,8 +62,8 @@ class UsersService(BaseService):
         return response.json()
 
     async def get_users_async(
-            self,
-            query: GetUsersQuery | None = None,
+        self,
+        query: GetUsersQuery | None = None,
     ) -> list[JsonData]:
         users_count_response = await self._provider.get_users_count_async(query=query)
 
@@ -73,15 +76,14 @@ class UsersService(BaseService):
             raise RuntimeError("Invalid users count response") from e
 
         return await self.get_paginated_users_async(
-            users_count=int(users_count),
-            query=query
+            users_count=int(users_count), query=query
         )
 
     async def get_paginated_users_async(
-            self,
-            users_count: int,
-            concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
-            query: GetUsersQuery | None = None,
+        self,
+        users_count: int,
+        concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
+        query: GetUsersQuery | None = None,
     ) -> list[JsonData]:
         _query = query or GetUsersQuery()
 
@@ -99,7 +101,9 @@ class UsersService(BaseService):
             first = page * _query.max
             remaining = users_count - first
             current_max = min(_query.max, remaining)
-            page_query = GetUsersQuery(first=first, max=current_max, search=_query.search)
+            page_query = GetUsersQuery(
+                first=first, max=current_max, search=_query.search
+            )
             queue.put_nowait(page_query)
 
         responses: list[JsonData] = []
@@ -112,7 +116,9 @@ class UsersService(BaseService):
                     break
 
                 try:
-                    worker_page_response = await self._provider.get_users_async(query=worker_page_query)
+                    worker_page_response = await self._provider.get_users_async(
+                        query=worker_page_query
+                    )
                     responses.append(worker_page_response.json())
                 finally:
                     queue.task_done()
@@ -123,8 +129,12 @@ class UsersService(BaseService):
 
         return responses
 
-    async def get_users_by_role_async(self, role_name: str, query: RoleMembersListQuery | None = None) -> list[JsonData]:
-        response = await self._provider.get_users_by_role_async(role_name=role_name, query=query)
+    async def get_users_by_role_async(
+        self, role_name: str, query: RoleMembersListQuery | None = None
+    ) -> list[JsonData]:
+        response = await self._provider.get_users_by_role_async(
+            role_name=role_name, query=query
+        )
 
         return response.json()
 
@@ -133,18 +143,30 @@ class UsersService(BaseService):
 
         return response.json()
 
-    async def update_user_async(self, user_id: UUID, payload: CreateUserPayload) -> JsonData:
-        response = await self._provider.update_user_by_id_async(user_id=user_id, payload=payload)
+    async def update_user_async(
+        self, user_id: UUID, payload: CreateUserPayload
+    ) -> JsonData:
+        response = await self._provider.update_user_by_id_async(
+            user_id=user_id, payload=payload
+        )
 
         return response.json()
 
-    async def enable_user_async(self, user_id: UUID, payload: UserUpdateEnablePayload) -> JsonData:
-        response = await self._provider.update_user_enable_by_id_async(user_id=user_id, payload=payload)
+    async def enable_user_async(
+        self, user_id: UUID, payload: UserUpdateEnablePayload
+    ) -> JsonData:
+        response = await self._provider.update_user_enable_by_id_async(
+            user_id=user_id, payload=payload
+        )
 
         return response.json()
 
-    async def update_user_password_async(self, user_id: UUID, payload: UserUpdatePasswordPayload) -> JsonData:
-        response = await self._provider.update_user_password_by_id_async(user_id=user_id, payload=payload)
+    async def update_user_password_async(
+        self, user_id: UUID, payload: UserUpdatePasswordPayload
+    ) -> JsonData:
+        response = await self._provider.update_user_password_by_id_async(
+            user_id=user_id, payload=payload
+        )
 
         return response.json()
 
@@ -155,37 +177,27 @@ class UsersService(BaseService):
 
 
 class RolesService(BaseService):
-    async def get_public_roles(self):
-        ...
+    async def get_public_roles(self): ...
 
-    async def get_role_by_id(self):
-        ...
+    async def get_role_by_id(self): ...
 
-    async def update_role_by_id(self):
-        ...
+    async def update_role_by_id(self): ...
 
-    async def delete_client_role(self):
-        ...
+    async def delete_client_role(self): ...
 
-    async def deep_role_copy(self):
-        ...
+    async def deep_role_copy(self): ...
 
 
 class SessionsService(BaseService):
-    async def get_user_sessions(self):
-        ...
+    async def get_user_sessions(self): ...
 
-    async def get_sessions(self):
-        ...
+    async def get_sessions(self): ...
 
-    async def delete_session_by_id(self):
-        ...
+    async def delete_session_by_id(self): ...
 
-    async def delete_user_sessions(self):
-        ...
+    async def delete_user_sessions(self): ...
 
-    async def delete_all_sessions(self):
-        ...
+    async def delete_all_sessions(self): ...
 
 
 class AuthService(BaseService):
@@ -195,7 +207,7 @@ class AuthService(BaseService):
     ###
 
     async def client_login_raw_async(
-            self,
+        self,
     ) -> dict[str, Any]:
         response = await self._provider.obtain_token_async(
             payload=ClientCredentialsLoginPayload()
@@ -204,8 +216,8 @@ class AuthService(BaseService):
         return self.validate_response(response)
 
     async def client_login_async(
-            self,
-            transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
+        self,
+        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
     ) -> R:
         data = await self.client_login_raw_async()
 
@@ -216,17 +228,17 @@ class AuthService(BaseService):
     ###
 
     async def user_login_raw_async(
-            self,
-            payload: UserCredentialsLoginPayload,
+        self,
+        payload: UserCredentialsLoginPayload,
     ) -> dict[str, Any]:
         response = await self._provider.obtain_token_async(payload=payload)
 
         return self.validate_response(response)
 
     async def user_login_async(
-            self,
-            payload: UserCredentialsLoginPayload,
-            transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
+        self,
+        payload: UserCredentialsLoginPayload,
+        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
     ) -> R:
         data = await self.user_login_raw_async(payload=payload)
 
@@ -237,17 +249,17 @@ class AuthService(BaseService):
     ###
 
     async def refresh_token_raw_async(
-            self,
-            payload: RefreshTokenPayload,
+        self,
+        payload: RefreshTokenPayload,
     ) -> dict[str, Any]:
         response = await self._provider.refresh_token_async(payload=payload)
 
         return self.validate_response(response)
 
     async def refresh_token_async(
-            self,
-            payload: RefreshTokenPayload,
-            transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
+        self,
+        payload: RefreshTokenPayload,
+        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
     ) -> R:
         data = await self.refresh_token_raw_async(payload=payload)
 
@@ -258,17 +270,17 @@ class AuthService(BaseService):
     ###
 
     async def get_user_info_raw_async(
-            self,
-            access_token: str,
+        self,
+        access_token: str,
     ) -> dict[str, Any]:
         response = await self._provider.get_user_info_async(access_token)
 
         return self.validate_response(response)
 
     async def get_user_info_async(
-            self,
-            access_token: str,
-            transform_to_response_model: type[R] = UserInfoRepresentation,  # type: ignore
+        self,
+        access_token: str,
+        transform_to_response_model: type[R] = UserInfoRepresentation,  # type: ignore
     ) -> R:
         data = await self.get_user_info_raw_async(access_token)
 
@@ -289,17 +301,17 @@ class AuthService(BaseService):
     ###
 
     async def introspect_raw_async(
-            self,
-            payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
+        self,
+        payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> dict[str, Any]:
         response = await self._provider.introspect_token_async(payload=payload)
 
         return self.validate_response(response)
 
     async def introspect_async(
-            self,
-            payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
-            transform_to_response_model: type[R] = IntrospectRepresentation,  # type: ignore
+        self,
+        payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
+        transform_to_response_model: type[R] = IntrospectRepresentation,  # type: ignore
     ) -> R:
         data = await self.introspect_raw_async(payload=payload)
 
@@ -310,7 +322,7 @@ class AuthService(BaseService):
     ###
 
     async def auth_device_raw_async(
-            self,
+        self,
     ) -> dict[str, Any]:
         response = await self._provider.auth_device_async()
 
@@ -321,7 +333,7 @@ class AuthService(BaseService):
     ###
 
     async def get_certs_raw_async(
-            self,
+        self,
     ) -> dict[str, Any]:
         response = await self._provider.get_certs_async()
 
@@ -330,10 +342,8 @@ class AuthService(BaseService):
 
 class UmaService(BaseService):
     async def get_uma_permissions_async(
-            self, payload: UMAAuthorizationPayload
+        self, payload: UMAAuthorizationPayload
     ) -> dict[str, Any]:
-        response = await self._provider.get_uma_permission_async(
-            payload=payload
-        )
+        response = await self._provider.get_uma_permission_async(payload=payload)
 
         return self.validate_response(response)

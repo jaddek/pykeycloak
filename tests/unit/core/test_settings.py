@@ -2,9 +2,10 @@
 Unit tests for the settings module.
 """
 
-import pytest
 import ssl
+
 from httpx import Limits
+
 from pykeycloak.core.settings import HttpTransportSettings
 
 
@@ -14,7 +15,7 @@ class TestHttpTransportSettings:
     def test_http_transport_settings_defaults(self):
         """Test HttpTransportSettings with default values."""
         settings = HttpTransportSettings()
-        
+
         # Check default values
         assert settings.verify is True
         assert settings.cert is None
@@ -43,7 +44,7 @@ class TestHttpTransportSettings:
             proxy="http://proxy.example.com",
             uds="/path/to/uds",
             local_address="127.0.0.1",
-            retries=3
+            retries=3,
         )
 
         assert settings.verify is False
@@ -61,15 +62,15 @@ class TestHttpTransportSettings:
         """Test HttpTransportSettings with SSL context."""
         ssl_context = ssl.create_default_context()
         settings = HttpTransportSettings(verify=ssl_context)
-        
+
         assert settings.verify == ssl_context
 
     def test_http_transport_settings_with_minimal_customization(self):
         """Test HttpTransportSettings with minimal customization."""
         settings = HttpTransportSettings(retries=5)
-        
+
         # Only retries should be different from default
         assert settings.retries == 5
         assert settings.verify is True  # Still default
-        assert settings.cert is None   # Still default
+        assert settings.cert is None  # Still default
         assert settings.trust_env is True  # Still default

@@ -1,19 +1,18 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
-from abc import ABC
 from dataclasses import dataclass, field, fields
 from typing import Any
 
 from pykeycloak.core.constants import (
     KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT,
-    KEYCLOAK_PAGINATION_FIRST_DEFAULT
+    KEYCLOAK_PAGINATION_FIRST_DEFAULT,
 )
 from pykeycloak.core.helpers import getenv_int
 
 
 @dataclass(kw_only=True)
-class BaseQuery(ABC):
+class BaseQuery:
     def to_dict(self) -> dict[str, Any]:
         """Универсальная быстрая конвертация для всех подклассов."""
         params = {}
@@ -38,13 +37,19 @@ class BaseQuery(ABC):
 
 @dataclass(kw_only=True)
 class PaginationQuery(BaseQuery):
-    max: int = field(default_factory=lambda: getenv_int("KEYCLOAK_MAX_ROWS_QUERY_LIMIT", KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT))
+    max: int = field(
+        default_factory=lambda: getenv_int(
+            "KEYCLOAK_MAX_ROWS_QUERY_LIMIT", KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT
+        )
+    )
     first: int = KEYCLOAK_PAGINATION_FIRST_DEFAULT
 
 
 @dataclass(kw_only=True)
 class BriefRepresentationQuery(BaseQuery):
-    brief_representation: bool = field(default=False, metadata={"alias": "briefRepresentation"})
+    brief_representation: bool = field(
+        default=False, metadata={"alias": "briefRepresentation"}
+    )
 
 
 @dataclass(kw_only=True)
@@ -70,7 +75,9 @@ class GetUsersCountQuery(SearchQuery):
 @dataclass(kw_only=True, slots=True)
 class GetUsersQuery(SearchQuery, PaginationQuery):
     def __post_init__(self) -> None:
-        max_users_per_query = getenv_int('KEYCLOAK_MAX_ROWS_QUERY_LIMIT', KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT)
+        max_users_per_query = getenv_int(
+            "KEYCLOAK_MAX_ROWS_QUERY_LIMIT", KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT
+        )
         if self.max > max_users_per_query:
             raise ValueError(f"Max {self.max} exceeds limit {max_users_per_query}")
 
@@ -89,7 +96,9 @@ class ResourcesListQuery(PaginationQuery):
 @dataclass(kw_only=True, slots=True)
 class GroupListQuery(PaginationQuery, BriefRepresentationQuery, SearchQuery):
     exact: bool = False
-    populate_hierarchy: bool = field(default=True, metadata={"alias": "populateHierarchy"})
+    populate_hierarchy: bool = field(
+        default=True, metadata={"alias": "populateHierarchy"}
+    )
     q: str | None = None
     sub_group_count: bool = field(default=True, metadata={"alias": "subGroupCount"})
 

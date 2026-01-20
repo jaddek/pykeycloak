@@ -2,12 +2,11 @@
 Unit tests for the enums module.
 """
 
-import pytest
 from pykeycloak.core.enums import (
     AuthFlowsEnum,
-    PermissionTypeEnum,
     DecisionStrategyEnum,
-    LogicEnum
+    LogicEnum,
+    PermissionTypeEnum,
 )
 
 
@@ -24,7 +23,10 @@ class TestAuthFlowsEnum:
 
     def test_resource_owner_password_credentials_flow_value(self):
         """Test the value of ResourceOwnerPasswordCredentialsFlow enum member."""
-        assert AuthFlowsEnum.ResourceOwnerPasswordCredentialsFlow.value == "ResourceOwnerPasswordCredentialsFlow"
+        assert (
+            AuthFlowsEnum.ResourceOwnerPasswordCredentialsFlow.value
+            == "ResourceOwnerPasswordCredentialsFlow"
+        )
 
     def test_token_exchange_flow_value(self):
         """Test the value of TokenExchangeFlow enum member."""
@@ -51,9 +53,9 @@ class TestAuthFlowsEnum:
             "TokenExchangeFlow",
             "ClientCredentialsFlow",
             "DeviceFlow",
-            "CibaFlow"
+            "CibaFlow",
         ]
-        
+
         actual_values = [flow.value for flow in AuthFlowsEnum]
         assert sorted(actual_values) == sorted(expected_values)
 

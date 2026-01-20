@@ -2,12 +2,7 @@
 Unit tests for the headers module.
 """
 
-import pytest
-from pykeycloak.core.headers import (
-    ContentTypesEnums,
-    HeaderKeys,
-    HeaderFactory
-)
+from pykeycloak.core.headers import ContentTypesEnums, HeaderFactory, HeaderKeys
 
 
 class TestContentTypesEnums:
@@ -15,7 +10,10 @@ class TestContentTypesEnums:
 
     def test_form_urlencoded_value(self):
         """Test the value of FORM_URLENCODED enum member."""
-        assert ContentTypesEnums.FORM_URLENCODED.value == "application/x-www-form-urlencoded"
+        assert (
+            ContentTypesEnums.FORM_URLENCODED.value
+            == "application/x-www-form-urlencoded"
+        )
 
     def test_json_value(self):
         """Test the value of JSON enum member."""
@@ -23,10 +21,7 @@ class TestContentTypesEnums:
 
     def test_all_content_type_values(self):
         """Test that all ContentTypesEnums members have correct values."""
-        expected_values = [
-            "application/x-www-form-urlencoded",
-            "application/json"
-        ]
+        expected_values = ["application/x-www-form-urlencoded", "application/json"]
         actual_values = [content_type.value for content_type in ContentTypesEnums]
         assert sorted(actual_values) == sorted(expected_values)
 
@@ -44,10 +39,7 @@ class TestHeaderKeys:
 
     def test_all_header_keys_values(self):
         """Test that all HeaderKeys members have correct values."""
-        expected_values = [
-            "Content-Type",
-            "Authorization"
-        ]
+        expected_values = ["Content-Type", "Authorization"]
         actual_values = [header_key.value for header_key in HeaderKeys]
         assert sorted(actual_values) == sorted(expected_values)
 
@@ -57,10 +49,10 @@ class TestHeaderFactory:
 
     def test_openid_basic_headers(self):
         """Test creating basic auth headers for OpenID."""
-        basic_token = "dGVzdC1jbGllbnQ6dGVzdC1zZWNyZXQ="
+        basic_token = "dGVzdC1jbGllbnQ6dGVzdC1zZWNyZXQ="  # noqa: S106 S105
         expected_headers = {
             "Authorization": f"Basic {basic_token}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Content-Type": "application/x-www-form-urlencoded",
         }
 
         factory = HeaderFactory()
@@ -69,10 +61,10 @@ class TestHeaderFactory:
 
     def test_openid_bearer_headers(self):
         """Test creating bearer token headers for OpenID."""
-        bearer_token = "sample-bearer-token"
+        bearer_token = "sample-bearer-token"  # noqa: S106 S105
         expected_headers = {
             "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/x-www-form-urlencoded"
+            "Content-Type": "application/x-www-form-urlencoded",
         }
 
         factory = HeaderFactory()
@@ -81,10 +73,10 @@ class TestHeaderFactory:
 
     def test_keycloak_bearer_headers(self):
         """Test creating bearer token headers for Keycloak."""
-        bearer_token = "sample-keycloak-token"
+        bearer_token = "sample-keycloak-token"  # noqa: S106 S105
         expected_headers = {
             "Authorization": f"Bearer {bearer_token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
         factory = HeaderFactory()
@@ -119,7 +111,7 @@ class TestHeaderFactory:
 
     def test_headers_immutability(self):
         """Test that returned headers dictionaries are independent."""
-        basic_token = "test-token"
+        basic_token = "test-token"  # noqa: S106 S105
         factory = HeaderFactory()
         headers1 = factory.openid_basic(basic_token)
         headers2 = factory.openid_basic(basic_token)
@@ -133,7 +125,7 @@ class TestHeaderFactory:
 
     def test_headers_content_type_consistency(self):
         """Test that OpenID headers consistently include form urlencoded content type."""
-        token = "any-token"
+        token = "any-token"  # noqa: S106 S105
 
         factory = HeaderFactory()
         basic_headers = factory.openid_basic(token)
@@ -146,10 +138,10 @@ class TestHeaderFactory:
         """Test that HeaderFactory class doesn't store any instance data."""
         factory1 = HeaderFactory()
         factory2 = HeaderFactory()
-        
+
         # Both instances should behave identically
-        token = "test-token"
+        token = "test-token"  # noqa: S106 S105
         headers1 = factory1.openid_bearer(token)
         headers2 = factory2.openid_bearer(token)
-        
+
         assert headers1 == headers2
