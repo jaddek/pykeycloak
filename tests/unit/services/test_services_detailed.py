@@ -244,3 +244,178 @@ class TestServicesDetailed:
         """Test BaseService initialization."""
         service = BaseService(provider=mock_provider)
         assert service._provider is mock_provider
+
+    @pytest.mark.asyncio
+    async def test_users_service_get_user_async(self, mock_provider):
+        """Test UsersService get_user_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from uuid import UUID
+        user_id = UUID(int=1)  # Create a valid UUID
+
+        # Mock the get_user_async response
+        user_data = {"id": str(user_id), "username": "test_user", "email": "test@example.com"}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = user_data
+        mock_provider.get_user_async.return_value = mock_response
+
+        result = await users_service.get_user_async(user_id=user_id)
+
+        assert result == user_data
+        mock_provider.get_user_async.assert_called_once_with(user_id=user_id)
+
+    @pytest.mark.asyncio
+    async def test_users_service_get_users_count(self, mock_provider):
+        """Test UsersService get_users_count method."""
+        users_service = UsersService(provider=mock_provider)
+
+        # Mock the get_users_count_async response
+        count_data = 42
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = count_data
+        mock_provider.get_users_count_async.return_value = mock_response
+
+        result = await users_service.get_users_count()
+
+        assert result == count_data
+        mock_provider.get_users_count_async.assert_called_once_with(query=None)
+
+    @pytest.mark.asyncio
+    async def test_users_service_get_users_by_role_async(self, mock_provider):
+        """Test UsersService get_users_by_role_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        role_name = "test_role"
+
+        # Mock the get_users_by_role_async response
+        users_data = [{"id": "1", "username": "user1"}, {"id": "2", "username": "user2"}]
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = users_data
+        mock_provider.get_users_by_role_async.return_value = mock_response
+
+        result = await users_service.get_users_by_role_async(role_name=role_name)
+
+        assert result == users_data
+        mock_provider.get_users_by_role_async.assert_called_once_with(role_name=role_name, query=None)
+
+    @pytest.mark.asyncio
+    async def test_users_service_create_user_async(self, mock_provider):
+        """Test UsersService create_user_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from pykeycloak.providers.payloads import CreateUserPayload
+        payload = CreateUserPayload(
+            username="test_user",
+            email="test@example.com",
+            first_name="Test",
+            last_name="User"
+        )
+
+        # Mock the create_user_async response
+        user_data = {"id": "new_user_id", "username": "test_user"}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = user_data
+        mock_provider.create_user_async.return_value = mock_response
+
+        result = await users_service.create_user_async(payload=payload)
+
+        assert result == user_data
+        mock_provider.create_user_async.assert_called_once_with(parent=payload)
+
+    @pytest.mark.asyncio
+    async def test_users_service_update_user_async(self, mock_provider):
+        """Test UsersService update_user_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from uuid import UUID
+        user_id = UUID(int=1)  # Create a valid UUID
+
+        from pykeycloak.providers.payloads import CreateUserPayload
+        payload = CreateUserPayload(
+            username="updated_user",
+            email="updated@example.com",
+            first_name="Updated",
+            last_name="User"
+        )
+
+        # Mock the update_user_by_id_async response
+        user_data = {"id": str(user_id), "username": "updated_user"}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = user_data
+        mock_provider.update_user_by_id_async.return_value = mock_response
+
+        result = await users_service.update_user_async(user_id=user_id, payload=payload)
+
+        assert result == user_data
+        mock_provider.update_user_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+
+    @pytest.mark.asyncio
+    async def test_users_service_enable_user_async(self, mock_provider):
+        """Test UsersService enable_user_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from uuid import UUID
+        user_id = UUID(int=1)  # Create a valid UUID
+
+        from pykeycloak.providers.payloads import UserUpdateEnablePayload
+        payload = UserUpdateEnablePayload(enabled=True)
+
+        # Mock the update_user_enable_by_id_async response
+        user_data = {"id": str(user_id), "enabled": True}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = user_data
+        mock_provider.update_user_enable_by_id_async.return_value = mock_response
+
+        result = await users_service.enable_user_async(user_id=user_id, payload=payload)
+
+        assert result == user_data
+        mock_provider.update_user_enable_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+
+    @pytest.mark.asyncio
+    async def test_users_service_update_user_password_async(self, mock_provider):
+        """Test UsersService update_user_password_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from uuid import UUID
+        user_id = UUID(int=1)  # Create a valid UUID
+
+        from pykeycloak.providers.payloads import UserUpdatePasswordPayload
+        payload = UserUpdatePasswordPayload(
+            credentials=[
+                {
+                    "temporary": False,
+                    "type": "password",
+                    "value": "new_password"
+                }
+            ]
+        )
+
+        # Mock the update_user_password_by_id_async response
+        result_data = {"success": True}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = result_data
+        mock_provider.update_user_password_by_id_async.return_value = mock_response
+
+        result = await users_service.update_user_password_async(user_id=user_id, payload=payload)
+
+        assert result == result_data
+        mock_provider.update_user_password_by_id_async.assert_called_once_with(user_id=user_id, payload=payload)
+
+    @pytest.mark.asyncio
+    async def test_users_service_delete_user_async(self, mock_provider):
+        """Test UsersService delete_user_async method."""
+        users_service = UsersService(provider=mock_provider)
+
+        from uuid import UUID
+        user_id = UUID(int=1)  # Create a valid UUID
+
+        # Mock the delete_user_async response
+        result_data = {"success": True}
+        mock_response = MagicMock(spec=Response)
+        mock_response.json.return_value = result_data
+        mock_provider.delete_user_async.return_value = mock_response
+
+        result = await users_service.delete_user_async(user_id=user_id)
+
+        assert result == result_data
+        mock_provider.delete_user_async.assert_called_once_with(user_id=user_id)

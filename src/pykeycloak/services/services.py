@@ -2,6 +2,7 @@ import asyncio
 import math
 from http import HTTPStatus
 from typing import Any
+from uuid import UUID
 
 from httpx import Response
 
@@ -14,10 +15,10 @@ from pykeycloak.providers.payloads import (
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
-    UserCredentialsLoginPayload,
+    UserCredentialsLoginPayload, CreateUserPayload, UserUpdateEnablePayload, UserUpdatePasswordPayload,
 )
 from pykeycloak.providers.providers import KeycloakProviderAsync
-from pykeycloak.providers.queries import GetUsersQuery
+from pykeycloak.providers.queries import GetUsersQuery, RoleMembersListQuery
 from pykeycloak.services.representations import (
     IntrospectRepresentation,
     R,
@@ -44,8 +45,15 @@ class BaseService:
 
 
 class UsersService(BaseService):
-    def get_user(self, user_id: str) -> dict[str, Any]:
-        ...
+    async def get_user_async(self, user_id: UUID) -> dict[str, Any]:
+        response = await self._provider.get_user_async(user_id=user_id)
+
+        return response.json()
+
+    async def get_users_count(self, query: GetUsersQuery | None = None) -> int:
+        response = await self._provider.get_users_count_async(query=query)
+
+        return response.json()
 
     async def get_users_async(
             self,
@@ -112,17 +120,35 @@ class UsersService(BaseService):
 
         return responses
 
-    def get_users_by_role(self):
-        ...
+    async def get_users_by_role_async(self, role_name: str, query: RoleMembersListQuery | None = None) -> list[JsonData]:
+        response = await self._provider.get_users_by_role_async(role_name=role_name, query=query)
 
-    def create_user(self):
-        ...
+        return response.json()
 
-    def update_user(self, user_id: str):
-        ...
+    async def create_user_async(self, payload: CreateUserPayload) -> JsonData:
+        response = await self._provider.create_user_async(parent=payload)
 
-    def delete_user(self, user_id: str):
-        ...
+        return response.json()
+
+    async def update_user_async(self, user_id: UUID, payload: CreateUserPayload) -> JsonData:
+        response = await self._provider.update_user_by_id_async(user_id=user_id, payload=payload)
+
+        return response.json()
+
+    async def enable_user_async(self, user_id: UUID, payload: UserUpdateEnablePayload) -> JsonData:
+        response = await self._provider.update_user_enable_by_id_async(user_id=user_id, payload=payload)
+
+        return response.json()
+
+    async def update_user_password_async(self, user_id: UUID, payload: UserUpdatePasswordPayload) -> JsonData:
+        response = await self._provider.update_user_password_by_id_async(user_id=user_id, payload=payload)
+
+        return response.json()
+
+    async def delete_user_async(self, user_id: UUID):
+        response = await self._provider.delete_user_async(user_id=user_id)
+
+        return response.json()
 
 
 class RolesService(BaseService):

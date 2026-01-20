@@ -296,7 +296,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ):
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -312,7 +312,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def delete_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ):
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -345,7 +345,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def update_user_by_id_async(
             self,
-            user_id: str,
+            user_id: UUID,
             payload: CreateUserPayload,
             access_token: str | None = None,
     ) -> Response:
@@ -363,7 +363,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def update_user_enable_by_id_async(
             self,
-            user_id: str,
+            user_id: UUID,
             payload: UserUpdateEnablePayload,
             access_token: str | None = None,
     ) -> Response:
@@ -381,7 +381,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def update_user_password_by_id_async(
             self,
-            user_id: str,
+            user_id: UUID,
             payload: UserUpdatePasswordPayload,
             access_token: str | None = None,
     ) -> Response:
@@ -427,7 +427,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_user_sessions_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -527,7 +527,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def remove_user_sessions_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -573,7 +573,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_client_user_offline_sessions_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -743,7 +743,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_client_roles_of_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -759,7 +759,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_composite_client_roles_of_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             request_query: BriefRepresentationQuery | None = None,
             access_token: str | None = None,
     ) -> Response:
@@ -777,7 +777,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_available_client_roles_of_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
@@ -793,7 +793,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def delete_client_roles_of_user_async(
             self,
-            user_id: str,
+            user_id: UUID,
             roles: list[str],
             access_token: str | None = None,
     ) -> Response:
@@ -811,7 +811,7 @@ class KeycloakProviderAsync(ABC):
     @mark_need_token_verification
     async def get_user_roles_async(
             self,
-            user_id: str,
+            user_id: UUID,
             access_token: str | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)

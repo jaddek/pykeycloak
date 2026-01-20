@@ -1,5 +1,5 @@
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any
 from uuid import UUID
 
@@ -13,7 +13,12 @@ from pykeycloak.core.enums import (
 @dataclass(frozen=True, kw_only=True)
 class Payload:
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        result = {}
+        for field_info in fields(self):
+            value = getattr(self, field_info.name)
+            alias = field_info.metadata.get("alias", field_info.name)
+            result[alias] = value
+        return result
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), default=str)
@@ -184,15 +189,15 @@ class UMAAuthorizationPayload(Payload):
 
 @dataclass(frozen=True, kw_only=True)
 class CreateUserPayload(Payload):
-    id: UUID | None = None
-    username: str = ""
-    first_name: str | None = None
-    last_name: str | None = None
-    email: str = ""
-    enabled: bool | None = None
-    credentials: list[dict[str, Any]] = field(default_factory=list)
-    location_id: UUID | None = None
-    role_ids: list[UUID] | None = field(default_factory=list)
+    id: UUID | None = field(default=None, metadata={"alias": "id"})
+    username: str = field(default="", metadata={"alias": "username"})
+    first_name: str | None = field(default=None, metadata={"alias": "firstName"})
+    last_name: str | None = field(default=None, metadata={"alias": "lastName"})
+    email: str = field(default="", metadata={"alias": "email"})
+    enabled: bool | None = field(default=None, metadata={"alias": "enabled"})
+    credentials: list[dict[str, Any]] = field(default_factory=list, metadata={"alias": "credentials"})
+    location_id: UUID | None = field(default=None, metadata={"alias": "locationId"})
+    role_ids: list[UUID] | None = field(default_factory=list, metadata={"alias": "roleIds"})
 
 
 @dataclass(frozen=True, kw_only=True)
