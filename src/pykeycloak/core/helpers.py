@@ -1,8 +1,7 @@
 import os
+from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
-
-from pykeycloak.services.representations import R
 
 
 def getenv_required_url(name: str) -> str:
@@ -42,7 +41,7 @@ def getenv_int(name: str, default: int) -> int:
         return default
 
 
-def dataclass_from_dict(data: dict[str, Any], cls: type[R]) -> R:
+def dataclass_from_dict(data: dict[str, Any], cls: type[dataclass]) -> type[dataclass]:
     init_kwargs = {}
     for f in cls.__dataclass_fields__.values():
         key = f.metadata.get("alias", f.name)

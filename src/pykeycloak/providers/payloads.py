@@ -1,6 +1,7 @@
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Any
+from uuid import UUID
 
 from pykeycloak.core.enums import (
     GrantTypeEnum,
@@ -9,26 +10,31 @@ from pykeycloak.core.enums import (
 )
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class Payload:
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        result = {}
+        for field_info in fields(self):
+            value = getattr(self, field_info.name)
+            alias = field_info.metadata.get("alias", field_info.name)
+            result[alias] = value
+        return result
 
     def to_json(self) -> str:
         return json.dumps(self.to_dict(), default=str)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class TokenIntrospectionPayload(Payload):
     token: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class RTPIntrospectionPayload(TokenIntrospectionPayload):
     token_type_hint: str = "requesting_party_token"  # noqa: S105
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class ObtainTokenPayload(Payload):
     scopes: str | None = field(default=None, repr=False, init=False)
 
@@ -59,7 +65,7 @@ class ObtainTokenPayload(Payload):
         return result
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class UserCredentialsLoginPayload(ObtainTokenPayload):
     username: str
     password: str
@@ -69,20 +75,42 @@ class UserCredentialsLoginPayload(ObtainTokenPayload):
         return GrantTypeEnum.PASSWORD
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class ClientCredentialsLoginPayload(ObtainTokenPayload):
     @property
     def grant_type(self) -> str:
         return GrantTypeEnum.CLIENT_CREDENTIALS
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class RefreshTokenPayload(ObtainTokenPayload):
     refresh_token: str
 
     @property
     def grant_type(self) -> str:
         return GrantTypeEnum.REFRESH_TOKEN
+
+
+@dataclass(frozen=True, kw_only=True)
+class ConfidentialClientRevokePayload(Payload):
+    token: str
+    token_type_hint: str = "refresh_token"  # noqa: S105
+
+
+@dataclass(frozen=True, kw_only=True)
+class PublicClientRevokePayload(Payload):
+    client_id: str
+    token: str
+    token_type_hint: str = "refresh_token"  # noqa: S105
+
+
+@dataclass(frozen=True, kw_only=True)
+class RTPExchangeTokenPayload(ObtainTokenPayload):
+    refresh_token: str
+
+    @property
+    def grant_type(self) -> str:
+        return GrantTypeEnum.URN_IETF_OAUTH_TOKEN_EXCHANGE
 
 
 #
@@ -97,7 +125,7 @@ class RefreshTokenPayload(ObtainTokenPayload):
 #     scope: str = "openid"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, kw_only=True)
 class UMAAuthorizationPayload(Payload):
     audience: str
     permissions: dict[str, list[str]]
@@ -107,6 +135,7 @@ class UMAAuthorizationPayload(Payload):
     permission_resource_format: UrnIetfOauthUmaTicketPermissionResourceFormatEnum = (
         UrnIetfOauthUmaTicketPermissionResourceFormatEnum.URI
     )
+    subject_token: str
     permission_resource_matching_uri: bool = False
     response_include_resource_name: bool = False
     _normalized_permissions: list[str] = field(init=False)
@@ -124,6 +153,7 @@ class UMAAuthorizationPayload(Payload):
 
     def to_dict(self) -> dict[str, Any]:
         return {
+            "subject_token": self.subject_token,
             "audience": self.audience,
             "grant_type": self.grant_type,
             "permission": self._normalized_permissions,
@@ -155,3 +185,26 @@ class UMAAuthorizationPayload(Payload):
                 result.add(f"{resource}#{scope}")
 
         return list(result)
+
+
+@dataclass(frozen=True, kw_only=True)
+class CreateUserPayload(Payload):
+    id: UUID | None = field(default=None, metadata={"alias": "id"})
+    username: str = field(default="", metadata={"alias": "username"})
+    first_name: str | None = field(default=None, metadata={"alias": "firstName"})
+    last_name: str | None = field(default=None, metadata={"alias": "lastName"})
+    email: str = field(default="", metadata={"alias": "email"})
+    enabled: bool | None = field(default=None, metadata={"alias": "enabled"})
+    credentials: list[dict[str, Any]] = field(default_factory=list, metadata={"alias": "credentials"})
+    location_id: UUID | None = field(default=None, metadata={"alias": "locationId"})
+    role_ids: list[UUID] | None = field(default_factory=list, metadata={"alias": "roleIds"})
+
+
+@dataclass(frozen=True, kw_only=True)
+class UserUpdateEnablePayload(Payload):
+    enabled: bool = True
+
+
+@dataclass(frozen=True, kw_only=True)
+class UserUpdatePasswordPayload(Payload):
+    credentials: list[dict[str, Any]] = field(default_factory=list)

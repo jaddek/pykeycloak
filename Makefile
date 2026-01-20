@@ -105,6 +105,18 @@ pre-commit-update: ## Update pre-commit hooks
 tests: ## Run all tests
 	@$(load_env); $(UV_RUN) pytest tests -vv -s
 
+test-unit: ## Run unit tests
+	@$(load_env); $(UV_RUN) pytest tests/unit -vv -s
+
+test-integration: ## Run integration tests
+	@$(load_env); $(UV_RUN) pytest tests/integration -vv -s
+
+test-functional: ## Run functional tests
+	@$(load_env); $(UV_RUN) pytest tests/functional -vv -s
+
+test-with-coverage: ## Run all tests with coverage
+	@$(load_env); $(UV_RUN) pytest tests --cov=src --cov-report=html --cov-report=term -vv -s
+
 
 # =========
 # Helpers
