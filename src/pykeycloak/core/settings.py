@@ -18,7 +18,6 @@ from httpx._types import (
     QueryParamTypes,
     TimeoutTypes,
     URLTypes,
-    Headers,
 )
 
 from .constants import KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT, \
@@ -105,7 +104,7 @@ class HttpTransportSettings:
 class ClientSettings:
     auth: AuthTypes | None = None
     params: QueryParamTypes | None = None
-    headers: HeaderTypes | Headers | None = None
+    headers: HeaderTypes | None = None
     cookies: CookieTypes | None = None
     verify: ssl.SSLContext | str | bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_SSL_VERIFY_DEFAULT
     cert: CertTypes | None = None
