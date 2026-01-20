@@ -18,6 +18,7 @@ from httpx._types import (
     QueryParamTypes,
     TimeoutTypes,
     URLTypes,
+    Headers,
 )
 
 from .constants import KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT, \
@@ -31,7 +32,6 @@ from .constants import KEYCLOAK_HTTPX_CLIENT_PARAMS_TIMEOUT_DEFAULT, \
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1_DEFAULT, KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV_DEFAULT, \
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY_DEFAULT, \
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT
-from .headers import Headers
 from .helpers import getenv_bool, getenv_int, getenv_optional, getenv_required_url
 
 
