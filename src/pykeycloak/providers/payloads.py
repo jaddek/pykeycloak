@@ -198,9 +198,13 @@ class CreateUserPayload(Payload):
     last_name: str | None = field(default=None, metadata={"alias": "lastName"})
     email: str = field(default="", metadata={"alias": "email"})
     enabled: bool | None = field(default=None, metadata={"alias": "enabled"})
-    credentials: list[dict[str, Any]] = field(default_factory=list, metadata={"alias": "credentials"})
+    credentials: list[dict[str, Any]] = field(
+        default_factory=list, metadata={"alias": "credentials"}
+    )
     location_id: UUID | None = field(default=None, metadata={"alias": "locationId"})
-    role_ids: list[UUID] | None = field(default_factory=list, metadata={"alias": "roleIds"})
+    role_ids: list[UUID] | None = field(
+        default_factory=list, metadata={"alias": "roleIds"}
+    )
 
 
 @dataclass(frozen=True, kw_only=True)

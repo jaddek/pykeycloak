@@ -1,12 +1,13 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
+
 class PyKeycloakException(Exception):
     def __init__(
-            self,
-            message: str = "",
-            status_code: int | None = None,
-            content: bytes | None = None,
+        self,
+        message: str = "",
+        status_code: int | None = None,
+        content: bytes | None = None,
     ) -> None:
         Exception.__init__(self, message)
 
@@ -20,33 +21,25 @@ class PyKeycloakException(Exception):
         return f"{self.message}"
 
 
-class PyKeycloakAuthenticationError(PyKeycloakException):
-    ...
+class PyKeycloakAuthenticationError(PyKeycloakException): ...
 
 
-class PyKeycloakConnectionError(PyKeycloakException):
-    ...
+class PyKeycloakConnectionError(PyKeycloakException): ...
 
 
-class PyKeycloakOperationError(PyKeycloakException):
-    ...
+class PyKeycloakOperationError(PyKeycloakException): ...
 
 
-class PyKeycloakDeprecationError(PyKeycloakException):
-    ...
+class PyKeycloakDeprecationError(PyKeycloakException): ...
 
 
-class PyKeycloakSecretNotFound(PyKeycloakOperationError):
-    ...
+class PyKeycloakSecretNotFound(PyKeycloakOperationError): ...
 
 
-class PyKeycloakRPTNotFound(PyKeycloakOperationError):
-    ...
+class PyKeycloakRPTNotFound(PyKeycloakOperationError): ...
 
 
-class PyKeycloakAuthorizationConfigError(PyKeycloakOperationError):
-    ...
+class PyKeycloakAuthorizationConfigError(PyKeycloakOperationError): ...
 
 
-class PyKeycloakInvalidTokenError(PyKeycloakOperationError):
-    ...
+class PyKeycloakInvalidTokenError(PyKeycloakOperationError): ...
