@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
+
 import os
 import ssl
 from collections.abc import Callable, Iterable
