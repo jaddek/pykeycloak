@@ -77,6 +77,9 @@ run: ## Run app using uvicorn for local dev
 script-%:
 	$(load_env); $(UV_RUN) $*
 
+scripte-%:
+	$(load_env); $(UV_RUN) ./examples/$*
+
 # ========================
 # Formatting & Linting
 # ========================

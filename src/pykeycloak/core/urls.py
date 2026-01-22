@@ -98,18 +98,18 @@ REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE = (
 REALM_DELETE_SESSION = BASE_ADMIN_REALMS + "/sessions/{session_id}"
 REALM_SESSION_STATS = BASE_ADMIN_REALMS + "/client-session-stats"
 REALM_CLIENT_OFFLINE_SESSION_COUNT = (
-    BASE_ADMIN_REALMS + "/clients/{client_id}/offline-session-count"
+    BASE_ADMIN_REALMS + "/clients/{client_uuid}/offline-session-count"
 )
 REALM_CLIENT_OFFLINE_SESSIONS = (
-    BASE_ADMIN_REALMS + "/clients/{client_id}/offline-sessions"
+    BASE_ADMIN_REALMS + "/clients/{client_uuid}/offline-sessions"
 )
 REALM_CLIENT_ACTIVE_SESSION_COUNT = (
-    BASE_ADMIN_REALMS + "/clients/{client_id}/session-count"
+    BASE_ADMIN_REALMS + "/clients/{client_uuid}/session-count"
 )
-REALM_CLIENT_USER_SESSIONS = BASE_ADMIN_REALMS + "/clients/{client_id}/user-sessions"
+REALM_CLIENT_USER_SESSIONS = BASE_ADMIN_REALMS + "/clients/{client_uuid}/user-sessions"
 
 REALM_CLIENT_USER_OFFLINE_SESSIONS = (
-    BASE_ADMIN_REALMS + "/users/{user_id}/offline-sessions/{client_id}"
+    BASE_ADMIN_REALMS + "/users/{client_uuid}/offline-sessions/{client_id}"
 )
 
 # ######################################################################
