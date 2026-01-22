@@ -27,10 +27,16 @@ from pykeycloak.providers.payloads import (
 from pykeycloak.providers.providers import (
     KeycloakProviderProtocol,
 )
-from pykeycloak.providers.queries import GetUsersQuery, RoleMembersListQuery
+from pykeycloak.providers.queries import (
+    GetUsersQuery,
+    PaginationQuery,
+    RoleMembersListQuery,
+)
 from pykeycloak.services.representations import (
     IntrospectRepresentation,
-    R,
+    SessionRepresentation,
+    SessionsCountRepresentation,
+    SessionsStatsRepresentation,
     TokenRepresentation,
     UserInfoRepresentation,
 )
@@ -192,15 +198,136 @@ class RolesService(BaseService):
 
 
 class SessionsService(BaseService):
-    async def get_user_sessions(self) -> None: ...
+    async def get_client_sessions_raw_async(
+        self, query: PaginationQuery | None = None
+    ) -> JsonData:
+        response = await self._provider.get_client_sessions_async(query=query)
+        return self.validate_response(response)
 
-    async def get_sessions(self) -> None: ...
+    async def get_client_sessions_async(
+        self,
+        query: PaginationQuery | None = None,
+        transform_to_response_model: type[list[SessionRepresentation]] = list[
+            SessionRepresentation
+        ],
+    ) -> list[SessionRepresentation]:
+        data = await self.get_client_sessions_raw_async(query=query)
 
-    async def delete_session_by_id(self) -> None: ...
+        return dataclass_from_dict(data, transform_to_response_model)
 
-    async def delete_user_sessions(self) -> None: ...
+    async def get_user_sessions_raw_async(
+        self,
+        user_id: UUID,
+    ) -> JsonData:
+        response = await self._provider.get_user_sessions_async(user_id=user_id)
+        return self.validate_response(response)
 
-    async def delete_all_sessions(self) -> None: ...
+    async def get_user_sessions_async(
+        self,
+        user_id: UUID,
+        transform_to_response_model: type[list[SessionRepresentation]] = list[
+            SessionRepresentation
+        ],
+    ) -> list[SessionRepresentation]:
+        data = await self.get_user_sessions_raw_async(user_id=user_id)
+
+        return dataclass_from_dict(data, transform_to_response_model)
+
+    async def get_client_sessions_count_raw_async(self) -> JsonData:
+        response = await self._provider.get_client_sessions_count_async()
+        return self.validate_response(response)
+
+    async def get_client_sessions_count_async(
+        self,
+        transform_to_response_model: type[
+            SessionsCountRepresentation
+        ] = SessionsCountRepresentation,
+    ) -> SessionsCountRepresentation:
+        data = await self.get_client_sessions_count_raw_async()
+
+        return dataclass_from_dict(data, transform_to_response_model)
+
+    async def get_offline_sessions_raw_async(
+        self,
+        query: PaginationQuery | None = None,
+    ) -> JsonData:
+        response = await self._provider.get_offline_sessions_async(query=query)
+        return self.validate_response(response)
+
+    async def get_offline_sessions_async(
+        self,
+        query: PaginationQuery | None = None,
+        transform_to_response_model: type[list[SessionRepresentation]] = list[
+            SessionRepresentation
+        ],
+    ) -> list[SessionRepresentation]:
+        data = await self.get_offline_sessions_raw_async(query=query)
+
+        return dataclass_from_dict(data, transform_to_response_model)
+
+    async def get_offline_sessions_count_raw_async(self) -> JsonData:
+        response = await self._provider.get_offline_sessions_count_async()
+        return self.validate_response(response)
+
+    async def get_offline_sessions_count_async(
+        self,
+        transform_to_response_model: type[
+            SessionsCountRepresentation
+        ] = SessionsCountRepresentation,
+    ) -> SessionsCountRepresentation:
+        data = await self.get_offline_sessions_count_raw_async()
+
+        return dataclass_from_dict(data, transform_to_response_model)
+
+    async def remove_user_sessions_raw_async(
+        self,
+        user_id: UUID,
+    ) -> JsonData:
+        response = await self._provider.remove_user_sessions_async(user_id=user_id)
+        return self.validate_response(response)
+
+    async def logout_all_users_raw_async(self) -> JsonData:
+        response = await self._provider.logout_all_users_async()
+        return self.validate_response(response)
+
+    async def logout_all_users_async(self) -> None:
+        await self.logout_all_users_raw_async()
+
+    async def get_client_session_stats_raw_async(
+        self,
+    ) -> JsonData:
+        response = await self._provider.get_client_session_stats_async()
+        return self.validate_response(response)
+
+    async def get_client_session_stats_async(
+        self,
+        transform_to_response_model: type[list[SessionsStatsRepresentation]] = list[
+            SessionsStatsRepresentation
+        ],
+    ) -> list[SessionsStatsRepresentation]:
+        data = await self.get_client_session_stats_raw_async()
+
+        return dataclass_from_dict(data, transform_to_response_model)
+
+    async def get_client_user_offline_sessions_raw_async(
+        self,
+        user_id: UUID,
+    ) -> JsonData:
+        response = await self._provider.get_client_user_offline_sessions_async(
+            user_id=user_id
+        )
+        return self.validate_response(response)
+
+    async def get_client_user_offline_sessions_async(
+        self,
+        user_id: UUID,
+        transform_to_response_model: type[
+            SessionRepresentation
+        ] = SessionRepresentation,
+    ) -> SessionRepresentation:
+        data = await self.get_client_user_offline_sessions_raw_async(user_id=user_id)
+
+        return dataclass_from_dict(data, transform_to_response_model)
 
 
 class AuthService(BaseService):
@@ -219,8 +346,8 @@ class AuthService(BaseService):
 
     async def client_login_async(
         self,
-        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
-    ) -> R:
+        transform_to_response_model: type[TokenRepresentation] = TokenRepresentation,
+    ) -> TokenRepresentation:
         data = await self.client_login_raw_async()
 
         return dataclass_from_dict(data, transform_to_response_model)
@@ -240,8 +367,8 @@ class AuthService(BaseService):
     async def user_login_async(
         self,
         payload: UserCredentialsLoginPayload,
-        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
-    ) -> R:
+        transform_to_response_model: type[TokenRepresentation] = TokenRepresentation,
+    ) -> TokenRepresentation:
         data = await self.user_login_raw_async(payload=payload)
 
         return dataclass_from_dict(data, transform_to_response_model)
@@ -261,8 +388,8 @@ class AuthService(BaseService):
     async def refresh_token_async(
         self,
         payload: RefreshTokenPayload,
-        transform_to_response_model: type[R] = TokenRepresentation,  # type: ignore
-    ) -> R:
+        transform_to_response_model: type[TokenRepresentation] = TokenRepresentation,
+    ) -> TokenRepresentation:
         data = await self.refresh_token_raw_async(payload=payload)
 
         return dataclass_from_dict(data, transform_to_response_model)
@@ -282,8 +409,10 @@ class AuthService(BaseService):
     async def get_user_info_async(
         self,
         access_token: str,
-        transform_to_response_model: type[R] = UserInfoRepresentation,  # type: ignore
-    ) -> R:
+        transform_to_response_model: type[
+            UserInfoRepresentation
+        ] = UserInfoRepresentation,
+    ) -> UserInfoRepresentation:
         data = await self.get_user_info_raw_async(access_token)
 
         return dataclass_from_dict(data, transform_to_response_model)
@@ -313,8 +442,10 @@ class AuthService(BaseService):
     async def introspect_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
-        transform_to_response_model: type[R] = IntrospectRepresentation,  # type: ignore
-    ) -> R:
+        transform_to_response_model: type[
+            IntrospectRepresentation
+        ] = IntrospectRepresentation,
+    ) -> IntrospectRepresentation:
         data = await self.introspect_raw_async(payload=payload)
 
         return dataclass_from_dict(data, transform_to_response_model)
