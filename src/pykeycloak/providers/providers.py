@@ -158,7 +158,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def delete_session_by_id_async(
-        self, session_id: str, is_offline: bool, access_token: str = ...
+        self, session_id: UUID, is_offline: bool, access_token: str = ...
     ) -> Response: ...
 
     async def get_client_user_sessions_async(
@@ -174,7 +174,7 @@ class KeycloakProviderProtocol(Protocol):
     async def get_offline_sessions_async(
         self,
         access_token: str = ...,
-        request_query: PaginationQuery | None = None,
+        query: PaginationQuery | None = None,
     ) -> Response: ...
 
     async def get_offline_sessions_count_async(
@@ -190,6 +190,10 @@ class KeycloakProviderProtocol(Protocol):
     async def get_client_session_stats_async(
         self,
         access_token: str = ...,
+    ) -> Response: ...
+
+    async def get_client_sessions_async(
+        self, access_token: str = ..., query: PaginationQuery | None = None
     ) -> Response: ...
 
     async def get_client_user_offline_sessions_async(
@@ -622,6 +626,22 @@ class KeycloakProviderAsync:
     ##############################################################
 
     @mark_need_token_verification
+    async def get_client_sessions_async(
+        self, access_token: str, query: PaginationQuery | None = None
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_USER_SESSIONS, id=self._realm_client.client_uuid
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    @mark_need_token_verification
     async def get_user_sessions_async(
         self, user_id: UUID, access_token: str
     ) -> Response:
@@ -637,7 +657,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def delete_session_by_id_async(
-        self, session_id: str, is_offline: bool, access_token: str
+        self, session_id: UUID, is_offline: bool, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -685,7 +705,7 @@ class KeycloakProviderAsync:
     async def get_offline_sessions_async(
         self,
         access_token: str,
-        request_query: PaginationQuery | None = None,
+        query: PaginationQuery | None = None,
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -693,7 +713,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OFFLINE_SESSIONS),
             headers=headers,
-            params=request_query,
+            params=query,
         )
 
         return response
@@ -987,6 +1007,7 @@ class KeycloakProviderAsync:
         params = {
             "realm": self._realm,
             "client_id": self._realm_client.client_id,
+            "client_uuid": self._realm_client.client_uuid,
             **kwargs,
         }
         return path.format(**params)

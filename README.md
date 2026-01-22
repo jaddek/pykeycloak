@@ -2,11 +2,20 @@
 
 PyKeycloak is a library for working with Keycloak that provides asynchronous methods for authentication, token management, and permission handling.
 
+## Whats different from other libraries
+
+- Sanitized logging: Automatically hide sensitive data in request/response logs.
+- Httpx-powered: Gain full control using standard httpx client configuration.
+- Rich Request/Response handling: Access a comprehensive list of parameters and detailed response fields.
+- Flexible Data Access: Easily work with both raw data and structured representations.
+- Environment-based config: Quick setup using environment variables.
+
 ## Installation
 
 For local development to install dependencies, use the following command:
 
 ```bash
+
 make install
 ```
 
