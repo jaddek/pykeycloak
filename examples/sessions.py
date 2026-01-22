@@ -25,7 +25,18 @@ async def main():
     auth_service = AuthService(provider)
     sessions_service = SessionsService(provider)
 
-    await auth_service.client_login_async()
+    service_account_login = await auth_service.client_login_async()
+
+    print(f"Service account login {service_account_login}")
+
+    user_login = await auth_service.user_login_async(
+        payload=UserCredentialsLoginPayload(
+            username=username,
+            password=password,
+        )
+    )
+
+    print(f"User login {user_login}")
 
     client_sessions = await sessions_service.get_client_sessions_async(
         query=PaginationQuery(first=0, max=10)
@@ -45,13 +56,6 @@ async def main():
 
     client_session_stats = await sessions_service.get_client_session_stats_async()
     print(f"Client session stats: {client_session_stats}")
-
-    await auth_service.user_login_async(
-        payload=UserCredentialsLoginPayload(
-            username=username,
-            password=password,
-        )
-    )
 
     logout_result = await sessions_service.logout_all_users_async()
     print(f"Logout all users result: {logout_result}")
