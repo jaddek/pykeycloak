@@ -15,6 +15,7 @@ from pykeycloak.core.clients import (
     get_keycloak_client_wrapper_from_env,
 )
 from pykeycloak.core.headers import HeaderFactory, HeadersProtocol
+from pykeycloak.providers.payloads import RolePayload
 
 from ..core.realm import RealmClient
 from ..core.token_manager import (
@@ -211,15 +212,15 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def create_role(
-        self, payload: dict[str, Any], access_token: str = ...
+        self, payload: RolePayload, access_token: str = ...
     ) -> Response: ...
 
     async def update_role_by_id_async(
-        self, role_id: UUID, payload: dict[str, Any], access_token: str = ...
+        self, role_id: UUID, payload: RolePayload, access_token: str = ...
     ) -> Response: ...
 
     async def update_role_by_name_async(
-        self, role_name: str, payload: dict[str, Any], access_token: str = ...
+        self, role_name: str, payload: RolePayload, access_token: str = ...
     ) -> Response: ...
 
     async def delete_role_by_id_async(
@@ -834,7 +835,7 @@ class KeycloakProviderAsync:
         return response
 
     @mark_need_token_verification
-    async def create_role(self, payload: dict[str, Any], access_token: str) -> Response:
+    async def create_role(self, payload: RolePayload, access_token: str) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(

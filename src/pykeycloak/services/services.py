@@ -17,6 +17,7 @@ from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
     RefreshTokenPayload,
+    RolePayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
@@ -43,6 +44,8 @@ from pykeycloak.services.representations import (
 
 
 class BaseService:
+    """ """
+
     def __init__(self, provider: KeycloakProviderProtocol):
         self._provider = provider
 
@@ -60,6 +63,8 @@ class BaseService:
 
 
 class UsersService(BaseService):
+    """ """
+
     async def get_user_async(self, user_id: UUID) -> JsonData:
         response = await self._provider.get_user_async(user_id=user_id)
 
@@ -186,15 +191,68 @@ class UsersService(BaseService):
 
 
 class RolesService(BaseService):
-    async def get_public_roles(self) -> None: ...
+    """ """
 
-    async def get_role_by_id(self) -> None: ...
+    async def get_client_roles_raw_async(self) -> JsonData:
+        response = await self._provider.get_client_roles_async()
 
-    async def update_role_by_id(self) -> None: ...
+        return self.validate_response(response)
 
-    async def delete_client_role(self) -> None: ...
+    async def get_client_roles_async(self) -> JsonData:
+        data = await self.get_client_roles_raw_async()
 
-    async def deep_role_copy(self) -> None: ...
+        return data
+
+    async def get_role_id_async(self, role_name: str) -> JsonData:
+        response = await self._provider.get_client_role_id_async(role_name=role_name)
+
+        return self.validate_response(response)
+
+    async def get_role_by_name_raw_async(self, role_name: str) -> JsonData:
+        response = await self._provider.get_role_by_name_async(role_name=role_name)
+
+        return self.validate_response(response)
+
+    async def get_role_by_name_async(self, role_name: str) -> JsonData:
+        data = await self.get_role_by_name_raw_async(role_name=role_name)
+
+        return data
+
+    async def create_role_raw_async(self, payload: RolePayload) -> JsonData:
+        response = await self._provider.create_role(payload=payload)
+
+        return self.validate_response(response)
+
+    async def create_role_async(self, payload: RolePayload) -> JsonData:
+        data = await self.create_role_raw_async(payload=payload)
+
+        return data
+
+    async def update_role_by_id_raw_async(
+        self, role_id: UUID, payload: RolePayload
+    ) -> JsonData:
+        response = await self._provider.update_role_by_id_async(
+            role_id=role_id, payload=payload
+        )
+
+        return self.validate_response(response)
+
+    async def update_role_by_id_async(
+        self, role_id: UUID, payload: RolePayload
+    ) -> JsonData:
+        data = await self.create_role_raw_async(payload=payload)
+
+        return data
+
+    async def delete_role_by_id_raw_async(self, role_id: UUID) -> JsonData:
+        response = await self._provider.delete_role_by_id_async(role_id=role_id)
+
+        return self.validate_response(response)
+
+    async def delete_role_by_name_raw_async(self, role_name: str) -> JsonData:
+        response = await self._provider.delete_role_by_name_async(role_name=role_name)
+
+        return self.validate_response(response)
 
 
 class SessionsService(BaseService):

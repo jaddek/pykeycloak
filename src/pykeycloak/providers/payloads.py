@@ -215,3 +215,15 @@ class UserUpdateEnablePayload(Payload):
 @dataclass(frozen=True, kw_only=True)
 class UserUpdatePasswordPayload(Payload):
     credentials: list[dict[str, Any]] = field(default_factory=list)
+
+
+@dataclass(frozen=True, kw_only=True)
+class RolePayload(Payload):
+    id: str | None = None
+    name: str | None = None
+    description: str | None = None
+    scope_param_required: bool | None = None
+    composite: bool | None = None
+    client_role: bool | None = None
+    container_id: str | None = None
+    attributes: dict[str, list[str]] | None = None

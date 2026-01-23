@@ -100,3 +100,15 @@ class IntrospectRepresentation(Representation):
         default=None, metadata={"alias": "email_verified"}
     )
     name: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class RoleRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+    description: str | None = None
+    scope_param_required: bool | None = None
+    composite: bool | None = None
+    client_role: bool | None = None
+    container_id: str | None = None
+    attributes: dict[str, list[str]] | None = None
