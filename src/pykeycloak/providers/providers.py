@@ -15,7 +15,9 @@ from pykeycloak.core.clients import (
     get_keycloak_client_wrapper_from_env,
 )
 from pykeycloak.core.headers import HeaderFactory, HeadersProtocol
+from pykeycloak.providers.payloads import RolePayload
 
+from ..core.exceptions import PyKeycloakUnexpectedBehaviourException
 from ..core.realm import RealmClient
 from ..core.token_manager import (
     TokenAutoRefresher,
@@ -45,8 +47,8 @@ from ..core.urls import (
     REALM_CLIENT_USER_SESSIONS,
     REALM_DELETE_SESSION,
     REALM_LOGOUT_ALL,
+    REALM_ROLES_DELETE_ROLE_BY_NAME,
     REALM_ROLES_ROLE_BY_ID,
-    REALM_ROLES_ROLE_BY_NAME,
     REALM_USER,
     REALM_USER_LOGOUT,
     REALM_USER_SESSIONS,
@@ -123,11 +125,11 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def get_user_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def delete_user_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def create_user_async(
@@ -135,15 +137,21 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def update_user_by_id_async(
-        self, user_id: UUID, payload: CreateUserPayload, access_token: str = ...
+        self, user_id: UUID | str, payload: CreateUserPayload, access_token: str = ...
     ) -> Response: ...
 
     async def update_user_enable_by_id_async(
-        self, user_id: UUID, payload: UserUpdateEnablePayload, access_token: str = ...
+        self,
+        user_id: UUID | str,
+        payload: UserUpdateEnablePayload,
+        access_token: str = ...,
     ) -> Response: ...
 
     async def update_user_password_by_id_async(
-        self, user_id: UUID, payload: UserUpdatePasswordPayload, access_token: str = ...
+        self,
+        user_id: UUID | str,
+        payload: UserUpdatePasswordPayload,
+        access_token: str = ...,
     ) -> Response: ...
 
     async def get_users_by_role_async(
@@ -154,7 +162,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def get_user_sessions_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def delete_session_by_id_async(
@@ -182,7 +190,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def remove_user_sessions_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def logout_all_users_async(self, access_token: str = ...) -> Response: ...
@@ -197,7 +205,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def get_client_user_offline_sessions_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def get_client_roles_async(self, access_token: str = ...) -> Response: ...
@@ -210,20 +218,24 @@ class KeycloakProviderProtocol(Protocol):
         self, role_name: str, access_token: str = ...
     ) -> Response: ...
 
-    async def create_role(
-        self, payload: dict[str, Any], access_token: str = ...
+    async def create_role_async(
+        self, payload: RolePayload, access_token: str = ...
     ) -> Response: ...
 
     async def update_role_by_id_async(
-        self, role_id: UUID, payload: dict[str, Any], access_token: str = ...
+        self,
+        role_id: UUID | str,
+        payload: RolePayload,
+        access_token: str = ...,
+        skip_unexpected_behaviour_exception: bool = False,
     ) -> Response: ...
 
     async def update_role_by_name_async(
-        self, role_name: str, payload: dict[str, Any], access_token: str = ...
+        self, role_name: str, payload: RolePayload, access_token: str = ...
     ) -> Response: ...
 
     async def delete_role_by_id_async(
-        self, role_id: UUID, access_token: str = ...
+        self, role_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def delete_role_by_name_async(
@@ -231,30 +243,30 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def assign_client_role_async(
-        self, user_id: UUID, roles: list[str], access_token: str = ...
+        self, user_id: UUID | str, roles: list[str], access_token: str = ...
     ) -> Response: ...
 
     async def get_client_roles_of_user_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def get_composite_client_roles_of_user_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
         access_token: str = ...,
         request_query: BriefRepresentationQuery | None = None,
     ) -> Response: ...
 
     async def get_available_client_roles_of_user_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
     async def delete_client_roles_of_user_async(
-        self, user_id: UUID, roles: list[str], access_token: str = ...
+        self, user_id: UUID | str, roles: list[str], access_token: str = ...
     ) -> Response: ...
 
     async def get_user_roles_async(
-        self, user_id: UUID, access_token: str = ...
+        self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
 
@@ -359,7 +371,7 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_INTROSPECT),
-            data=payload,
+            data=payload.to_dict(),
             headers=headers,
         )
 
@@ -438,7 +450,7 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_REVOKE),
-            data=payload,
+            data=payload.to_dict(),
             headers=headers,
         )
 
@@ -517,7 +529,7 @@ class KeycloakProviderAsync:
         )
 
     @mark_need_token_verification
-    async def get_user_async(self, user_id: UUID, access_token: str) -> Response:
+    async def get_user_async(self, user_id: UUID | str, access_token: str) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
@@ -529,7 +541,9 @@ class KeycloakProviderAsync:
         return response
 
     @mark_need_token_verification
-    async def delete_user_async(self, user_id: UUID, access_token: str) -> Response:
+    async def delete_user_async(
+        self, user_id: UUID | str, access_token: str
+    ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
@@ -550,14 +564,14 @@ class KeycloakProviderAsync:
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_USERS_LIST),
             headers=headers,
-            data=payload,
+            data=payload.to_dict(),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_user_by_id_async(
-        self, user_id: UUID, payload: CreateUserPayload, access_token: str
+        self, user_id: UUID | str, payload: CreateUserPayload, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -565,14 +579,14 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload,
+            data=payload.to_dict(),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_user_enable_by_id_async(
-        self, user_id: UUID, payload: UserUpdateEnablePayload, access_token: str
+        self, user_id: UUID | str, payload: UserUpdateEnablePayload, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -580,14 +594,14 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload,
+            data=payload.to_dict(),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_user_password_by_id_async(
-        self, user_id: UUID, payload: UserUpdatePasswordPayload, access_token: str
+        self, user_id: UUID | str, payload: UserUpdatePasswordPayload, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -595,7 +609,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload,
+            data=payload.to_dict(),
         )
 
         return response
@@ -637,13 +651,14 @@ class KeycloakProviderAsync:
                 path=REALM_CLIENT_USER_SESSIONS, id=self._realm_client.client_uuid
             ),
             headers=headers,
+            params=query.to_dict() if query else {},
         )
 
         return response
 
     @mark_need_token_verification
     async def get_user_sessions_async(
-        self, user_id: UUID, access_token: str
+        self, user_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -732,7 +747,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def remove_user_sessions_async(
-        self, user_id: UUID, access_token: str
+        self, user_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -773,7 +788,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def get_client_user_offline_sessions_async(
-        self, user_id: UUID, access_token: str
+        self, user_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -834,51 +849,83 @@ class KeycloakProviderAsync:
         return response
 
     @mark_need_token_verification
-    async def create_role(self, payload: dict[str, Any], access_token: str) -> Response:
+    async def create_role_async(
+        self, payload: RolePayload, access_token: str
+    ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_ROLES),
             headers=headers,
-            data=payload,
+            data=payload.to_json(),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_role_by_id_async(
-        self, role_id: UUID, payload: dict[str, Any], access_token: str
+        self,
+        role_id: UUID | str,
+        payload: RolePayload,
+        access_token: str,
+        skip_unexpected_behaviour_exception: bool = False,
     ) -> Response:
+        """
+        !!!WARNING!!!
+        v26.3.3 will create a new role if you send description and name.
+        !!!WARNING!!!
+
+        :param role_id:
+        :param payload:
+        :param access_token:
+        :param skip_unexpected_behaviour_exception:
+        :return:
+        """
+        if not skip_unexpected_behaviour_exception:
+            raise PyKeycloakUnexpectedBehaviourException(
+                message="Warning! Unexpected Keycloak API behavior encountered.",
+                description=(
+                    "The Keycloak API requires 'name' and 'description', yet produces inconsistent results: "
+                    "setting the correct name returns 409 (Conflict), omitting it returns 500 (Internal Error), "
+                    "and any other name returns 201 (Created). Updating both name and description results "
+                    "in an entirely new role instead of an update."
+                ),
+                affected_versions=["26.3.3"],
+            )
+
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
-            url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=role_id),
+            url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=str(role_id)),
             headers=headers,
-            data=payload,
+            data=json.dumps(payload.to_dict()),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_role_by_name_async(
-        self, role_name: str, payload: dict[str, Any], access_token: str
+        self, role_name: str, payload: RolePayload, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.PUT,
-            url=self._get_path(path=REALM_ROLES_ROLE_BY_NAME, role_name=role_name),
+            url=self._get_path(
+                path=REALM_CLIENT_ROLE,
+                role_name=role_name,
+            ),
             headers=headers,
-            data=payload,
+            data=json.dumps(payload.to_dict()),
         )
 
         return response
 
     @mark_need_token_verification
     async def delete_role_by_id_async(
-        self, role_id: UUID, access_token: str
+        self, role_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -898,7 +945,9 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request(
             method=HttpMethod.DELETE,
-            url=self._get_path(path=REALM_ROLES_ROLE_BY_NAME, role_name=role_name),
+            url=self._get_path(
+                path=REALM_ROLES_DELETE_ROLE_BY_NAME, role_name=role_name
+            ),
             headers=headers,
         )
 
@@ -906,13 +955,15 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def assign_client_role_async(
-        self, user_id: UUID, roles: list[str], access_token: str
+        self, user_id: UUID | str, roles: list[str], access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(
             method=HttpMethod.POST,
-            url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
+            url=self._get_path(
+                path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=str(user_id)
+            ),
             headers=headers,
             data=json.dumps(roles),
         )
@@ -921,7 +972,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def get_client_roles_of_user_async(
-        self, user_id: UUID, access_token: str
+        self, user_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -936,7 +987,7 @@ class KeycloakProviderAsync:
     @mark_need_token_verification
     async def get_composite_client_roles_of_user_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
         access_token: str,
         request_query: BriefRepresentationQuery | None = None,
     ) -> Response:
@@ -955,7 +1006,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def get_available_client_roles_of_user_async(
-        self, user_id: UUID, access_token: str
+        self, user_id: UUID | str, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -971,7 +1022,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def delete_client_roles_of_user_async(
-        self, user_id: UUID, roles: list[str], access_token: str
+        self, user_id: UUID | str, roles: list[str], access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -985,7 +1036,9 @@ class KeycloakProviderAsync:
         return response
 
     @mark_need_token_verification
-    async def get_user_roles_async(self, user_id: UUID, access_token: str) -> Response:
+    async def get_user_roles_async(
+        self, user_id: UUID | str, access_token: str
+    ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
         response = await self._wrapper.request(

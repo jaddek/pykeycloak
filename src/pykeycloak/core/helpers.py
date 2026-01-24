@@ -57,7 +57,6 @@ def dataclass_from_dict[T](data: Any, cls: type[T]) -> T:
             raise TypeError(f"Expected list, got {type(data)}")
         return [dataclass_from_dict(item, inner_cls) for item in data]  # type: ignore
 
-    # Обработка одиночного объекта
     if not is_dataclass(cls):
         raise TypeError(f"{cls} must be a dataclass")
 
@@ -75,3 +74,19 @@ def dataclass_from_dict[T](data: Any, cls: type[T]) -> T:
 
 def is_json_data(val: Any) -> TypeGuard[JsonData]:
     return isinstance(val, (dict, list, str, int, float, bool)) or val is None
+
+
+class RoleHelper:
+    PUBLIC_ROLE_PREFIX: str = "public_role__"
+
+    @staticmethod
+    def hide_prefix(role_name: str) -> str:
+        return role_name.replace(RoleHelper.PUBLIC_ROLE_PREFIX, "")
+
+    @staticmethod
+    def add_prefix(role_name: str) -> str:
+        return f"{RoleHelper.PUBLIC_ROLE_PREFIX}{role_name}"
+
+    @staticmethod
+    def get_public_refix() -> str:
+        return RoleHelper.PUBLIC_ROLE_PREFIX
