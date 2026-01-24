@@ -6,6 +6,32 @@ class PyKeycloakException(Exception):
     def __init__(
         self,
         message: str = "",
+    ) -> None:
+        self.message = message
+
+    def __str__(self) -> str:
+        return f"{self.message}"
+
+
+class PyKeycloakUnexpectedBehaviourException(PyKeycloakException):
+    def __init__(
+        self,
+        message: str = "",
+        description: str = "",
+        affected_versions: list[str] | None = None,
+    ) -> None:
+        self.message = message
+        self.description = description
+        self.versions = affected_versions
+
+    def __str__(self) -> str:
+        return f"v:[{self.versions}]{self.message}: {self.description}"
+
+
+class PyKeycloakHTTPException(PyKeycloakException):
+    def __init__(
+        self,
+        message: str = "",
         status_code: int | None = None,
         content: bytes | None = None,
     ) -> None:

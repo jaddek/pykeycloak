@@ -80,15 +80,15 @@ REALM_USER_REALM_ROLES_COMPOSITE = (
 )
 
 REALM_CLIENT_USER_ROLE_MAPPING = (
-    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_id}"
+    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_uuid}"
 )
 
 REALM_CLIENT_USER_ROLE_MAPPING_AVAILABLE = (
-    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_id}/available"
+    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_uuid}/available"
 )
 
 REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE = (
-    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_id}/composite"
+    BASE_ADMIN_REALMS + "/users/{user_id}/role-mappings/clients/{client_uuid}/composite"
 )
 
 # ######################################################################
@@ -146,7 +146,7 @@ REALM_SERVER_INFO = "admin/serverinfo"
 
 REALM_CLIENT_INITIAL_ACCESS = BASE_ADMIN_REALMS + "/clients-initial-access"
 REALM_CLIENTS = BASE_ADMIN_REALMS + "/clients"
-REALM_CLIENT = REALM_CLIENTS + "/{client_id}"
+REALM_CLIENT = REALM_CLIENTS + "/{client_uuid}"
 REALM_CLIENT_ALL_SESSIONS = REALM_CLIENT + "/user-sessions"
 REALM_CLIENT_SECRETS = REALM_CLIENT + "/client-secret"
 REALM_CLIENT_ROLES = REALM_CLIENT + "/roles"
@@ -247,6 +247,9 @@ REALM_IDP = BASE_ADMIN_REALMS + "/identity-provider/instances/{alias}"
 REALM_ROLES_ROLE_BY_ID = BASE_ADMIN_REALMS + "/roles-by-id/{role_id}"
 REALM_ROLES_ROLE_BY_NAME = BASE_ADMIN_REALMS + "/roles/{role_name}"
 REALM_ROLES_COMPOSITE = BASE_ADMIN_REALMS + "/roles/{role_name}/composites"
+REALM_ROLES_DELETE_ROLE_BY_NAME = (
+    BASE_ADMIN_REALMS + "/clients/{client_uuid}/roles/{role_name}"
+)
 
 # ######################################################################
 # Export/Import

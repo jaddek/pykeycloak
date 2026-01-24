@@ -17,6 +17,7 @@ from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
     RefreshTokenPayload,
+    RolePayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
@@ -43,11 +44,40 @@ from pykeycloak.services.representations import (
 
 
 class BaseService:
+    """ """
+
     def __init__(self, provider: KeycloakProviderProtocol):
         self._provider = provider
 
     @staticmethod
     def validate_response(response: Response) -> JsonData:
+        if response.status_code == HTTPStatus.CREATED:
+            return None
+
+        if response.status_code == HTTPStatus.NO_CONTENT:
+            return None
+
+        if response.status_code == HTTPStatus.CONFLICT:
+            """
+            сюда
+            """
+            return None
+
+        if response.status_code == HTTPStatus.BAD_REQUEST:
+            """
+            сюда
+            """
+            return None
+
+        if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
+            """
+            сюда
+            """
+            return None
+
+        if response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
+            return None
+
         try:
             data = response.json()
         except Exception as e:
@@ -60,7 +90,9 @@ class BaseService:
 
 
 class UsersService(BaseService):
-    async def get_user_async(self, user_id: UUID) -> JsonData:
+    """ """
+
+    async def get_user_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.get_user_async(user_id=user_id)
 
         return cast(JsonData, response.json())
@@ -153,7 +185,7 @@ class UsersService(BaseService):
         return cast(JsonData, response.json())
 
     async def update_user_async(
-        self, user_id: UUID, payload: CreateUserPayload
+        self, user_id: UUID | str, payload: CreateUserPayload
     ) -> JsonData:
         response = await self._provider.update_user_by_id_async(
             user_id=user_id, payload=payload
@@ -162,7 +194,7 @@ class UsersService(BaseService):
         return cast(JsonData, response.json())
 
     async def enable_user_async(
-        self, user_id: UUID, payload: UserUpdateEnablePayload
+        self, user_id: UUID | str, payload: UserUpdateEnablePayload
     ) -> JsonData:
         response = await self._provider.update_user_enable_by_id_async(
             user_id=user_id, payload=payload
@@ -171,7 +203,7 @@ class UsersService(BaseService):
         return cast(JsonData, response.json())
 
     async def update_user_password_async(
-        self, user_id: UUID, payload: UserUpdatePasswordPayload
+        self, user_id: UUID | str, payload: UserUpdatePasswordPayload
     ) -> JsonData:
         response = await self._provider.update_user_password_by_id_async(
             user_id=user_id, payload=payload
@@ -179,22 +211,134 @@ class UsersService(BaseService):
 
         return cast(JsonData, response.json())
 
-    async def delete_user_async(self, user_id: UUID) -> JsonData:
+    async def delete_user_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.delete_user_async(user_id=user_id)
 
         return cast(JsonData, response.json())
 
 
 class RolesService(BaseService):
-    async def get_public_roles(self) -> None: ...
+    """ """
 
-    async def get_role_by_id(self) -> None: ...
+    async def get_client_roles_raw_async(self) -> JsonData:
+        response = await self._provider.get_client_roles_async()
 
-    async def update_role_by_id(self) -> None: ...
+        return self.validate_response(response)
 
-    async def delete_client_role(self) -> None: ...
+    async def get_client_roles_async(self) -> JsonData:
+        data = await self.get_client_roles_raw_async()
 
-    async def deep_role_copy(self) -> None: ...
+        return data
+
+    async def get_role_id_async(self, role_name: str) -> JsonData:
+        response = await self._provider.get_client_role_id_async(role_name=role_name)
+
+        return self.validate_response(response)
+
+    async def get_role_by_name_raw_async(self, role_name: str) -> JsonData:
+        response = await self._provider.get_role_by_name_async(role_name=role_name)
+
+        return self.validate_response(response)
+
+    async def get_role_by_name_async(self, role_name: str) -> JsonData:
+        data = await self.get_role_by_name_raw_async(role_name=role_name)
+
+        return data
+
+    async def create_role_raw_async(self, payload: RolePayload) -> JsonData:
+        response = await self._provider.create_role_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def create_role_async(self, payload: RolePayload) -> JsonData:
+        data = await self.create_role_raw_async(payload=payload)
+
+        return data
+
+    async def update_role_by_id_async(
+        self,
+        role_id: UUID,
+        payload: RolePayload,
+        skip_unexpected_behaviour_exception: bool = False,
+    ) -> None:
+        await self._provider.update_role_by_id_async(
+            role_id=role_id,
+            payload=payload,
+            skip_unexpected_behaviour_exception=skip_unexpected_behaviour_exception,
+        )
+
+    async def delete_role_by_id_async(self, role_id: UUID) -> JsonData:
+        response = await self._provider.delete_role_by_id_async(role_id=role_id)
+
+        return self.validate_response(response)
+
+    async def delete_role_by_name_async(self, role_name: str) -> JsonData:
+        response = await self._provider.delete_role_by_name_async(role_name=role_name)
+
+        return self.validate_response(response)
+
+    async def update_role_by_name_raw_async(
+        self, role_name: str, payload: RolePayload
+    ) -> JsonData:
+        response = await self._provider.update_role_by_name_async(
+            role_name=role_name, payload=payload
+        )
+
+        return self.validate_response(response)
+
+    async def update_role_by_name_async(
+        self, role_name: str, payload: RolePayload
+    ) -> JsonData:
+        data = await self.update_role_by_name_raw_async(
+            role_name=role_name, payload=payload
+        )
+
+        return data
+
+    async def assign_client_role_async(
+        self, user_id: UUID | str, roles: list[str]
+    ) -> JsonData:
+        response = await self._provider.assign_client_role_async(
+            user_id=user_id, roles=roles
+        )
+
+        return self.validate_response(response)
+
+    async def get_client_roles_of_user_async(self, user_id: UUID | str) -> JsonData:
+        response = await self._provider.get_client_roles_of_user_async(user_id=user_id)
+
+        return self.validate_response(response)
+
+    async def get_composite_client_roles_of_user_async(
+        self, user_id: UUID | str
+    ) -> JsonData:
+        response = await self._provider.get_composite_client_roles_of_user_async(
+            user_id=user_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_available_client_roles_of_user_async(
+        self, user_id: UUID | str
+    ) -> JsonData:
+        response = await self._provider.get_available_client_roles_of_user_async(
+            user_id=user_id
+        )
+
+        return self.validate_response(response)
+
+    async def delete_client_roles_of_user_async(
+        self, user_id: UUID | str, roles: list[str]
+    ) -> None:
+        await self._provider.delete_client_roles_of_user_async(
+            user_id=user_id,
+            roles=roles,
+        )
+
+    async def get_user_roles_async(self, user_id: UUID | str) -> JsonData:
+        response = await self._provider.get_user_roles_async(user_id=user_id)
+
+        return self.validate_response(response)
 
 
 class SessionsService(BaseService):
@@ -217,14 +361,14 @@ class SessionsService(BaseService):
 
     async def get_user_sessions_raw_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
     ) -> JsonData:
         response = await self._provider.get_user_sessions_async(user_id=user_id)
         return self.validate_response(response)
 
     async def get_user_sessions_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
         transform_to_response_model: type[list[SessionRepresentation]] = list[
             SessionRepresentation
         ],
@@ -281,7 +425,7 @@ class SessionsService(BaseService):
 
     async def remove_user_sessions_raw_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
     ) -> JsonData:
         response = await self._provider.remove_user_sessions_async(user_id=user_id)
         return self.validate_response(response)
@@ -311,7 +455,7 @@ class SessionsService(BaseService):
 
     async def get_client_user_offline_sessions_raw_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
     ) -> JsonData:
         response = await self._provider.get_client_user_offline_sessions_async(
             user_id=user_id
@@ -320,7 +464,7 @@ class SessionsService(BaseService):
 
     async def get_client_user_offline_sessions_async(
         self,
-        user_id: UUID,
+        user_id: UUID | str,
         transform_to_response_model: type[
             SessionRepresentation
         ] = SessionRepresentation,
