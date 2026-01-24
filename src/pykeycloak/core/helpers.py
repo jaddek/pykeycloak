@@ -57,7 +57,6 @@ def dataclass_from_dict[T](data: Any, cls: type[T]) -> T:
             raise TypeError(f"Expected list, got {type(data)}")
         return [dataclass_from_dict(item, inner_cls) for item in data]  # type: ignore
 
-    # Обработка одиночного объекта
     if not is_dataclass(cls):
         raise TypeError(f"{cls} must be a dataclass")
 

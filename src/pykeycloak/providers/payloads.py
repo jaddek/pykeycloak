@@ -15,10 +15,14 @@ from pykeycloak.core.enums import (
 
 @dataclass(frozen=True, kw_only=True)
 class Payload:
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         result = {}
         for field_info in fields(self):
             value = getattr(self, field_info.name)
+
+            if exclude_none and value is None:
+                continue
+
             alias = field_info.metadata.get("alias", field_info.name)
             result[alias] = value
         return result
@@ -56,7 +60,7 @@ class ObtainTokenPayload(Payload):
 
         return self.scopes
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         result = asdict(self)
         result |= {
             "grant_type": self.grant_type,
@@ -154,7 +158,7 @@ class UMAAuthorizationPayload(Payload):
     def grant_type(self) -> str:
         return GrantTypeEnum.URN_IETF_OAUTH_UMA_TICKET
 
-    def to_dict(self) -> dict[str, Any]:
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         return {
             "subject_token": self.subject_token,
             "audience": self.audience,
@@ -224,6 +228,5 @@ class RolePayload(Payload):
     description: str | None = None
     scope_param_required: bool | None = None
     composite: bool | None = None
-    client_role: bool | None = None
     container_id: str | None = None
     attributes: dict[str, list[str]] | None = None

@@ -334,7 +334,7 @@ class TestKeycloakProviderAsyncDetailed:
             username="test_user", email="test@example.com", enabled=True
         )
         await provider.create_user_async(
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -352,7 +352,7 @@ class TestKeycloakProviderAsyncDetailed:
         )
         await provider.update_user_by_id_async(
             user_id=uuid.uuid4(),
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -368,7 +368,7 @@ class TestKeycloakProviderAsyncDetailed:
         payload = UserUpdateEnablePayload(enabled=True)
         await provider.update_user_enable_by_id_async(
             user_id=uuid.uuid4(),
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -388,7 +388,7 @@ class TestKeycloakProviderAsyncDetailed:
         )
         await provider.update_user_password_by_id_async(
             user_id=uuid.uuid4(),
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -661,7 +661,7 @@ class TestKeycloakProviderAsyncDetailed:
         """Test create_role method."""
         payload = {"name": "test_role", "description": "Test role"}
         await provider.create_role(
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -680,7 +680,7 @@ class TestKeycloakProviderAsyncDetailed:
         payload = {"name": "updated_role", "description": "Updated role"}
         await provider.update_role_by_id_async(
             role_id=role_id,
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 
@@ -696,7 +696,7 @@ class TestKeycloakProviderAsyncDetailed:
         payload = {"name": "updated_role", "description": "Updated role"}
         await provider.update_role_by_name_async(
             role_name="test_role",
-            payload=payload,
+            payload=payload.to_dict(),
             access_token="test_token",  # noqa: S106
         )
 

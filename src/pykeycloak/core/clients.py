@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
-
 import logging
 from enum import Enum
 from types import TracebackType
@@ -72,10 +71,11 @@ class KeycloakHttpClientWrapperAsync:
             response = await self.client.request(method=method.value, url=url, **kwargs)
 
             logger.debug(
-                "Response method: %s, url: %s, content: %s, headers: %s",
+                "Response method: %s:%s, url: %s, content: %s, headers: %s",
                 method,
+                response.status_code,
                 url,
-                self._sanitizer.sanitize(response.json()),
+                self._sanitizer.sanitize(response.text),
                 self._sanitizer.sanitize(dict(response.headers)),
             )
 
