@@ -26,7 +26,9 @@ from ..core.token_manager import (
     mark_need_token_verification,
 )
 from ..core.urls import (
+    REALM_CLIENT,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
+    REALM_CLIENT_AUTHZ_SETTINGS,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
     REALM_CLIENT_OFFLINE_SESSIONS,
     REALM_CLIENT_OPENID_URL_AUTH_DEVICE,
@@ -45,6 +47,7 @@ from ..core.urls import (
     REALM_CLIENT_USER_ROLE_MAPPING_AVAILABLE,
     REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE,
     REALM_CLIENT_USER_SESSIONS,
+    REALM_CLIENTS,
     REALM_DELETE_SESSION,
     REALM_LOGOUT_ALL,
     REALM_ROLES_DELETE_ROLE_BY_NAME,
@@ -269,6 +272,12 @@ class KeycloakProviderProtocol(Protocol):
         self, user_id: UUID | str, access_token: str = ...
     ) -> Response: ...
 
+    async def get_clients_async(self, access_token: str = ...) -> Response: ...
+
+    async def get_client_async(self, access_token: str = ...) -> Response: ...
+
+    async def get_client_authz_settings(self, access_token: str = ...) -> Response: ...
+
 
 class KeycloakProviderAsync:
     def __init__(
@@ -284,6 +293,50 @@ class KeycloakProviderAsync:
 
         self._headers = headers or HeaderFactory()
         self._wrapper = wrapper or get_keycloak_client_wrapper_from_env()
+
+    ##############################################################
+    #  Clint endpoints
+    ##############################################################
+
+    @mark_need_token_verification
+    async def get_clients_async(self, access_token: str) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENTS),
+            headers=headers,
+        )
+
+        return response
+
+    @mark_need_token_verification
+    async def get_client_async(self, access_token: str) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT),
+            headers=headers,
+        )
+
+        return response
+
+    ##############################################################
+    #  Authz endpoints
+    ##############################################################
+
+    @mark_need_token_verification
+    async def get_client_authz_settings(self, access_token: str) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_SETTINGS),
+            headers=headers,
+        )
+
+        return response
 
     ##############################################################
     #  Auth/OpenID endpoints

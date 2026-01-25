@@ -112,3 +112,150 @@ class RoleRepresentation(Representation):
     client_role: bool | None = None
     container_id: str | None = None
     attributes: dict[str, list[str]] | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class PolicyRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+    type: str | None = None
+    logic: str | None = None  # "POSITIVE" or "NEGATIVE"
+    decision_strategy: str | None = None  # "AFFIRMATIVE", "UNANIMOUS", "CONSENSUS"
+    resources: list[str] = field(default_factory=list)
+    scopes: list[str] = field(default_factory=list)
+    config: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResourceRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+    type: str | None = None
+    owner_managed_access: bool = field(
+        default=False, metadata={"alias": "ownerManagedAccess"}
+    )
+    uris: list[str] = field(default_factory=list)
+    scopes: list[dict[str, str]] = field(default_factory=list)
+    attributes: dict[str, list[str]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ScopeRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class PermissionRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+    type: str | None = None  # "resource" or "scope"
+    policies: list[Any] = field(default_factory=list)
+    resources: list[Any] = field(default_factory=list)
+    scopes: list[Any] = field(default_factory=list)
+    decision_strategy: str | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class AuthzSettingsRepresentation(Representation):
+    allow_remote_resource_management: bool = field(
+        default=False, metadata={"alias": "allowRemoteResourceManagement"}
+    )
+    policy_enforcement_mode: str | None = field(
+        default=None, metadata={"alias": "policyEnforcementMode"}
+    )  # "ENFORCING", "PERMISSIVE", "DISABLED"
+    resources: list[ResourceRepresentation] = field(default_factory=list)
+    policies: list[PolicyRepresentation] = field(default_factory=list)
+    permissions: list[PermissionRepresentation] = field(default_factory=list)
+    scopes: list[ScopeRepresentation] = field(default_factory=list)
+    decision_strategy: str | None = field(
+        default=None, metadata={"alias": "decisionStrategy"}
+    )
+    name: str | None = None
+    id: str | None = None
+    type: str | None = None
+    description: str | None = None
+    attributes: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ProtocolMapperRepresentation(Representation):
+    id: str | None = None
+    name: str | None = None
+    protocol: str | None = None
+    protocol_mapper: str = field(metadata={"alias": "protocolMapper"})
+    consent_required: bool | None = field(
+        default=None, metadata={"alias": "consentRequired"}
+    )
+    config: dict[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class ClientRepresentation(Representation):
+    id: str | None = None
+    client_id: str = field(metadata={"alias": "clientId"})
+    name: str | None = None
+    description: str | None = None
+    root_url: str | None = field(default=None, metadata={"alias": "rootUrl"})
+    admin_url: str | None = field(default=None, metadata={"alias": "adminUrl"})
+    base_url: str | None = field(default=None, metadata={"alias": "baseUrl"})
+    surrogate_auth_required: bool = field(
+        default=False, metadata={"alias": "surrogateAuthRequired"}
+    )
+    enabled: bool = field(default=False)
+    always_display_in_console: bool = field(
+        default=False, metadata={"alias": "alwaysDisplayInConsole"}
+    )
+    client_authenticator_type: str | None = field(
+        default=None, metadata={"alias": "clientAuthenticatorType"}
+    )
+    secret: str | None = None
+    redirect_uris: list[str] = field(
+        default_factory=list, metadata={"alias": "redirectUris"}
+    )
+    web_origins: list[str] = field(
+        default_factory=list, metadata={"alias": "webOrigins"}
+    )
+    not_before: int = field(default=0, metadata={"alias": "notBefore"})
+    bearer_only: bool = field(default=False, metadata={"alias": "bearerOnly"})
+    consent_required: bool = field(default=False, metadata={"alias": "consentRequired"})
+    standard_flow_enabled: bool = field(
+        default=False, metadata={"alias": "standardFlowEnabled"}
+    )
+    implicit_flow_enabled: bool = field(
+        default=False, metadata={"alias": "implicitFlowEnabled"}
+    )
+    direct_access_grants_enabled: bool = field(
+        default=False, metadata={"alias": "directAccessGrantsEnabled"}
+    )
+    service_accounts_enabled: bool = field(
+        default=False, metadata={"alias": "serviceAccountsEnabled"}
+    )
+    authorization_services_enabled: bool = field(
+        default=False, metadata={"alias": "authorizationServicesEnabled"}
+    )
+    public_client: bool = field(default=False, metadata={"alias": "publicClient"})
+    frontchannel_logout: bool = field(
+        default=False, metadata={"alias": "frontchannelLogout"}
+    )
+    protocol: str | None = None
+    attributes: dict[str, str] = field(default_factory=dict)
+    authentication_flow_binding_overrides: dict[str, str] = field(
+        default_factory=dict, metadata={"alias": "authenticationFlowBindingOverrides"}
+    )
+    full_scope_allowed: bool = field(
+        default=False, metadata={"alias": "fullScopeAllowed"}
+    )
+    node_re_registration_timeout: int = field(
+        default=-1, metadata={"alias": "nodeReRegistrationTimeout"}
+    )
+    protocol_mappers: list[ProtocolMapperRepresentation] = field(
+        default_factory=list, metadata={"alias": "protocolMappers"}
+    )
+    default_client_scopes: list[str] = field(
+        default_factory=list, metadata={"alias": "defaultClientScopes"}
+    )
+    optional_client_scopes: list[str] = field(
+        default_factory=list, metadata={"alias": "optionalClientScopes"}
+    )
+    access: dict[str, bool] = field(default_factory=dict)
