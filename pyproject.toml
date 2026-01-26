@@ -112,6 +112,7 @@ build-backend = "uv_build"
 dev = [
   {include-group = "lint"},
   {include-group = "test"},
+  "ty>=0.0.13",
 ]
 lint = [
     "black>=25.1.0",
