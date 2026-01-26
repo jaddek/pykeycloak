@@ -143,6 +143,7 @@ class ResourceRepresentation(Representation):
 class ScopeRepresentation(Representation):
     id: str | None = None
     name: str | None = None
+    display_name: str | None = field(default=None, metadata={"alias": "display_name"})
 
 
 @dataclass(frozen=True, kw_only=True)
