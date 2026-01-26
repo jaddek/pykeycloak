@@ -24,11 +24,6 @@ REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS = (
     + "/clients/{client_id}/authz/resource-server/resource/{resource_id}/permissions"
 )
 
-REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES = (
-    BASE_ADMIN_REALMS
-    + "/clients/{client_id}/authz/resource-server/policy/{policy_id}/associatedPolicies"
-)
-
 REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER = (
     BASE_ADMIN_REALMS + "/clients/{client_id}/authz/resource-server/policy/user"
 )
@@ -186,15 +181,15 @@ REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION = (
 REALM_CLIENT_AUTHZ_POLICY = REALM_CLIENT_AUTHZ + "/policy/{policy_id}"
 REALM_CLIENT_AUTHZ_POLICY_SCOPES = REALM_CLIENT_AUTHZ_POLICY + "/scopes"
 REALM_CLIENT_AUTHZ_POLICY_RESOURCES = REALM_CLIENT_AUTHZ_POLICY + "/resources"
-REALM_CLIENT_AUTHZ_SCOPE_PERMISSION = (
-    REALM_CLIENT_AUTHZ + "/permission/scope/{scope_id}"
+REALM_CLIENT_AUTHZ_PERMISSION_SCOPE = (
+    REALM_CLIENT_AUTHZ + "/permission/scope/{permission_id}"
 )
 REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION = (
-    REALM_CLIENT_AUTHZ + "/permission/resource/{resource_id}"
+    REALM_CLIENT_AUTHZ + "/permission/resource/{permission_id}"
 )
-REALM_ADD_CLIENT_AUTHZ_SCOPE_PERMISSION = REALM_CLIENT_AUTHZ + "/permission/scope"
+REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION = REALM_CLIENT_AUTHZ + "/permission/scope"
 REALM_CLIENT_AUTHZ_CLIENT_POLICY = REALM_CLIENT_AUTHZ + "/policy/client"
-REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_POLICIES = (
+REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES = (
     REALM_CLIENT_AUTHZ + "/policy/{policy_id}/associatedPolicies"
 )
 

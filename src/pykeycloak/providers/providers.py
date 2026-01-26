@@ -15,7 +15,11 @@ from pykeycloak.core.clients import (
     get_keycloak_client_wrapper_from_env,
 )
 from pykeycloak.core.headers import HeaderFactory, HeadersProtocol
-from pykeycloak.providers.payloads import RolePayload
+from pykeycloak.providers.payloads import (
+    PermissionPayload,
+    PermissionScopesPayload,
+    RolePayload,
+)
 
 from ..core.exceptions import PyKeycloakUnexpectedBehaviourException
 from ..core.realm import RealmClient
@@ -28,6 +32,12 @@ from ..core.token_manager import (
 from ..core.urls import (
     REALM_CLIENT,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
+    REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
+    REALM_CLIENT_AUTHZ_PERMISSION_SCOPE,
+    REALM_CLIENT_AUTHZ_PERMISSIONS,
+    REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION,
+    REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION,
+    REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION,
     REALM_CLIENT_AUTHZ_SCOPES,
     REALM_CLIENT_AUTHZ_SETTINGS,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
@@ -74,6 +84,7 @@ from .payloads import (
 )
 from .queries import (
     BriefRepresentationQuery,
+    FindPermissionQuery,
     GetUsersQuery,
     PaginationQuery,
     RoleMembersListQuery,
@@ -281,6 +292,39 @@ class KeycloakProviderProtocol(Protocol):
 
     async def get_client_authz_scopes_async(
         self, access_token: str = ...
+    ) -> Response: ...
+
+    async def create_client_authz_permission_resource_based_async(
+        self, payload: PermissionPayload, access_token: str = ...
+    ) -> Response: ...
+
+    async def create_client_authz_permission_scope_based_async(
+        self, payload: PermissionPayload, access_token: str = ...
+    ) -> Response: ...
+
+    async def get_permissions_async(
+        self,
+        access_token: str = ...,
+        query: FindPermissionQuery | None = None,
+    ) -> Response: ...
+
+    async def get_permissions_for_scope_by_id_async(
+        self, permission_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def delete_permission_async(
+        self, permission_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def update_permission_scopes_async(
+        self,
+        permission_id: str,  # resource OR scope based permission
+        payload: PermissionScopesPayload,
+        access_token: str = ...,
+    ) -> Response: ...
+
+    async def get_policy_associated_role_policies_async(
+        self, policy_id: str, access_token: str = ...
     ) -> Response: ...
 
 
@@ -1131,9 +1175,118 @@ class KeycloakProviderAsync:
     #  Authz Policies
     ##############################################################
 
+    async def get_policy_associated_role_policies_async(
+        self, policy_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
+                policy_id=policy_id,
+            ),
+            headers=headers,
+        )
+
+        return response
+
     ##############################################################
     #  Authz Permissions
     ##############################################################
+
+    async def create_client_authz_permission_resource_based_async(
+        self, payload: PermissionPayload, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.POST,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
+
+    async def create_client_authz_permission_scope_based_async(
+        self, payload: PermissionPayload, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.POST,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
+
+    async def get_permissions_async(
+        self,
+        access_token: str,
+        query: FindPermissionQuery | None = None,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS),
+            headers=headers,
+            query=query,
+        )
+
+        return response
+
+    async def get_permissions_for_scope_by_id_async(
+        self, permission_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_PERMISSION_SCOPE, permission_id=permission_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def delete_permission_async(
+        self, permission_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.DELETE,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION, permission_id=permission_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def update_permission_scopes_async(
+        self,
+        permission_id: str,  # resource OR scope based permission
+        payload: PermissionScopesPayload,
+        access_token: str,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.PUT,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_PERMISSION_SCOPE, permission_id=permission_id
+            ),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
 
     ##############################################################
     #  ...

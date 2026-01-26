@@ -15,6 +15,8 @@ from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
+    PermissionPayload,
+    PermissionScopesPayload,
     RefreshTokenPayload,
     RolePayload,
     RTPIntrospectionPayload,
@@ -28,6 +30,7 @@ from pykeycloak.providers.providers import (
     KeycloakProviderProtocol,
 )
 from pykeycloak.providers.queries import (
+    FindPermissionQuery,
     GetUsersQuery,
     PaginationQuery,
     RoleMembersListQuery,
@@ -36,6 +39,8 @@ from pykeycloak.services.representations import (
     AuthzSettingsRepresentation,
     ClientRepresentation,
     IntrospectRepresentation,
+    PermissionRepresentation,
+    PolicyRepresentation,
     ScopeRepresentation,
     SessionRepresentation,
     SessionsCountRepresentation,
@@ -645,7 +650,93 @@ class AuthzScopeService(BaseService):
 
         return self.validate_response(response)
 
-    async def get_client_authz_scopes_async(self) -> JsonData:
+    async def get_client_authz_scopes_async(self) -> list[ScopeRepresentation]:
         data = await self.get_client_authz_scopes_raw_async()
 
         return dataclass_from_dict(data, list[ScopeRepresentation])
+
+
+class AuthzPermissionService(BaseService):
+    async def create_client_authz_permission_resource_based_async(
+        self, payload: PermissionPayload
+    ) -> JsonData:
+        response = (
+            await self._provider.create_client_authz_permission_resource_based_async(
+                payload=payload
+            )
+        )
+
+        return self.validate_response(response)
+
+    async def create_client_authz_permission_scope_based_async(
+        self, payload: PermissionPayload
+    ) -> JsonData:
+        response = (
+            await self._provider.create_client_authz_permission_resource_based_async(
+                payload=payload
+            )
+        )
+
+        return self.validate_response(response)
+
+    async def get_permissions_raw_async(
+        self, query: FindPermissionQuery | None = None
+    ) -> JsonData:
+        response = await self._provider.get_permissions_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_permissions_async(
+        self, query: FindPermissionQuery | None = None
+    ) -> list[PermissionRepresentation]:
+        data = await self.get_permissions_raw_async(query=query)
+
+        return dataclass_from_dict(data, list[PermissionRepresentation])
+
+    async def get_permissions_for_scope_by_id_async(
+        self, permission_id: str
+    ) -> JsonData:
+        """?! не понимаю что этот метод делает"""
+        response = await self._provider.get_permissions_for_scope_by_id_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def delete_permission_async(self, permission_id: str) -> JsonData:
+        response = await self._provider.get_permissions_for_scope_by_id_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def update_permission_scopes_async(
+        self,
+        permission_id: str,  # resource OR scope based permission
+        payload: PermissionScopesPayload,
+    ) -> JsonData:
+        response = await self._provider.update_permission_scopes_async(
+            permission_id=permission_id, payload=payload
+        )
+
+        return self.validate_response(response)
+
+
+class AuthPolicyService(BaseService):
+    async def get_policy_associated_role_policies_raw_async(
+        self, policy_id: str
+    ) -> JsonData:
+        response = await self._provider.get_policy_associated_role_policies_async(
+            policy_id=policy_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policy_associated_role_policies_async(
+        self, policy_id: str
+    ) -> list[PolicyRepresentation]:
+        data = await self.get_policy_associated_role_policies_raw_async(
+            policy_id=policy_id
+        )
+
+        return dataclass_from_dict(data, list[PolicyRepresentation])

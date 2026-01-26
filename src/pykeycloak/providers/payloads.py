@@ -8,6 +8,7 @@ from uuid import UUID
 
 from pykeycloak.core.enums import (
     GrantTypeEnum,
+    LogicEnum,
     UrnIetfOauthUmaTicketPermissionResourceFormatEnum,
     UrnIetfOauthUmaTicketResponseModeEnum,
 )
@@ -230,3 +231,24 @@ class RolePayload(Payload):
     composite: bool | None = None
     container_id: str | None = None
     attributes: dict[str, list[str]] | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class PermissionPayload(Payload):
+    id: str | None = None
+    name: str | None = None
+    type: str | None = None
+    logic: LogicEnum | None = None
+    description: str | None = None
+    decision_strategy: str | None = field(
+        default=None, metadata={"alias": "decisionStrategy"}
+    )
+
+
+@dataclass(frozen=True, kw_only=True)
+class PermissionScopesPayload(Payload):
+    name: str
+    policies: list[str] = field(default_factory=list)
+    decision_strategy: str | None = field(
+        default=None, metadata={"alias": "decisionStrategy"}
+    )

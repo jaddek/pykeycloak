@@ -114,19 +114,6 @@ class AdminRealmClientRoleGroupQuery(BriefRepresentationQuery, PaginationQuery):
 
 
 @dataclass(kw_only=True, slots=True)
-class FindPermissionQuery(PaginationQuery):
-    fields: list[str] | None = None
-    name: str | None = None
-    owner: str | None = None
-    permission: bool | None = None
-    policy_id: str | None = None
-    resource: str | None = None
-    resource_type: str | None = field(default=None, metadata={"alias": "resourceType"})
-    scope: str | None = None
-    type: str | None = None
-
-
-@dataclass(kw_only=True, slots=True)
 class FilterFindPolicyParams(BaseQuery):
     fields: list[str] | None = None
     name: str | None = None
@@ -141,3 +128,16 @@ class FilterQueryParams(PaginationQuery):
     resource_type: str | None = field(default=None, metadata={"alias": "type"})
     scope: str | None = None
     matching_uri: bool = field(default=False, metadata={"alias": "matchingUri"})
+
+
+@dataclass(kw_only=True, slots=True)
+class FindPermissionQuery(PaginationQuery):
+    fields: list[str] | None = None
+    name: str | None = None
+    owner: str | None = None
+    permission: bool | None = None
+    policy_id: str | None = field(default=None, metadata={"alias": "policyId"})
+    resource: str | None = None
+    resource_type: str | None = field(default=None, metadata={"alias": "resourceType"})
+    scope: str | None = None
+    type: str | None = None
