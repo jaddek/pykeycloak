@@ -36,6 +36,7 @@ from pykeycloak.services.representations import (
     AuthzSettingsRepresentation,
     ClientRepresentation,
     IntrospectRepresentation,
+    ScopeRepresentation,
     SessionRepresentation,
     SessionsCountRepresentation,
     SessionsStatsRepresentation,
@@ -636,3 +637,15 @@ class AuthzService(BaseService):
         data = await self.get_client_authz_settings_raw_async()
 
         return dataclass_from_dict(data, AuthzSettingsRepresentation)
+
+
+class AuthzScopeService(BaseService):
+    async def get_client_authz_scopes_raw_async(self) -> JsonData:
+        response = await self._provider.get_client_authz_scopes_async()
+
+        return self.validate_response(response)
+
+    async def get_client_authz_scopes_async(self) -> JsonData:
+        data = await self.get_client_authz_scopes_raw_async()
+
+        return dataclass_from_dict(data, list[ScopeRepresentation])
