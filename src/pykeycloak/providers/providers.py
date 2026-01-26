@@ -28,6 +28,7 @@ from ..core.token_manager import (
 from ..core.urls import (
     REALM_CLIENT,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
+    REALM_CLIENT_AUTHZ_SCOPES,
     REALM_CLIENT_AUTHZ_SETTINGS,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
     REALM_CLIENT_OFFLINE_SESSIONS,
@@ -277,6 +278,10 @@ class KeycloakProviderProtocol(Protocol):
     async def get_client_async(self, access_token: str = ...) -> Response: ...
 
     async def get_client_authz_settings(self, access_token: str = ...) -> Response: ...
+
+    async def get_client_authz_scopes_async(
+        self, access_token: str = ...
+    ) -> Response: ...
 
 
 class KeycloakProviderAsync:
@@ -1101,6 +1106,34 @@ class KeycloakProviderAsync:
         )
 
         return response
+
+    ##############################################################
+    #  Authz Scopes
+    ##############################################################
+
+    @mark_need_token_verification
+    async def get_client_authz_scopes_async(self, access_token: str) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_SCOPES),
+            headers=headers,
+        )
+
+        return response
+
+    ##############################################################
+    #  Authz Resources
+    ##############################################################
+
+    ##############################################################
+    #  Authz Policies
+    ##############################################################
+
+    ##############################################################
+    #  Authz Permissions
+    ##############################################################
 
     ##############################################################
     #  ...
