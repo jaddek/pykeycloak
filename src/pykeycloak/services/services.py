@@ -18,7 +18,9 @@ from pykeycloak.providers.payloads import (
     PermissionPayload,
     PermissionScopesPayload,
     RefreshTokenPayload,
+    ResourcePayload,
     RolePayload,
+    RolePolicyPayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
@@ -30,9 +32,11 @@ from pykeycloak.providers.providers import (
     KeycloakProviderProtocol,
 )
 from pykeycloak.providers.queries import (
+    FilterFindPolicyParams,
     FindPermissionQuery,
     GetUsersQuery,
     PaginationQuery,
+    ResourcesListQuery,
     RoleMembersListQuery,
 )
 from pykeycloak.services.representations import (
@@ -101,7 +105,7 @@ class UsersService(BaseService):
 
         return self.validate_response(response)
 
-    async def get_users_count(self, query: GetUsersQuery | None = None) -> int:
+    async def get_users_count_async(self, query: GetUsersQuery | None = None) -> int:
         response = await self._provider.get_users_count_async(query=query)
 
         return int(response.json())
@@ -456,6 +460,15 @@ class SessionsService(BaseService):
 
         return dataclass_from_dict(data, SessionRepresentation)
 
+    async def delete_session_by_id_async(
+        self, session_id: UUID | str, is_offline: bool
+    ) -> JsonData:
+        response = await self._provider.delete_session_by_id_async(
+            session_id=session_id, is_offline=is_offline
+        )
+
+        return self.validate_response(response)
+
 
 class AuthService(BaseService):
     ###
@@ -495,6 +508,28 @@ class AuthService(BaseService):
         payload: UserCredentialsLoginPayload,
     ) -> TokenRepresentation:
         data = await self.user_login_raw_async(payload=payload)
+
+        return dataclass_from_dict(data, TokenRepresentation)
+
+    ###
+    # General token operations
+    ###
+
+    async def obtain_token_raw_async(
+        self,
+        *,
+        payload: ClientCredentialsLoginPayload | UserCredentialsLoginPayload,
+    ) -> JsonData:
+        response = await self._provider.obtain_token_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def obtain_token_async(
+        self,
+        *,
+        payload: ClientCredentialsLoginPayload | UserCredentialsLoginPayload,
+    ) -> TokenRepresentation:
+        data = await self.obtain_token_raw_async(payload=payload)
 
         return dataclass_from_dict(data, TokenRepresentation)
 
@@ -542,8 +577,13 @@ class AuthService(BaseService):
     # Logout
     ###
 
+    async def logout_raw_async(self, refresh_token: str) -> JsonData:
+        response = await self._provider.logout_async(refresh_token=refresh_token)
+
+        return self.validate_response(response)
+
     async def logout_async(self, refresh_token: str) -> None:
-        response = await self._provider.logout_async(refresh_token)
+        response = await self._provider.logout_async(refresh_token=refresh_token)
 
         if response.status_code != HTTPStatus.NO_CONTENT:
             raise ValueError("Unexpected response from Keycloak")
@@ -552,7 +592,7 @@ class AuthService(BaseService):
     # Introspect
     ###
 
-    async def introspect_raw_async(
+    async def introspect_token_raw_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> JsonData:
@@ -560,11 +600,11 @@ class AuthService(BaseService):
 
         return self.validate_response(response)
 
-    async def introspect_async(
+    async def introspect_token_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> IntrospectRepresentation:
-        data = await self.introspect_raw_async(payload=payload)
+        data = await self.introspect_token_raw_async(payload=payload)
 
         return dataclass_from_dict(data, IntrospectRepresentation)
 
@@ -574,8 +614,17 @@ class AuthService(BaseService):
 
     async def auth_device_raw_async(
         self,
+        access_token: str,
     ) -> JsonData:
-        response = await self._provider.auth_device_async()
+        response = await self._provider.auth_device_async(access_token=access_token)
+
+        return self.validate_response(response)
+
+    async def auth_device_async(
+        self,
+        access_token: str,
+    ) -> JsonData:
+        response = await self._provider.auth_device_async(access_token=access_token)
 
         return self.validate_response(response)
 
@@ -585,10 +634,52 @@ class AuthService(BaseService):
 
     async def get_certs_raw_async(
         self,
+        access_token: str,
     ) -> JsonData:
-        response = await self._provider.get_certs_async()
+        response = await self._provider.get_certs_async(access_token=access_token)
 
         return self.validate_response(response)
+
+    async def get_certs_async(
+        self,
+        access_token: str,
+    ) -> JsonData:
+        response = await self._provider.get_certs_async(access_token=access_token)
+
+        return self.validate_response(response)
+
+    ###
+    # Revoke
+    ###
+
+    async def revoke_raw_async(
+        self,
+        refresh_token: str,
+    ) -> JsonData:
+        response = await self._provider.revoke_async(refresh_token=refresh_token)
+
+        return self.validate_response(response)
+
+    async def revoke_async(
+        self,
+        refresh_token: str,
+    ) -> None:
+        response = await self._provider.revoke_async(refresh_token=refresh_token)
+
+        if response.status_code != HTTPStatus.NO_CONTENT:
+            raise ValueError("Unexpected response from Keycloak")
+
+    ###
+    # UMA Permissions
+    ###
+
+    async def get_uma_permission_async(
+        self,
+        payload: UMAAuthorizationPayload,
+    ) -> JsonData:
+        data = await self.get_uma_permission_async(payload=payload)
+
+        return data
 
 
 class UmaService(BaseService):
@@ -644,6 +735,53 @@ class AuthzService(BaseService):
         return dataclass_from_dict(data, AuthzSettingsRepresentation)
 
 
+class AuthzResourceService(BaseService):
+    async def get_resources_raw_async(
+        self, query: ResourcesListQuery | None = None
+    ) -> JsonData:
+        response = await self._provider.get_resources_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_resources_async(
+        self, query: ResourcesListQuery | None = None
+    ) -> JsonData:
+        data = await self.get_resources_raw_async(query=query)
+
+        return data
+
+    async def create_resource_async(self, payload: ResourcePayload) -> JsonData:
+        response = await self._provider.create_resource_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def get_resource_by_id_raw_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.get_resource_by_id_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_resource_by_id_async(self, resource_id: str) -> JsonData:
+        data = await self.get_resource_by_id_raw_async(resource_id=resource_id)
+
+        return data
+
+    async def delete_resource_by_id_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.delete_resource_by_id_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_resource_permissions_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.get_resource_permissions_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+
 class AuthzScopeService(BaseService):
     async def get_client_authz_scopes_raw_async(self) -> JsonData:
         response = await self._provider.get_client_authz_scopes_async()
@@ -672,7 +810,7 @@ class AuthzPermissionService(BaseService):
         self, payload: PermissionPayload
     ) -> JsonData:
         response = (
-            await self._provider.create_client_authz_permission_resource_based_async(
+            await self._provider.create_client_authz_permission_scope_based_async(
                 payload=payload
             )
         )
@@ -704,7 +842,7 @@ class AuthzPermissionService(BaseService):
         return self.validate_response(response)
 
     async def delete_permission_async(self, permission_id: str) -> JsonData:
-        response = await self._provider.get_permissions_for_scope_by_id_async(
+        response = await self._provider.delete_permission_async(
             permission_id=permission_id
         )
 
@@ -740,3 +878,58 @@ class AuthPolicyService(BaseService):
         )
 
         return dataclass_from_dict(data, list[PolicyRepresentation])
+
+    async def create_policy_role_async(self, payload: RolePolicyPayload) -> JsonData:
+        response = await self._provider.create_policy_role_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def delete_policy_async(self, policy_id: str) -> JsonData:
+        response = await self._provider.delete_policy_async(policy_id=policy_id)
+
+        return self.validate_response(response)
+
+    async def create_policy_async(self, payload: PermissionPayload) -> JsonData:
+        response = await self._provider.create_policy_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def get_policy_by_name_raw_async(
+        self, query: FilterFindPolicyParams | None = None
+    ) -> JsonData:
+        response = await self._provider.get_policy_by_name_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_policy_by_name_async(
+        self, query: FilterFindPolicyParams | None = None
+    ) -> JsonData:
+        data = await self.get_policy_by_name_raw_async(query=query)
+
+        return data
+
+    async def get_associated_policies_async(self, policy_id: str) -> JsonData:
+        response = await self._provider.get_associated_policies_async(
+            policy_id=policy_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policy_authorisation_scopes_async(
+        self, permission_id: str
+    ) -> JsonData:
+        response = await self._provider.get_policy_authorisation_scopes_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policies_raw_async(self) -> JsonData:
+        response = await self._provider.get_policies_async()
+
+        return self.validate_response(response)
+
+    async def get_policies_async(self) -> JsonData:
+        data = await self.get_policies_raw_async()
+
+        return data

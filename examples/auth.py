@@ -45,7 +45,7 @@ async def main():
     )
 
     ## introspec async (RTP or Token depends on payload)
-    result = await auth_service.introspect_async(  # noqa: F841
+    result = await auth_service.introspect_token_async(  # noqa: F841
         payload=TokenIntrospectionPayload(
             token=refresh.auth_token,
         )

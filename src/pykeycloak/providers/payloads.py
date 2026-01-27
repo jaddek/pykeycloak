@@ -252,3 +252,27 @@ class PermissionScopesPayload(Payload):
     decision_strategy: str | None = field(
         default=None, metadata={"alias": "decisionStrategy"}
     )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResourcePayload(Payload):
+    id: str | None = None
+    name: str | None = None
+    display_name: str | None = field(default=None, metadata={"alias": "displayName"})
+    type: str | None = None
+    uris: list[str] = field(default_factory=list)
+    scopes: list[dict[str, str]] = field(default_factory=list)
+    attributes: dict[str, list[str]] = field(default_factory=dict)
+
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
+        result = super().to_dict(exclude_none=exclude_none)
+
+        result["_id"] = result.pop("id")
+
+        return result
+
+
+@dataclass(frozen=True, kw_only=True)
+class RolePolicyPayload(Payload):
+    name: str
+    roles: list[str] = field(default_factory=list)

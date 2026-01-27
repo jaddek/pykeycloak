@@ -13,16 +13,16 @@ from pykeycloak.core.helpers import getenv_int
 
 @dataclass(kw_only=True)
 class BaseQuery:
-    def to_dict(self) -> dict[str, Any]:
-        """Универсальная быстрая конвертация для всех подклассов."""
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         params = {}
         for f in fields(self):
-            val = getattr(self, f.name)
-            if val is None or val is False:
+            value = getattr(self, f.name)
+
+            if exclude_none and value is None:
                 continue
 
             name = f.metadata.get("alias", f.name)
-            params[name] = "true" if val is True else str(val)
+            params[name] = str(value)
         return params
 
     def __call__(self) -> dict[str, Any]:

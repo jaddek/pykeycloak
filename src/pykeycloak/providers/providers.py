@@ -18,7 +18,9 @@ from pykeycloak.core.headers import HeaderFactory, HeadersProtocol
 from pykeycloak.providers.payloads import (
     PermissionPayload,
     PermissionScopesPayload,
+    ResourcePayload,
     RolePayload,
+    RolePolicyPayload,
 )
 
 from ..core.exceptions import PyKeycloakUnexpectedBehaviourException
@@ -35,8 +37,17 @@ from ..core.urls import (
     REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
     REALM_CLIENT_AUTHZ_PERMISSION_SCOPE,
     REALM_CLIENT_AUTHZ_PERMISSIONS,
+    REALM_CLIENT_AUTHZ_POLICIES,
+    REALM_CLIENT_AUTHZ_POLICY,
+    REALM_CLIENT_AUTHZ_POLICY_SCOPES,
+    REALM_CLIENT_AUTHZ_RESOURCE,
     REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION,
     REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION,
+    REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS,
+    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE,
+    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH,
+    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER,
+    REALM_CLIENT_AUTHZ_RESOURCES,
     REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION,
     REALM_CLIENT_AUTHZ_SCOPES,
     REALM_CLIENT_AUTHZ_SETTINGS,
@@ -84,9 +95,11 @@ from .payloads import (
 )
 from .queries import (
     BriefRepresentationQuery,
+    FilterFindPolicyParams,
     FindPermissionQuery,
     GetUsersQuery,
     PaginationQuery,
+    ResourcesListQuery,
     RoleMembersListQuery,
 )
 
@@ -181,7 +194,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def delete_session_by_id_async(
-        self, session_id: UUID, is_offline: bool, access_token: str = ...
+        self, session_id: UUID | str, is_offline: bool, access_token: str = ...
     ) -> Response: ...
 
     async def get_client_user_sessions_async(
@@ -325,6 +338,59 @@ class KeycloakProviderProtocol(Protocol):
 
     async def get_policy_associated_role_policies_async(
         self, policy_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def get_resources_async(
+        self, access_token: str = ..., query: ResourcesListQuery | None = None
+    ) -> Response: ...
+
+    async def create_resource_async(
+        self, payload: ResourcePayload, access_token: str = ...
+    ) -> Response: ...
+
+    async def get_resource_by_id_async(
+        self, resource_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def delete_resource_by_id_async(
+        self, resource_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def get_resource_permissions_async(
+        self, resource_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def create_policy_role_async(
+        self, payload: RolePolicyPayload, access_token: str = ...
+    ) -> Response: ...
+
+    async def delete_policy_async(
+        self, policy_id: str, access_token: str = ...
+    ) -> Response: ...
+
+    async def create_policy_async(
+        self, payload: PermissionPayload, access_token: str = ...
+    ) -> Response: ...
+
+    async def get_policy_by_name_async(
+        self, access_token: str = ..., query: FilterFindPolicyParams | None = None
+    ) -> Response: ...
+
+    async def get_associated_policies_async(
+        self,
+        policy_id: str,
+        access_token: str = ...,
+    ) -> Response: ...
+
+    async def get_policy_authorisation_scopes_async(
+        self,
+        permission_id: str,
+        access_token: str = ...,
+    ) -> Response: ...
+
+    async def get_policies_async(
+        self,
+        access_token: str = ...,
     ) -> Response: ...
 
 
@@ -610,7 +676,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USERS_COUNT),
             headers=headers,
-            params=query,
+            params=query.to_dict() if query else None,
         )
 
     @mark_need_token_verification
@@ -753,7 +819,7 @@ class KeycloakProviderAsync:
                 path=REALM_CLIENT_USER_SESSIONS, id=self._realm_client.client_uuid
             ),
             headers=headers,
-            params=query.to_dict() if query else {},
+            params=query.to_dict() if query else None,
         )
 
         return response
@@ -774,7 +840,7 @@ class KeycloakProviderAsync:
 
     @mark_need_token_verification
     async def delete_session_by_id_async(
-        self, session_id: UUID, is_offline: bool, access_token: str
+        self, session_id: UUID | str, is_offline: bool, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -830,7 +896,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OFFLINE_SESSIONS),
             headers=headers,
-            params=query,
+            params=query.to_dict() if query else None,
         )
 
         return response
@@ -1171,9 +1237,188 @@ class KeycloakProviderAsync:
     #  Authz Resources
     ##############################################################
 
+    async def get_resources_async(
+        self,
+        access_token: str,
+        query: ResourcesListQuery | None = None,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCES),
+            headers=headers,
+            params=query.to_dict() if query else None,
+        )
+
+        return response
+
+    async def create_resource_async(
+        self,
+        payload: ResourcePayload,
+        access_token: str,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.POST,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCES),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
+
+    async def get_resource_by_id_async(
+        self, resource_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_RESOURCE, resource_id=resource_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def delete_resource_by_id_async(
+        self, resource_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.DELETE,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_RESOURCE, resource_id=resource_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def get_resource_permissions_async(
+        self, resource_id: str, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS, resource_id=resource_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
     ##############################################################
     #  Authz Policies
     ##############################################################
+
+    async def create_policy_role_async(
+        self, payload: RolePolicyPayload, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
+
+    async def delete_policy_async(self, policy_id: str, access_token: str) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.DELETE,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY, policy_id=policy_id),
+            headers=headers,
+        )
+
+        return response
+
+    async def create_policy_async(
+        self, payload: PermissionPayload, access_token: str
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.POST,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER),
+            headers=headers,
+            data=payload.to_dict(),
+        )
+
+        return response
+
+    async def get_policy_by_name_async(
+        self, access_token: str, query: FilterFindPolicyParams | None = None
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH),
+            headers=headers,
+            params=query.to_dict() if query else None,
+        )
+
+        return response
+
+    async def get_associated_policies_async(
+        self,
+        policy_id: str,
+        access_token: str,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
+                policy_id=policy_id,
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def get_policy_authorisation_scopes_async(
+        self,
+        permission_id: str,
+        access_token: str,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_POLICY_SCOPES, permission_id=permission_id
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    async def get_policies_async(
+        self,
+        access_token: str,
+    ) -> Response:
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request(
+            method=HttpMethod.GET,
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICIES),
+            headers=headers,
+        )
+
+        return response
 
     async def get_policy_associated_role_policies_async(
         self, policy_id: str, access_token: str
@@ -1297,10 +1542,10 @@ class KeycloakProviderAsync:
 
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {
-            "realm": self._realm,
-            "client_id": self._realm_client.client_id,
-            "client_uuid": self._realm_client.client_uuid,
-            **kwargs,
+            "realm": str(self._realm),
+            "client_id": str(self._realm_client.client_id),
+            "client_uuid": str(self._realm_client.client_uuid),
+            **{k: str(v) for k, v in kwargs.items()},
         }
         return path.format(**params)
 
