@@ -130,6 +130,7 @@ class PolicyRepresentation(Representation):
 class ResourceRepresentation(Representation):
     id: str | None = None
     name: str | None = None
+    display_name: str | None = field(default=None, metadata={"alias": "displayName"})
     type: str | None = None
     owner_managed_access: bool = field(
         default=False, metadata={"alias": "ownerManagedAccess"}
@@ -137,6 +138,12 @@ class ResourceRepresentation(Representation):
     uris: list[str] = field(default_factory=list)
     scopes: list[dict[str, str]] = field(default_factory=list)
     attributes: dict[str, list[str]] = field(default_factory=dict)
+    icon_uri: str | None = None
+    owner: dict | None = None
+    uri: str | None = None
+    scopes_uma: set["ScopeRepresentation"] = field(
+        default_factory=set, metadata={"alias": "scopesUma"}
+    )
 
 
 @dataclass(frozen=True, kw_only=True)

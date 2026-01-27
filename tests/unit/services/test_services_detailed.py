@@ -226,7 +226,7 @@ class TestServicesDetailed:
         mock_response.json.return_value = {"active": True, "username": "test_user"}
         mock_provider.introspect_token_async.return_value = mock_response
 
-        result = await auth_service.introspect_raw_async(payload=payload)
+        result = await auth_service.introspect_token_raw_async(payload=payload)
 
         assert "active" in result
         assert mock_provider.introspect_token_async.called

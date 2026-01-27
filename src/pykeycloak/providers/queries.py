@@ -13,16 +13,16 @@ from pykeycloak.core.helpers import getenv_int
 
 @dataclass(kw_only=True)
 class BaseQuery:
-    def to_dict(self) -> dict[str, Any]:
-        """Универсальная быстрая конвертация для всех подклассов."""
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         params = {}
         for f in fields(self):
-            val = getattr(self, f.name)
-            if val is None or val is False:
+            value = getattr(self, f.name)
+
+            if exclude_none and value is None:
                 continue
 
             name = f.metadata.get("alias", f.name)
-            params[name] = "true" if val is True else str(val)
+            params[name] = str(value)
         return params
 
     def __call__(self) -> dict[str, Any]:
@@ -114,19 +114,6 @@ class AdminRealmClientRoleGroupQuery(BriefRepresentationQuery, PaginationQuery):
 
 
 @dataclass(kw_only=True, slots=True)
-class FindPermissionQuery(PaginationQuery):
-    fields: list[str] | None = None
-    name: str | None = None
-    owner: str | None = None
-    permission: bool | None = None
-    policy_id: str | None = None
-    resource: str | None = None
-    resource_type: str | None = field(default=None, metadata={"alias": "resourceType"})
-    scope: str | None = None
-    type: str | None = None
-
-
-@dataclass(kw_only=True, slots=True)
 class FilterFindPolicyParams(BaseQuery):
     fields: list[str] | None = None
     name: str | None = None
@@ -141,3 +128,16 @@ class FilterQueryParams(PaginationQuery):
     resource_type: str | None = field(default=None, metadata={"alias": "type"})
     scope: str | None = None
     matching_uri: bool = field(default=False, metadata={"alias": "matchingUri"})
+
+
+@dataclass(kw_only=True, slots=True)
+class FindPermissionQuery(PaginationQuery):
+    fields: list[str] | None = None
+    name: str | None = None
+    owner: str | None = None
+    permission: bool | None = None
+    policy_id: str | None = field(default=None, metadata={"alias": "policyId"})
+    resource: str | None = None
+    resource_type: str | None = field(default=None, metadata={"alias": "resourceType"})
+    scope: str | None = None
+    type: str | None = None
