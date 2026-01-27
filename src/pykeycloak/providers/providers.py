@@ -1237,6 +1237,7 @@ class KeycloakProviderAsync:
     #  Authz Resources
     ##############################################################
 
+    @mark_need_token_verification
     async def get_resources_async(
         self,
         access_token: str,
@@ -1253,6 +1254,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def create_resource_async(
         self,
         payload: ResourcePayload,
@@ -1269,6 +1271,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_resource_by_id_async(
         self, resource_id: str, access_token: str
     ) -> Response:
@@ -1284,6 +1287,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_resource_by_id_async(
         self, resource_id: str, access_token: str
     ) -> Response:
@@ -1299,6 +1303,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_resource_permissions_async(
         self, resource_id: str, access_token: str
     ) -> Response:
@@ -1318,6 +1323,7 @@ class KeycloakProviderAsync:
     #  Authz Policies
     ##############################################################
 
+    @mark_need_token_verification
     async def create_policy_role_async(
         self, payload: RolePolicyPayload, access_token: str
     ) -> Response:
@@ -1332,6 +1338,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_policy_async(self, policy_id: str, access_token: str) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1343,6 +1350,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def create_policy_async(
         self, payload: PermissionPayload, access_token: str
     ) -> Response:
@@ -1357,6 +1365,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_policy_by_name_async(
         self, access_token: str, query: FilterFindPolicyParams | None = None
     ) -> Response:
@@ -1371,6 +1380,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_associated_policies_async(
         self,
         policy_id: str,
@@ -1389,6 +1399,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_policy_authorisation_scopes_async(
         self,
         permission_id: str,
@@ -1406,6 +1417,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_policies_async(
         self,
         access_token: str,
@@ -1420,6 +1432,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_policy_associated_role_policies_async(
         self, policy_id: str, access_token: str
     ) -> Response:
@@ -1440,6 +1453,7 @@ class KeycloakProviderAsync:
     #  Authz Permissions
     ##############################################################
 
+    @mark_need_token_verification
     async def create_client_authz_permission_resource_based_async(
         self, payload: PermissionPayload, access_token: str
     ) -> Response:
@@ -1454,6 +1468,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def create_client_authz_permission_scope_based_async(
         self, payload: PermissionPayload, access_token: str
     ) -> Response:
@@ -1468,6 +1483,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_permissions_async(
         self,
         access_token: str,
@@ -1484,6 +1500,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def get_permissions_for_scope_by_id_async(
         self, permission_id: str, access_token: str
     ) -> Response:
@@ -1499,6 +1516,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def delete_permission_async(
         self, permission_id: str, access_token: str
     ) -> Response:
@@ -1514,6 +1532,7 @@ class KeycloakProviderAsync:
 
         return response
 
+    @mark_need_token_verification
     async def update_permission_scopes_async(
         self,
         permission_id: str,  # resource OR scope based permission
