@@ -25,28 +25,23 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         """Fixture to create mock settings."""
         client_settings = ClientSettings()
         transport_settings = HttpTransportSettings()
-        sanitizer = SensitiveDataSanitizer()
-        return client_settings, transport_settings, sanitizer
+        return client_settings, transport_settings
 
     def test_init_with_defaults(self, mock_settings):
         """Test initialization with default values."""
-        client_settings, transport_settings, sanitizer = mock_settings
         wrapper = KeycloakHttpClientWrapperAsync()
 
         assert wrapper._client is not None
-        assert wrapper._sanitizer is not None
 
     def test_init_with_custom_values(self, mock_settings):
         """Test initialization with custom values."""
-        client_settings, transport_settings, sanitizer = mock_settings
+        client_settings, transport_settings = mock_settings
         wrapper = KeycloakHttpClientWrapperAsync(
             client_settings=client_settings,
             transport_settings=transport_settings,
-            sanitizer=sanitizer,
         )
 
         assert wrapper._client is not None
-        assert wrapper._sanitizer is sanitizer
 
     @pytest.mark.asyncio
     async def test_request_success(self):

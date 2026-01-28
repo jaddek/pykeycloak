@@ -133,6 +133,8 @@ class TestServicesDetailed:
             "access_token": "test_token",
             "expires_in": 3600,
         }
+        mock_response.status_code = 200
+
         mock_provider.obtain_token_async.return_value = mock_response
 
         result = await auth_service.client_login_raw_async()
@@ -154,6 +156,8 @@ class TestServicesDetailed:
             "access_token": "new_token",  # noqa: S106
             "refresh_token": "new_refresh_token",  # noqa: S106
         }
+        mock_response.status_code = 200
+
         mock_provider.refresh_token_async.return_value = mock_response
 
         result = await auth_service.refresh_token_raw_async(payload=payload)
@@ -171,6 +175,8 @@ class TestServicesDetailed:
             "sub": "user123",
             "email": "user@example.com",
         }
+        mock_response.status_code = 200
+
         mock_provider.get_user_info_async.return_value = mock_response
 
         result = await auth_service.get_user_info_raw_async(
@@ -240,7 +246,7 @@ class TestServicesDetailed:
         mock_response.json.return_value = {"keys": []}
         mock_provider.get_certs_async.return_value = mock_response
 
-        result = await auth_service.get_certs_raw_async()
+        result = await auth_service.get_certs_async()
 
         assert "keys" in result
         assert mock_provider.get_certs_async.called
@@ -260,6 +266,7 @@ class TestServicesDetailed:
 
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = {"permissions": []}
+        mock_response.status_code = 200
         mock_provider.get_uma_permission_async.return_value = mock_response
 
         result = await uma_service.get_uma_permissions_async(payload=payload)
@@ -290,6 +297,7 @@ class TestServicesDetailed:
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = user_data
         mock_provider.get_user_async.return_value = mock_response
+        mock_response.status_code = 200
 
         result = await users_service.get_user_async(user_id=user_id)
 
@@ -326,6 +334,8 @@ class TestServicesDetailed:
         ]
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = users_data
+        mock_response.status_code = 200
+
         mock_provider.get_users_by_role_async.return_value = mock_response
 
         result = await users_service.get_users_by_role_async(role_name=role_name)
@@ -353,6 +363,8 @@ class TestServicesDetailed:
         user_data = {"id": "new_user_id", "username": "test_user"}
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = user_data
+        mock_response.status_code = 200
+
         mock_provider.create_user_async.return_value = mock_response
 
         result = await users_service.create_user_async(payload=payload)
@@ -382,6 +394,8 @@ class TestServicesDetailed:
         user_data = {"id": str(user_id), "username": "updated_user"}
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = user_data
+        mock_response.status_code = 200
+
         mock_provider.update_user_by_id_async.return_value = mock_response
 
         result = await users_service.update_user_async(user_id=user_id, payload=payload)
@@ -408,6 +422,7 @@ class TestServicesDetailed:
         user_data = {"id": str(user_id), "enabled": True}
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = user_data
+        mock_response.status_code = 200
         mock_provider.update_user_enable_by_id_async.return_value = mock_response
 
         result = await users_service.enable_user_async(user_id=user_id, payload=payload)
@@ -438,13 +453,13 @@ class TestServicesDetailed:
         result_data = {"success": True}
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = result_data
+        mock_response.status_code = 200
         mock_provider.update_user_password_by_id_async.return_value = mock_response
 
-        result = await users_service.update_user_password_async(
+        await users_service.update_user_password_async(
             user_id=user_id, payload=payload
         )
 
-        assert result == result_data
         mock_provider.update_user_password_by_id_async.assert_called_once_with(
             user_id=user_id, payload=payload
         )
@@ -462,9 +477,9 @@ class TestServicesDetailed:
         result_data = {"success": True}
         mock_response = MagicMock(spec=Response)
         mock_response.json.return_value = result_data
+        mock_response.status_code = 200
         mock_provider.delete_user_async.return_value = mock_response
 
-        result = await users_service.delete_user_async(user_id=user_id)
+        await users_service.delete_user_async(user_id=user_id)
 
-        assert result == result_data
         mock_provider.delete_user_async.assert_called_once_with(user_id=user_id)
