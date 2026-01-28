@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
-import logging
 from enum import Enum
 from types import TracebackType
 from typing import Any
@@ -13,10 +12,8 @@ from httpx import (
     Response,
 )
 
-from .sanitizer import SensitiveDataSanitizer, get_sanitizer
+from .. import logger
 from .settings import ClientSettings, HttpTransportSettings
-
-logger = logging.getLogger(__name__)
 
 
 class HttpMethod(Enum):
@@ -37,15 +34,12 @@ class KeycloakHttpClientWrapperAsync:
         self,
         client_settings: ClientSettings | None = None,
         transport_settings: HttpTransportSettings | None = None,
-        sanitizer: SensitiveDataSanitizer | None = None,
     ):
         transport_settings = transport_settings or HttpTransportSettings()
         transport = AsyncHTTPTransport(**transport_settings.to_dict())
 
         client_settings = client_settings or ClientSettings()
         client_settings.transport = transport
-
-        self._sanitizer = sanitizer or get_sanitizer()
 
         self._client = AsyncClient(**client_settings.to_dict())
 
@@ -57,16 +51,34 @@ class KeycloakHttpClientWrapperAsync:
     def init_default_client() -> "KeycloakHttpClientWrapperAsync":
         return KeycloakHttpClientWrapperAsync()
 
+    def log_client_config_before_request(self) -> None:
+        # Достаем настройки пула безопасно
+        pool = getattr(self.client._transport, "_pool", None)
+
+        max_conns = getattr(pool, "_max_connections", "N/A")
+        max_keepalive = getattr(pool, "_max_keepalive_connections", "N/A")
+        keepalive_expiry = getattr(pool, "_keepalive_expiry", "N/A")
+
+        logger.debug(
+            "HTTPX\n=========================================\n"
+            " HTTPX Client Configuration:\n"
+            " timeouts=%s, max_connections=%s, max_keepalive=%s, keepalive_expiry=%s,\n"
+            " base_url=%s, default_headers=%s\n"
+            "=========================================",
+            self.client.timeout,
+            max_conns,
+            max_keepalive,
+            keepalive_expiry,
+            self.client.base_url,
+            self.client.headers,
+        )
+
     async def request(
         self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
     ) -> Response:
         try:
-            logger.debug(
-                "Request method: %s, url: %s kwargs %s",
-                method,
-                url,
-                self._sanitizer.sanitize(kwargs),
-            )
+            logger.debug("Request method: %s, url: %s kwargs %s", method, url, kwargs)
+            self.log_client_config_before_request()
 
             response = await self.client.request(method=method.value, url=url, **kwargs)
 
@@ -75,8 +87,8 @@ class KeycloakHttpClientWrapperAsync:
                 method,
                 response.status_code,
                 url,
-                self._sanitizer.sanitize(response.text),
-                self._sanitizer.sanitize(dict(response.headers)),
+                response.text,
+                response.headers,
             )
 
             if raise_exception:
@@ -110,7 +122,6 @@ def get_keycloak_client_wrapper_from_env() -> KeycloakHttpClientWrapperAsync:
     return get_keycloak_client_wrapper(
         client_settings=ClientSettings.from_env(),
         transport_settings=HttpTransportSettings.from_env(),
-        sanitizer=SensitiveDataSanitizer.from_env(),
     )
 
 
@@ -118,10 +129,8 @@ def get_keycloak_client_wrapper(
     *,
     client_settings: ClientSettings | None = None,
     transport_settings: HttpTransportSettings | None = None,
-    sanitizer: SensitiveDataSanitizer | None = None,
 ) -> KeycloakHttpClientWrapperAsync:
     return KeycloakHttpClientWrapperAsync(
         client_settings=client_settings,
         transport_settings=transport_settings,
-        sanitizer=sanitizer,
     )

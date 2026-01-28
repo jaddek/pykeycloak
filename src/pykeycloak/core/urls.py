@@ -21,7 +21,7 @@ REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH = (
 
 REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS = (
     BASE_ADMIN_REALMS
-    + "/clients/{client_id}/authz/resource-server/resource/{resource_id}/permissions"
+    + "/clients/{client_uuid}/authz/resource-server/resource/{resource_id}/permissions"
 )
 
 REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER = (

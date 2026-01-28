@@ -4,14 +4,13 @@ import os
 
 from pykeycloak.core.realm import RealmClient
 from pykeycloak.providers.payloads import (
-    RefreshTokenPayload,
-    TokenIntrospectionPayload,
     UserCredentialsLoginPayload,
 )
 from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
 from pykeycloak.services.services import AuthService
 
-logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
+
 kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "some name")
 
 username = "admin"
@@ -29,43 +28,30 @@ async def main():
     auth_service = AuthService(provider)
 
     ## this step is required as the service account client get the access token and refresh tokens for further operations
-    service_account_login = (
-        await auth_service.client_login_async()
-    )  # or client_login_raw_async()
+
+    await auth_service.client_login_async()
+    # or client_login_raw_async()
 
     ## device login flow
     result = await auth_service.auth_device_raw_async()  # noqa: F841
 
-    ## certs
-    result = await auth_service.get_certs_raw_async()  # noqa: F841
-
-    ## refresh token
-    refresh = await auth_service.refresh_token_async(
-        payload=RefreshTokenPayload(refresh_token=service_account_login.refresh_token)
-    )
-
-    ## introspec async (RTP or Token depends on payload)
-    result = await auth_service.introspect_token_async(  # noqa: F841
-        payload=TokenIntrospectionPayload(
-            token=refresh.auth_token,
-        )
-    )
-
     ## User login
-    result = await auth_service.user_login_async(  # or user_login_raw_async #noqa: F841
-        payload=UserCredentialsLoginPayload(
-            username=username,
-            password=password,
+    user_refresh_token = (
+        await auth_service.user_login_async(  # or user_login_raw_async #noqa: F841
+            payload=UserCredentialsLoginPayload(
+                username=username,
+                password=password,
+            )
         )
     )
 
     ## getting user info
     result = await auth_service.get_user_info_async(  # noqa: F841
-        access_token=refresh.auth_token
+        access_token=user_refresh_token.access_token
     )
 
     ## logout
-    result = await auth_service.logout_async(refresh.refresh_token)  # noqa: F841
+    result = await auth_service.logout_async(user_refresh_token.refresh_token)  # noqa: F841
 
     await provider.close()
 

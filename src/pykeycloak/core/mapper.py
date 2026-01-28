@@ -110,7 +110,6 @@ class PyKeyCloakDataMapper:
                         kwargs[name] = h(data[key])
                     except Exception as e:
                         raise TypeError(f"Field '{name}' (key '{key}'): {e}") from e
-                # Narrowing types for Mypy: checking fac and def_v directly
                 elif fac is not MISSING:
                     kwargs[name] = fac()
                 elif def_v is not MISSING:

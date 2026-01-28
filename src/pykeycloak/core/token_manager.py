@@ -3,7 +3,6 @@
 
 import asyncio
 import inspect
-import logging
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -17,7 +16,7 @@ from pykeycloak.core.constants import KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECON
 from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
 
-logger = logging.getLogger(__name__)
+from .. import logger
 
 
 class TokenUpdater(Protocol):
@@ -63,7 +62,11 @@ class AuthTokenValidator:
         expires_at = now + timedelta(seconds=token.expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
-        return now < expires_at - buffer
+        is_valid = now < expires_at - buffer
+
+        logger.debug("Checking if access token is valid: %s", is_valid)
+
+        return is_valid
 
     @staticmethod
     def is_refresh_token_valid(
@@ -78,7 +81,11 @@ class AuthTokenValidator:
         expires_at = now + timedelta(seconds=token.refresh_expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
-        return now < expires_at - buffer
+        is_valid = now < expires_at - buffer
+
+        logger.debug("Checking if refresh token is valid: %s", is_valid)
+
+        return is_valid
 
 
 class TokenManagerProtocol(Protocol):
@@ -101,11 +108,6 @@ class TokenManagerProtocol(Protocol):
 
 
 class TokenManager:
-    """
-    Double-Checked Locking (Двойная проверка) через asyncio
-    Ручное управление локами через threading
-    """
-
     _update_access_token_method: TokenUpdater | None = None
     _auth_tokens: AuthToken
 

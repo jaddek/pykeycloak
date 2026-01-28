@@ -2,9 +2,13 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import asyncio
+import itertools
+import json
 import math
 from asyncio import Queue
+from collections.abc import Iterable
 from http import HTTPStatus
+from typing import Any
 from uuid import UUID
 
 from httpx import Response
@@ -24,6 +28,7 @@ from pykeycloak.providers.payloads import (
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
+    UpdateUserPayload,
     UserCredentialsLoginPayload,
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
@@ -51,7 +56,10 @@ from pykeycloak.services.representations import (
     SessionsStatsRepresentation,
     TokenRepresentation,
     UserInfoRepresentation,
+    UserRepresentation,
 )
+
+from .. import logger
 
 
 class BaseService:
@@ -66,6 +74,9 @@ class BaseService:
             return None
 
         if response.status_code == HTTPStatus.NO_CONTENT:
+            return None
+
+        if response.status_code == HTTPStatus.NOT_FOUND:
             return None
 
         if response.status_code == HTTPStatus.CONFLICT:
@@ -87,7 +98,12 @@ class BaseService:
             return None
 
         try:
-            data = response.json()
+            data: dict = {}
+            if response.text:  # if status_code = 200 and empty response.text
+                data = response.json()
+
+        except json.decoder.JSONDecodeError as e:
+            raise ValueError(f"Failed to decode JSON response: {e}") from e
         except Exception as e:
             raise ValueError(f"Failed to decode JSON response: {e}") from e
 
@@ -100,40 +116,58 @@ class BaseService:
 class UsersService(BaseService):
     """ """
 
-    async def get_user_async(self, user_id: UUID | str) -> JsonData:
+    async def get_user_raw_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.get_user_async(user_id=user_id)
 
         return self.validate_response(response)
+
+    async def get_user_async(self, user_id: UUID | str) -> UserRepresentation:
+        data = await self.get_user_raw_async(user_id=user_id)
+
+        return dataclass_from_dict(data, UserRepresentation)
 
     async def get_users_count_async(self, query: GetUsersQuery | None = None) -> int:
         response = await self._provider.get_users_count_async(query=query)
 
         return int(response.json())
 
-    async def get_users_async(
+    async def get_users_raw_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> list[JsonData]:
+    ) -> Iterable[dict[str, Any]]:
         users_count_response = await self._provider.get_users_count_async(query=query)
 
         try:
             users_count_text = users_count_response.text.strip()
+
+            logger.debug(f"Users count response: {users_count_text}")
+
             if not users_count_text.isdigit():
                 raise RuntimeError("Invalid users count response: not a number")
             users_count = int(users_count_text)
         except ValueError as e:
             raise RuntimeError("Invalid users count response") from e
 
-        return await self.get_paginated_users_async(
+        responses = await self.get_paginated_users_async(
             users_count=int(users_count), query=query
         )
+
+        return itertools.chain.from_iterable(responses)
+
+    async def get_users_async(
+        self,
+        query: GetUsersQuery | None = None,
+    ) -> list[UserRepresentation]:
+        data = await self.get_users_raw_async(query=query)
+
+        return dataclass_from_dict(list(data), list[UserRepresentation])
 
     async def get_paginated_users_async(
         self,
         users_count: int,
         concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
         query: GetUsersQuery | None = None,
-    ) -> list[JsonData]:
+    ) -> list[Response]:
         _query = query or GetUsersQuery()
 
         total_pages = math.ceil(users_count / _query.max)
@@ -187,37 +221,46 @@ class UsersService(BaseService):
 
         return self.validate_response(response)
 
-    async def create_user_async(self, payload: CreateUserPayload) -> JsonData:
+    async def create_user_async(self, payload: CreateUserPayload) -> str:
         response = await self._provider.create_user_async(payload=payload)
 
-        return self.validate_response(response)
+        self.validate_response(response)
+
+        location_with_user_uuid: str = response.headers.get("Location", "")
+
+        user_uuid = location_with_user_uuid[location_with_user_uuid.rindex("/") + 1 :]
+
+        if not user_uuid:
+            raise ValueError("Invalid user uuid")
+
+        return user_uuid
 
     async def update_user_async(
-        self, user_id: UUID | str, payload: CreateUserPayload
-    ) -> JsonData:
+        self, user_id: UUID | str, payload: UpdateUserPayload
+    ) -> None:
         response = await self._provider.update_user_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def enable_user_async(
         self, user_id: UUID | str, payload: UserUpdateEnablePayload
-    ) -> JsonData:
+    ) -> None:
         response = await self._provider.update_user_enable_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def update_user_password_async(
         self, user_id: UUID | str, payload: UserUpdatePasswordPayload
-    ) -> JsonData:
+    ) -> None:
         response = await self._provider.update_user_password_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def delete_user_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.delete_user_async(user_id=user_id)
@@ -614,17 +657,8 @@ class AuthService(BaseService):
 
     async def auth_device_raw_async(
         self,
-        access_token: str,
     ) -> JsonData:
-        response = await self._provider.auth_device_async(access_token=access_token)
-
-        return self.validate_response(response)
-
-    async def auth_device_async(
-        self,
-        access_token: str,
-    ) -> JsonData:
-        response = await self._provider.auth_device_async(access_token=access_token)
+        response = await self._provider.auth_device_async()
 
         return self.validate_response(response)
 
@@ -632,19 +666,10 @@ class AuthService(BaseService):
     # Certs
     ###
 
-    async def get_certs_raw_async(
-        self,
-        access_token: str,
-    ) -> JsonData:
-        response = await self._provider.get_certs_async(access_token=access_token)
-
-        return self.validate_response(response)
-
     async def get_certs_async(
         self,
-        access_token: str,
     ) -> JsonData:
-        response = await self._provider.get_certs_async(access_token=access_token)
+        response = await self._provider.get_certs_async()
 
         return self.validate_response(response)
 
@@ -666,8 +691,7 @@ class AuthService(BaseService):
     ) -> None:
         response = await self._provider.revoke_async(refresh_token=refresh_token)
 
-        if response.status_code != HTTPStatus.NO_CONTENT:
-            raise ValueError("Unexpected response from Keycloak")
+        self.validate_response(response)
 
     ###
     # UMA Permissions

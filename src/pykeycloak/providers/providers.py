@@ -21,6 +21,7 @@ from pykeycloak.providers.payloads import (
     ResourcePayload,
     RolePayload,
     RolePolicyPayload,
+    UpdateUserPayload,
 )
 
 from ..core.exceptions import PyKeycloakUnexpectedBehaviourException
@@ -165,7 +166,7 @@ class KeycloakProviderProtocol(Protocol):
     ) -> Response: ...
 
     async def update_user_by_id_async(
-        self, user_id: UUID | str, payload: CreateUserPayload, access_token: str = ...
+        self, user_id: UUID | str, payload: UpdateUserPayload, access_token: str = ...
     ) -> Response: ...
 
     async def update_user_enable_by_id_async(
@@ -624,7 +625,6 @@ class KeycloakProviderAsync:
 
         return response
 
-    @mark_need_token_verification
     async def get_user_info_async(
         self,
         access_token: str,
@@ -732,14 +732,14 @@ class KeycloakProviderAsync:
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_USERS_LIST),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
 
     @mark_need_token_verification
     async def update_user_by_id_async(
-        self, user_id: UUID | str, payload: CreateUserPayload, access_token: str
+        self, user_id: UUID | str, payload: UpdateUserPayload, access_token: str
     ) -> Response:
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -747,7 +747,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -762,7 +762,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -777,7 +777,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -1068,7 +1068,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=str(role_id)),
             headers=headers,
-            data=json.dumps(payload.to_dict()),
+            data=payload.to_json(),
         )
 
         return response
@@ -1086,7 +1086,7 @@ class KeycloakProviderAsync:
                 role_name=role_name,
             ),
             headers=headers,
-            data=json.dumps(payload.to_dict()),
+            data=payload.to_json(),
         )
 
         return response
@@ -1266,7 +1266,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCES),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -1333,7 +1333,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -1360,7 +1360,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER),
             headers=headers,
-            data=payload.to_dict(),
+            data=payload.to_json(),
         )
 
         return response
@@ -1495,7 +1495,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS),
             headers=headers,
-            query=query,
+            params=query,
         )
 
         return response
