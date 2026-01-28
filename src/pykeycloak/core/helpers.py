@@ -46,6 +46,16 @@ def getenv_int(name: str, default: int) -> int:
         return default
 
 
+def getenv_float(name: str, default: float) -> float:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    try:
+        return float(val)
+    except ValueError:
+        return default
+
+
 def dataclass_from_dict[T](data: Any, cls: type[T]) -> T:
     if data is None:
         raise TypeError(f"Required data '{data}' is None")

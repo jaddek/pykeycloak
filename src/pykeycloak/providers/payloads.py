@@ -8,6 +8,7 @@ from uuid import UUID
 
 from pykeycloak.core.enums import (
     GrantTypeEnum,
+    LogicEnum,
     UrnIetfOauthUmaTicketPermissionResourceFormatEnum,
     UrnIetfOauthUmaTicketResponseModeEnum,
 )
@@ -65,6 +66,8 @@ class ObtainTokenPayload(Payload):
         result |= {
             "grant_type": self.grant_type,
         }
+
+        del result["scopes"]
 
         if scope := self.scope:
             result |= {"scope": scope}
@@ -196,19 +199,50 @@ class UMAAuthorizationPayload(Payload):
 
 @dataclass(frozen=True, kw_only=True)
 class CreateUserPayload(Payload):
-    id: UUID | None = field(default=None, metadata={"alias": "id"})
-    username: str = field(default="", metadata={"alias": "username"})
+    id: UUID | None = field(default=None)
+    username: str
+    email: str = field(default="")
+    emailVerified: bool = field(default=False)
+    first_name: str = field(default="", metadata={"alias": "firstName"})
+    last_name: str = field(default="", metadata={"alias": "lastName"})
+    enabled: bool = field(default=True)
+    credentials: list["CredentialsPayload"] = field(default_factory=list)
+    requiredActions: list[str] = field(default_factory=list)
+
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
+        data = super().to_dict()
+        data["credentials"] = [
+            credentials.to_dict()
+            for credentials in self.credentials
+            if isinstance(credentials, CredentialsPayload)
+        ]
+
+        return data
+
+
+@dataclass(frozen=True, kw_only=True)
+class UpdateUserPayload(Payload):
+    id: UUID | None = field(default=None)
+    email: str | None = field(default=None)
+    emailVerified: bool | None = field(default=None)
     first_name: str | None = field(default=None, metadata={"alias": "firstName"})
     last_name: str | None = field(default=None, metadata={"alias": "lastName"})
-    email: str = field(default="", metadata={"alias": "email"})
-    enabled: bool | None = field(default=None, metadata={"alias": "enabled"})
-    credentials: list[dict[str, Any]] = field(
-        default_factory=list, metadata={"alias": "credentials"}
-    )
-    location_id: UUID | None = field(default=None, metadata={"alias": "locationId"})
-    role_ids: list[UUID] | None = field(
-        default_factory=list, metadata={"alias": "roleIds"}
-    )
+    enabled: bool | None = field(default=None)
+    credentials: list["CredentialsPayload"] | None = field(default=None)
+    requiredActions: list[str] | None = field(default=None)
+
+
+@dataclass(frozen=True, kw_only=True)
+class CredentialsPayload(Payload):
+    type: str
+    value: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class PasswordCredentialsPayload(CredentialsPayload):
+    type: str = "password"
+    value: str
+    temporary: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -230,3 +264,48 @@ class RolePayload(Payload):
     composite: bool | None = None
     container_id: str | None = None
     attributes: dict[str, list[str]] | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class PermissionPayload(Payload):
+    id: str | None = None
+    name: str | None = None
+    type: str | None = None
+    logic: LogicEnum | None = None
+    description: str | None = None
+    decision_strategy: str | None = field(
+        default=None, metadata={"alias": "decisionStrategy"}
+    )
+
+
+@dataclass(frozen=True, kw_only=True)
+class PermissionScopesPayload(Payload):
+    name: str
+    policies: list[str] = field(default_factory=list)
+    decision_strategy: str | None = field(
+        default=None, metadata={"alias": "decisionStrategy"}
+    )
+
+
+@dataclass(frozen=True, kw_only=True)
+class ResourcePayload(Payload):
+    id: str | None = None
+    name: str | None = None
+    display_name: str | None = field(default=None, metadata={"alias": "displayName"})
+    type: str | None = None
+    uris: list[str] = field(default_factory=list)
+    scopes: list[dict[str, str]] = field(default_factory=list)
+    attributes: dict[str, list[str]] = field(default_factory=dict)
+
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
+        result = super().to_dict(exclude_none=exclude_none)
+
+        result["_id"] = result.pop("id")
+
+        return result
+
+
+@dataclass(frozen=True, kw_only=True)
+class RolePolicyPayload(Payload):
+    name: str
+    roles: list[str] = field(default_factory=list)

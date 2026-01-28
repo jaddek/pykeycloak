@@ -175,7 +175,7 @@ To introspect a token, use the `introspect_async` method:
 ```python
 from pykeycloak.providers.payloads import TokenIntrospectionPayload
 
-introspect = await auth_service.introspect_async(
+introspect = await auth_service.introspect_token_async(
     payload=TokenIntrospectionPayload(
         token=refresh.auth_token,
     )

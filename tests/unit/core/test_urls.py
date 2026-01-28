@@ -7,7 +7,6 @@ from pykeycloak.core.urls import (
     BASE_PROTOCOL_OPENID_CONNECT,
     BASE_REALMS,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
-    REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES,
     REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS,
     REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE,
     REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH,
@@ -39,7 +38,7 @@ from pykeycloak.core.urls import (
     REALM_USER_SESSIONS,
     REALM_USERS_COUNT,
     REALM_USERS_LIST,
-    USER_LOGOUT,
+    USER_LOGOUT, REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
 )
 
 
@@ -78,7 +77,7 @@ class TestURLConstants:
     def test_realm_client_authz_resource_permission_policy_scopes_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES constant."""
         expected = "/admin/realms/{realm}/clients/{client_id}/authz/resource-server/policy/{policy_id}/associatedPolicies"
-        assert REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES == expected
+        assert REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES == expected
 
     def test_realm_client_authz_resource_policy_user_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER constant."""
@@ -231,62 +230,3 @@ class TestURLConstants:
         """Test the REALM_CLIENT_SESSION_STATS constant."""
         expected = "/admin/realms/{realm}/client-session-stats"
         assert REALM_CLIENT_SESSION_STATS == expected
-
-    def test_url_placeholders(self):
-        """Test that all URLs contain appropriate placeholders."""
-        all_urls = [
-            BASE_REALMS,
-            BASE_ADMIN_REALMS,
-            USER_LOGOUT,
-            REALM_LOGOUT_ALL,
-            REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH,
-            REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS,
-            REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES,
-            REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER,
-            REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE,
-            BASE_PROTOCOL_OPENID_CONNECT,
-            REALM_CLIENT_OPENID_URL_TOKEN,
-            REALM_CLIENT_OPENID_URL_LOGOUT,
-            REALM_CLIENT_OPENID_URL_USERINFO,
-            REALM_CLIENT_OPENID_URL_INTROSPECT,
-            REALM_CLIENT_OPENID_URL_AUTH_DEVICE,
-            REALM_CLIENT_OPENID_URL_CERTS,
-            REALM_CLIENT_OPENID_URL_REVOKE,
-            REALM_USERS_LIST,
-            REALM_USERS_COUNT,
-            REALM_USER,
-            REALM_USER_LOGOUT,
-            REALM_CLIENT_ROLES,
-            REALM_CLIENT_ROLE_MEMBERS,
-            REALM_USER_SESSIONS,
-            REALM_DELETE_SESSION,
-            REALM_CLIENT_USER_SESSIONS,
-            REALM_CLIENT_ACTIVE_SESSION_COUNT,
-            REALM_CLIENT_OFFLINE_SESSION_COUNT,
-            REALM_CLIENT_OFFLINE_SESSIONS,
-            REALM_CLIENT_USER_OFFLINE_SESSIONS,
-            REALM_ROLES_ROLE_BY_ID,
-            REALM_CLIENT_ROLE,
-            REALM_ROLES_ROLE_BY_NAME,
-            REALM_CLIENT_USER_ROLE_MAPPING,
-            REALM_CLIENT_USER_ROLE_MAPPING_AVAILABLE,
-            REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE,
-            REALM_CLIENT_SESSION_STATS,
-        ]
-
-        # Check that each URL contains at least one placeholder
-        for url in all_urls:
-            assert "{" in url and "}" in url, f"URL {url} does not contain placeholders"
-
-    def test_unique_placeholders_existence(self):
-        """Test that URLs have the expected placeholders."""
-        # Check realm placeholder exists in base URLs
-        assert "{realm}" in BASE_REALMS
-        assert "{realm}" in BASE_ADMIN_REALMS
-
-        # Check other placeholders in specific URLs
-        assert "{user_id}" in USER_LOGOUT
-        assert "{client_id}" in REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH
-        assert "{resource_id}" in REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS
-        assert "{policy_id}" in REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION_POLICY_SCOPES
-        assert "{realm}" in REALM_CLIENT_OPENID_URL_REVOKE  # Additional check

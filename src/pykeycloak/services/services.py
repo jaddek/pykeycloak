@@ -2,9 +2,13 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import asyncio
+import itertools
+import json
 import math
 from asyncio import Queue
+from collections.abc import Iterable
 from http import HTTPStatus
+from typing import Any
 from uuid import UUID
 
 from httpx import Response
@@ -15,11 +19,16 @@ from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
+    PermissionPayload,
+    PermissionScopesPayload,
     RefreshTokenPayload,
+    ResourcePayload,
     RolePayload,
+    RolePolicyPayload,
     RTPIntrospectionPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
+    UpdateUserPayload,
     UserCredentialsLoginPayload,
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
@@ -28,21 +37,29 @@ from pykeycloak.providers.providers import (
     KeycloakProviderProtocol,
 )
 from pykeycloak.providers.queries import (
+    FilterFindPolicyParams,
+    FindPermissionQuery,
     GetUsersQuery,
     PaginationQuery,
+    ResourcesListQuery,
     RoleMembersListQuery,
 )
 from pykeycloak.services.representations import (
     AuthzSettingsRepresentation,
     ClientRepresentation,
     IntrospectRepresentation,
+    PermissionRepresentation,
+    PolicyRepresentation,
     ScopeRepresentation,
     SessionRepresentation,
     SessionsCountRepresentation,
     SessionsStatsRepresentation,
     TokenRepresentation,
     UserInfoRepresentation,
+    UserRepresentation,
 )
+
+from .. import logger
 
 
 class BaseService:
@@ -57,6 +74,9 @@ class BaseService:
             return None
 
         if response.status_code == HTTPStatus.NO_CONTENT:
+            return None
+
+        if response.status_code == HTTPStatus.NOT_FOUND:
             return None
 
         if response.status_code == HTTPStatus.CONFLICT:
@@ -78,7 +98,12 @@ class BaseService:
             return None
 
         try:
-            data = response.json()
+            data: dict = {}
+            if response.text:  # if status_code = 200 and empty response.text
+                data = response.json()
+
+        except json.decoder.JSONDecodeError as e:
+            raise ValueError(f"Failed to decode JSON response: {e}") from e
         except Exception as e:
             raise ValueError(f"Failed to decode JSON response: {e}") from e
 
@@ -91,40 +116,58 @@ class BaseService:
 class UsersService(BaseService):
     """ """
 
-    async def get_user_async(self, user_id: UUID | str) -> JsonData:
+    async def get_user_raw_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.get_user_async(user_id=user_id)
 
         return self.validate_response(response)
 
-    async def get_users_count(self, query: GetUsersQuery | None = None) -> int:
+    async def get_user_async(self, user_id: UUID | str) -> UserRepresentation:
+        data = await self.get_user_raw_async(user_id=user_id)
+
+        return dataclass_from_dict(data, UserRepresentation)
+
+    async def get_users_count_async(self, query: GetUsersQuery | None = None) -> int:
         response = await self._provider.get_users_count_async(query=query)
 
         return int(response.json())
 
-    async def get_users_async(
+    async def get_users_raw_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> list[JsonData]:
+    ) -> Iterable[dict[str, Any]]:
         users_count_response = await self._provider.get_users_count_async(query=query)
 
         try:
             users_count_text = users_count_response.text.strip()
+
+            logger.debug(f"Users count response: {users_count_text}")
+
             if not users_count_text.isdigit():
                 raise RuntimeError("Invalid users count response: not a number")
             users_count = int(users_count_text)
         except ValueError as e:
             raise RuntimeError("Invalid users count response") from e
 
-        return await self.get_paginated_users_async(
+        responses = await self.get_paginated_users_async(
             users_count=int(users_count), query=query
         )
+
+        return itertools.chain.from_iterable(responses)
+
+    async def get_users_async(
+        self,
+        query: GetUsersQuery | None = None,
+    ) -> list[UserRepresentation]:
+        data = await self.get_users_raw_async(query=query)
+
+        return dataclass_from_dict(list(data), list[UserRepresentation])
 
     async def get_paginated_users_async(
         self,
         users_count: int,
         concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
         query: GetUsersQuery | None = None,
-    ) -> list[JsonData]:
+    ) -> list[Response]:
         _query = query or GetUsersQuery()
 
         total_pages = math.ceil(users_count / _query.max)
@@ -178,37 +221,46 @@ class UsersService(BaseService):
 
         return self.validate_response(response)
 
-    async def create_user_async(self, payload: CreateUserPayload) -> JsonData:
+    async def create_user_async(self, payload: CreateUserPayload) -> str:
         response = await self._provider.create_user_async(payload=payload)
 
-        return self.validate_response(response)
+        self.validate_response(response)
+
+        location_with_user_uuid: str = response.headers.get("Location", "")
+
+        user_uuid = location_with_user_uuid[location_with_user_uuid.rindex("/") + 1 :]
+
+        if not user_uuid:
+            raise ValueError("Invalid user uuid")
+
+        return user_uuid
 
     async def update_user_async(
-        self, user_id: UUID | str, payload: CreateUserPayload
-    ) -> JsonData:
+        self, user_id: UUID | str, payload: UpdateUserPayload
+    ) -> None:
         response = await self._provider.update_user_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def enable_user_async(
         self, user_id: UUID | str, payload: UserUpdateEnablePayload
-    ) -> JsonData:
+    ) -> None:
         response = await self._provider.update_user_enable_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def update_user_password_async(
         self, user_id: UUID | str, payload: UserUpdatePasswordPayload
-    ) -> JsonData:
+    ) -> None:
         response = await self._provider.update_user_password_by_id_async(
             user_id=user_id, payload=payload
         )
 
-        return self.validate_response(response)
+        self.validate_response(response)
 
     async def delete_user_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.delete_user_async(user_id=user_id)
@@ -451,6 +503,15 @@ class SessionsService(BaseService):
 
         return dataclass_from_dict(data, SessionRepresentation)
 
+    async def delete_session_by_id_async(
+        self, session_id: UUID | str, is_offline: bool
+    ) -> JsonData:
+        response = await self._provider.delete_session_by_id_async(
+            session_id=session_id, is_offline=is_offline
+        )
+
+        return self.validate_response(response)
+
 
 class AuthService(BaseService):
     ###
@@ -490,6 +551,28 @@ class AuthService(BaseService):
         payload: UserCredentialsLoginPayload,
     ) -> TokenRepresentation:
         data = await self.user_login_raw_async(payload=payload)
+
+        return dataclass_from_dict(data, TokenRepresentation)
+
+    ###
+    # General token operations
+    ###
+
+    async def obtain_token_raw_async(
+        self,
+        *,
+        payload: ClientCredentialsLoginPayload | UserCredentialsLoginPayload,
+    ) -> JsonData:
+        response = await self._provider.obtain_token_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def obtain_token_async(
+        self,
+        *,
+        payload: ClientCredentialsLoginPayload | UserCredentialsLoginPayload,
+    ) -> TokenRepresentation:
+        data = await self.obtain_token_raw_async(payload=payload)
 
         return dataclass_from_dict(data, TokenRepresentation)
 
@@ -537,8 +620,13 @@ class AuthService(BaseService):
     # Logout
     ###
 
+    async def logout_raw_async(self, refresh_token: str) -> JsonData:
+        response = await self._provider.logout_async(refresh_token=refresh_token)
+
+        return self.validate_response(response)
+
     async def logout_async(self, refresh_token: str) -> None:
-        response = await self._provider.logout_async(refresh_token)
+        response = await self._provider.logout_async(refresh_token=refresh_token)
 
         if response.status_code != HTTPStatus.NO_CONTENT:
             raise ValueError("Unexpected response from Keycloak")
@@ -547,7 +635,7 @@ class AuthService(BaseService):
     # Introspect
     ###
 
-    async def introspect_raw_async(
+    async def introspect_token_raw_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> JsonData:
@@ -555,11 +643,11 @@ class AuthService(BaseService):
 
         return self.validate_response(response)
 
-    async def introspect_async(
+    async def introspect_token_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> IntrospectRepresentation:
-        data = await self.introspect_raw_async(payload=payload)
+        data = await self.introspect_token_raw_async(payload=payload)
 
         return dataclass_from_dict(data, IntrospectRepresentation)
 
@@ -578,12 +666,44 @@ class AuthService(BaseService):
     # Certs
     ###
 
-    async def get_certs_raw_async(
+    async def get_certs_async(
         self,
     ) -> JsonData:
         response = await self._provider.get_certs_async()
 
         return self.validate_response(response)
+
+    ###
+    # Revoke
+    ###
+
+    async def revoke_raw_async(
+        self,
+        refresh_token: str,
+    ) -> JsonData:
+        response = await self._provider.revoke_async(refresh_token=refresh_token)
+
+        return self.validate_response(response)
+
+    async def revoke_async(
+        self,
+        refresh_token: str,
+    ) -> None:
+        response = await self._provider.revoke_async(refresh_token=refresh_token)
+
+        self.validate_response(response)
+
+    ###
+    # UMA Permissions
+    ###
+
+    async def get_uma_permission_async(
+        self,
+        payload: UMAAuthorizationPayload,
+    ) -> JsonData:
+        data = await self.get_uma_permission_async(payload=payload)
+
+        return data
 
 
 class UmaService(BaseService):
@@ -639,13 +759,201 @@ class AuthzService(BaseService):
         return dataclass_from_dict(data, AuthzSettingsRepresentation)
 
 
+class AuthzResourceService(BaseService):
+    async def get_resources_raw_async(
+        self, query: ResourcesListQuery | None = None
+    ) -> JsonData:
+        response = await self._provider.get_resources_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_resources_async(
+        self, query: ResourcesListQuery | None = None
+    ) -> JsonData:
+        data = await self.get_resources_raw_async(query=query)
+
+        return data
+
+    async def create_resource_async(self, payload: ResourcePayload) -> JsonData:
+        response = await self._provider.create_resource_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def get_resource_by_id_raw_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.get_resource_by_id_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_resource_by_id_async(self, resource_id: str) -> JsonData:
+        data = await self.get_resource_by_id_raw_async(resource_id=resource_id)
+
+        return data
+
+    async def delete_resource_by_id_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.delete_resource_by_id_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_resource_permissions_async(self, resource_id: str) -> JsonData:
+        response = await self._provider.get_resource_permissions_async(
+            resource_id=resource_id
+        )
+
+        return self.validate_response(response)
+
+
 class AuthzScopeService(BaseService):
     async def get_client_authz_scopes_raw_async(self) -> JsonData:
         response = await self._provider.get_client_authz_scopes_async()
 
         return self.validate_response(response)
 
-    async def get_client_authz_scopes_async(self) -> JsonData:
+    async def get_client_authz_scopes_async(self) -> list[ScopeRepresentation]:
         data = await self.get_client_authz_scopes_raw_async()
 
         return dataclass_from_dict(data, list[ScopeRepresentation])
+
+
+class AuthzPermissionService(BaseService):
+    async def create_client_authz_permission_resource_based_async(
+        self, payload: PermissionPayload
+    ) -> JsonData:
+        response = (
+            await self._provider.create_client_authz_permission_resource_based_async(
+                payload=payload
+            )
+        )
+
+        return self.validate_response(response)
+
+    async def create_client_authz_permission_scope_based_async(
+        self, payload: PermissionPayload
+    ) -> JsonData:
+        response = (
+            await self._provider.create_client_authz_permission_scope_based_async(
+                payload=payload
+            )
+        )
+
+        return self.validate_response(response)
+
+    async def get_permissions_raw_async(
+        self, query: FindPermissionQuery | None = None
+    ) -> JsonData:
+        response = await self._provider.get_permissions_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_permissions_async(
+        self, query: FindPermissionQuery | None = None
+    ) -> list[PermissionRepresentation]:
+        data = await self.get_permissions_raw_async(query=query)
+
+        return dataclass_from_dict(data, list[PermissionRepresentation])
+
+    async def get_permissions_for_scope_by_id_async(
+        self, permission_id: str
+    ) -> JsonData:
+        """?! не понимаю что этот метод делает"""
+        response = await self._provider.get_permissions_for_scope_by_id_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def delete_permission_async(self, permission_id: str) -> JsonData:
+        response = await self._provider.delete_permission_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def update_permission_scopes_async(
+        self,
+        permission_id: str,  # resource OR scope based permission
+        payload: PermissionScopesPayload,
+    ) -> JsonData:
+        response = await self._provider.update_permission_scopes_async(
+            permission_id=permission_id, payload=payload
+        )
+
+        return self.validate_response(response)
+
+
+class AuthPolicyService(BaseService):
+    async def get_policy_associated_role_policies_raw_async(
+        self, policy_id: str
+    ) -> JsonData:
+        response = await self._provider.get_policy_associated_role_policies_async(
+            policy_id=policy_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policy_associated_role_policies_async(
+        self, policy_id: str
+    ) -> list[PolicyRepresentation]:
+        data = await self.get_policy_associated_role_policies_raw_async(
+            policy_id=policy_id
+        )
+
+        return dataclass_from_dict(data, list[PolicyRepresentation])
+
+    async def create_policy_role_async(self, payload: RolePolicyPayload) -> JsonData:
+        response = await self._provider.create_policy_role_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def delete_policy_async(self, policy_id: str) -> JsonData:
+        response = await self._provider.delete_policy_async(policy_id=policy_id)
+
+        return self.validate_response(response)
+
+    async def create_policy_async(self, payload: PermissionPayload) -> JsonData:
+        response = await self._provider.create_policy_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def get_policy_by_name_raw_async(
+        self, query: FilterFindPolicyParams | None = None
+    ) -> JsonData:
+        response = await self._provider.get_policy_by_name_async(query=query)
+
+        return self.validate_response(response)
+
+    async def get_policy_by_name_async(
+        self, query: FilterFindPolicyParams | None = None
+    ) -> JsonData:
+        data = await self.get_policy_by_name_raw_async(query=query)
+
+        return data
+
+    async def get_associated_policies_async(self, policy_id: str) -> JsonData:
+        response = await self._provider.get_associated_policies_async(
+            policy_id=policy_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policy_authorisation_scopes_async(
+        self, permission_id: str
+    ) -> JsonData:
+        response = await self._provider.get_policy_authorisation_scopes_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_policies_raw_async(self) -> JsonData:
+        response = await self._provider.get_policies_async()
+
+        return self.validate_response(response)
+
+    async def get_policies_async(self) -> JsonData:
+        data = await self.get_policies_raw_async()
+
+        return data

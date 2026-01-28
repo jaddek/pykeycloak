@@ -62,6 +62,15 @@ class TokenRepresentation(Representation):
     refresh_token: str | None = None
     refresh_token_expires_in: int | None = None
 
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}("
+            f"scope={self.scope!r}, "
+            f"expires={self.expires_in}s, "  # Добавили 's' для обозначения секунд
+            f"has_refresh={self.refresh_token is not None}"  # Просто флаг наличия
+            f")"
+        )
+
 
 @dataclass(frozen=True, kw_only=True)
 class UserInfoRepresentation(Representation):
@@ -72,6 +81,68 @@ class UserInfoRepresentation(Representation):
     username: str | None = field(default=None, metadata={"alias": "preferred_username"})
     email_verified: bool = field(default=False, metadata={"alias": "email_verified"})
     attributes: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class UserRepresentation(Representation):
+    id: str | None = field(default=None)
+    first_name: str | None = field(default=None, metadata={"alias": "firstName"})
+    last_name: str | None = field(default=None, metadata={"alias": "lastName"})
+    email: str | None = field(default=None)
+    username: str | None = field(default=None)
+    email_verified: bool = field(default=False, metadata={"alias": "emailVerified"})
+    attributes: dict[str, Any] = field(default_factory=dict, repr=False)
+    enabled: bool = field(default=False)
+
+    created_datetime: int | None = field(
+        default=None, metadata={"alias": "createdDateTime"}, repr=False
+    )
+    user_profile_metadata: dict[str, Any] = field(
+        default_factory=dict, metadata={"alias": "userProfileMetadata"}, repr=False
+    )
+    self: str | None = field(default=None, repr=False)
+    origin: str | None = field(default=None, repr=False)
+    created_timestamp: int | None = field(
+        default=None, metadata={"alias": "createdTimestamp"}, repr=False
+    )
+    totp: bool | None = field(default=None, repr=False)
+    federal_link: str | None = field(
+        default=None, metadata={"alias": "federalLink"}, repr=False
+    )
+    service_account_client_id: str | None = field(
+        default=None, metadata={"alias": "serviceAccountClientId"}, repr=False
+    )
+    disableable_credential_types: list[str] = field(
+        default_factory=list,
+        metadata={"alias": "disableableCredentialTypes"},
+        repr=False,
+    )
+    required_actions: list[str] = field(
+        default_factory=list, metadata={"alias": "requiredActions"}, repr=False
+    )
+    federated_identities: list[dict[str, Any]] = field(
+        default_factory=list, metadata={"alias": "federatedIdentities"}, repr=False
+    )
+    realm_roles: list[str] = field(
+        default_factory=list, metadata={"alias": "realmRoles"}, repr=False
+    )
+    client_roles: dict[str, list[str]] = field(
+        default_factory=dict, metadata={"alias": "clientRoles"}, repr=False
+    )
+    client_consents: list[dict[str, Any]] = field(
+        default_factory=list, metadata={"alias": "clientConsents"}, repr=False
+    )
+    not_before: int | None = field(
+        default=None, metadata={"alias": "notBeforePolicy"}, repr=False
+    )
+    application_roles: dict[str, list[str]] = field(
+        default_factory=dict, metadata={"alias": "applicationRoles"}, repr=False
+    )
+    social_links: list[dict[str, Any]] = field(
+        default_factory=list, metadata={"alias": "socialLinks"}, repr=False
+    )
+    groups: list[str] = field(default_factory=list, repr=False)
+    access: dict[str, Any] = field(default_factory=dict, repr=False)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -130,6 +201,7 @@ class PolicyRepresentation(Representation):
 class ResourceRepresentation(Representation):
     id: str | None = None
     name: str | None = None
+    display_name: str | None = field(default=None, metadata={"alias": "displayName"})
     type: str | None = None
     owner_managed_access: bool = field(
         default=False, metadata={"alias": "ownerManagedAccess"}
@@ -137,6 +209,12 @@ class ResourceRepresentation(Representation):
     uris: list[str] = field(default_factory=list)
     scopes: list[dict[str, str]] = field(default_factory=list)
     attributes: dict[str, list[str]] = field(default_factory=dict)
+    icon_uri: str | None = None
+    owner: dict | None = None
+    uri: str | None = None
+    scopes_uma: set["ScopeRepresentation"] = field(
+        default_factory=set, metadata={"alias": "scopesUma"}
+    )
 
 
 @dataclass(frozen=True, kw_only=True)

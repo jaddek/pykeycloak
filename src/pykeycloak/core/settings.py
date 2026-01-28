@@ -28,6 +28,7 @@ from .constants import (
     KEYCLOAK_HTTPX_CLIENT_PARAMS_FOLLOW_REDIRECTS_DEFAULT,
     KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP1_DEFAULT,
     KEYCLOAK_HTTPX_CLIENT_PARAMS_HTTP2_DEFAULT,
+    KEYCLOAK_HTTPX_CLIENT_PARAMS_KEEPALIVE_EXPIRY_DEFAULT,
     KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_CONNECTIONS_DEFAULT,
     KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS_DEFAULT,
     KEYCLOAK_HTTPX_CLIENT_PARAMS_SSL_VERIFY_DEFAULT,
@@ -35,13 +36,20 @@ from .constants import (
     KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP1_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_HTTP2_DEFAULT,
+    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_KEEPALIVE_EXPIRY_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_RETRIES_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_TRUST_ENV_DEFAULT,
     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY_DEFAULT,
 )
-from .helpers import getenv_bool, getenv_int, getenv_optional, getenv_required_url
+from .helpers import (
+    getenv_bool,
+    getenv_float,
+    getenv_int,
+    getenv_optional,
+    getenv_required_url,
+)
 
 
 @dataclass
@@ -55,6 +63,7 @@ class HttpTransportSettings:
         default_factory=lambda: Limits(
             max_connections=KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_CONNECTIONS_DEFAULT,
             max_keepalive_connections=KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT,
+            keepalive_expiry=KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_KEEPALIVE_EXPIRY_DEFAULT,
         )
     )
     proxy: ProxyTypes | None = None
@@ -125,6 +134,10 @@ class HttpTransportSettings:
                 max_keepalive_connections=getenv_int(
                     "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS",
                     KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_MAX_KEEPALIVE_CONNECTIONS_DEFAULT,
+                ),
+                keepalive_expiry=getenv_float(
+                    "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_KEEPALIVE_EXPIRY",
+                    KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_KEEPALIVE_EXPIRY_DEFAULT,
                 ),
             ),
         )
@@ -227,6 +240,10 @@ class ClientSettings:
                 max_keepalive_connections=getenv_int(
                     "KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS",
                     KEYCLOAK_HTTPX_CLIENT_PARAMS_MAX_KEEPALIVE_CONNECTIONS_DEFAULT,
+                ),
+                keepalive_expiry=getenv_float(
+                    "KEYCLOAK_HTTPX_CLIENT_PARAMS_KEEPALIVE_EXPIRY",
+                    KEYCLOAK_HTTPX_CLIENT_PARAMS_KEEPALIVE_EXPIRY_DEFAULT,
                 ),
             ),
             max_redirects=getenv_int(

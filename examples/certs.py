@@ -4,14 +4,11 @@ import os
 
 from pykeycloak.core.realm import RealmClient
 from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
-from pykeycloak.services.services import AuthService, AuthzService
+from pykeycloak.services.services import AuthService
 
 logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
 
 kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "otago")
-
-username = "admin"
-password = "password"  # noqa: S105
 
 
 async def main():
@@ -22,17 +19,13 @@ async def main():
     )
 
     auth_service = AuthService(provider)
-    authz_service = AuthzService(provider)
 
+    # Service account login required to get access to admin operations
     await auth_service.client_login_async()
 
-    # Get client authorization settings with typed representation
-    authz_settings = await authz_service.get_client_authz_settings_async()
-
-    authz_settings_raw = await authz_service.get_client_authz_settings_raw_async()
-
-    print(f"Authz settings: {authz_settings}")
-    print(f"Authz raw settings: {authz_settings_raw}")
+    # Get certificates using the access token
+    certs = await auth_service.get_certs_async()
+    print(f"Certificates: {certs}")
 
     await provider.close()
 
