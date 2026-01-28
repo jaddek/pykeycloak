@@ -5,7 +5,6 @@ import asyncio
 import itertools
 import json
 import math
-from asyncio import Queue
 from collections.abc import Iterable
 from http import HTTPStatus
 from typing import Any
@@ -152,7 +151,9 @@ class UsersService(BaseService):
             users_count=int(users_count), query=query
         )
 
-        return itertools.chain.from_iterable(responses)
+        return itertools.chain.from_iterable(
+            [response.json() for response in responses]
+        )
 
     async def get_users_async(
         self,
@@ -169,48 +170,24 @@ class UsersService(BaseService):
         query: GetUsersQuery | None = None,
     ) -> list[Response]:
         _query = query or GetUsersQuery()
-
         total_pages = math.ceil(users_count / _query.max)
-        queue: Queue[GetUsersQuery] = asyncio.Queue()
 
-        if users_count <= _query.max:
-            response = await self._provider.get_users_async(query=_query)
+        semaphore = asyncio.Semaphore(concurrency_limit)
 
-            data = response.json()
+        async def fetch_page(first_raw: int, current_max_rows: int) -> Response:
+            page_query = GetUsersQuery(
+                first=first_raw, max=current_max_rows, search=_query.search
+            )
+            async with semaphore:
+                return await self._provider.get_users_async(query=page_query)
 
-            return [data]
-
+        tasks = []
         for page in range(total_pages):
             first = page * _query.max
-            remaining = users_count - first
-            current_max = min(_query.max, remaining)
-            page_query = GetUsersQuery(
-                first=first, max=current_max, search=_query.search
-            )
-            queue.put_nowait(page_query)
+            current_max = min(_query.max, users_count - first)
+            tasks.append(fetch_page(first, current_max))
 
-        responses: list[JsonData] = []
-
-        async def worker() -> None:
-            while True:
-                try:
-                    worker_page_query = queue.get_nowait()
-                except asyncio.QueueEmpty:
-                    break
-
-                try:
-                    worker_page_response = await self._provider.get_users_async(
-                        query=worker_page_query
-                    )
-                    responses.append(worker_page_response.json())
-                finally:
-                    queue.task_done()
-
-        async with asyncio.TaskGroup() as tg:
-            for _ in range(min(concurrency_limit, total_pages)):
-                tg.create_task(worker())
-
-        return responses
+        return await asyncio.gather(*tasks)
 
     async def get_users_by_role_async(
         self, role_name: str, query: RoleMembersListQuery | None = None

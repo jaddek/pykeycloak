@@ -1,32 +1,14 @@
 import asyncio
-import logging
-import os
 
-from pykeycloak.core.realm import RealmClient
-from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
-from pykeycloak.services.services import AuthService, ClientsService
+from _common import auth
 
-logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
-
-kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "otago")
-
-username = "admin"
-password = "password"  # noqa: S105
+from pykeycloak.services.services import ClientsService
 
 
 async def main():
-    realm_client = RealmClient.from_env()
-    provider = KeycloakInMemoryProviderAsync(
-        realm=kc_realm,
-        realm_client=realm_client,
-    )
+    provider, auth_service = await auth()
 
-    auth_service = AuthService(provider)
     clients_service = ClientsService(provider)
-
-    service_account_login = await auth_service.client_login_async()
-
-    print(f"Service account login {service_account_login}")
 
     # Get specific client raw
     client_raw = await clients_service.get_client_raw_async()

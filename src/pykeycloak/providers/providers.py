@@ -25,7 +25,7 @@ from pykeycloak.providers.payloads import (
 )
 
 from ..core.exceptions import PyKeycloakUnexpectedBehaviourException
-from ..core.realm import RealmClient
+from ..core.realm import Realm, RealmClient
 from ..core.token_manager import (
     TokenAutoRefresher,
     TokenManager,
@@ -394,17 +394,19 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> Response: ...
 
+    async def close(self) -> None: ...
+
 
 class KeycloakProviderAsync:
     def __init__(
         self,
         *,
-        realm: str,
+        realm: Realm,
         realm_client: RealmClient,
         headers: HeadersProtocol | None = None,
         wrapper: KeycloakHttpClientWrapperAsync | None = None,
     ) -> None:
-        self._realm: str = realm
+        self._realm: Realm = realm
         self._realm_client: RealmClient = realm_client
 
         self._headers = headers or HeaderFactory()
@@ -1561,7 +1563,7 @@ class KeycloakProviderAsync:
 
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {
-            "realm": str(self._realm),
+            "realm": str(self._realm.realm_name),
             "client_id": str(self._realm_client.client_id),
             "client_uuid": str(self._realm_client.client_uuid),
             **{k: str(v) for k, v in kwargs.items()},
