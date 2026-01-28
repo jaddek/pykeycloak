@@ -1,26 +1,15 @@
 import asyncio
-import logging
-import os
 import uuid
 
-from pykeycloak.core.realm import RealmClient
+from _common import auth
+
 from pykeycloak.providers.payloads import ResourcePayload
-from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
-from pykeycloak.services.services import AuthService, AuthzResourceService
-
-logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
-
-kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "otago")
+from pykeycloak.services.services import AuthzResourceService
 
 
 async def main():
-    realm_client = RealmClient.from_env()
-    provider = KeycloakInMemoryProviderAsync(
-        realm=kc_realm,
-        realm_client=realm_client,
-    )
+    provider, auth_service = await auth()
 
-    auth_service = AuthService(provider)
     authz_resource_service = AuthzResourceService(provider)
 
     # Service account login required for admin operations

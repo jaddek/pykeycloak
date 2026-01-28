@@ -6,6 +6,11 @@ import os
 from typing import Self
 
 
+class Realm:
+    def __init__(self, realm_name: str) -> None:
+        self.realm_name = realm_name
+
+
 class RealmClient:
     def __init__(
         self, client_uuid: str, client_id: str, client_secret: str | None = None

@@ -1,16 +1,10 @@
 import asyncio
-import logging
-import os
 from time import time
 
-from pykeycloak.core.realm import RealmClient
+from _common import auth
+
 from pykeycloak.providers.payloads import RolePayload, UserCredentialsLoginPayload
-from pykeycloak.providers.providers import KeycloakInMemoryProviderAsync
-from pykeycloak.services.services import AuthService, RolesService, UsersService
-
-logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
-
-kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "otago")
+from pykeycloak.services.services import RolesService, UsersService
 
 username = "admin"
 password = "password"  # noqa: S105
@@ -19,13 +13,8 @@ prefix_for_updated_role = str(time())
 
 
 async def main():
-    realm_client = RealmClient.from_env()
-    provider = KeycloakInMemoryProviderAsync(
-        realm=kc_realm,
-        realm_client=realm_client,
-    )
+    provider, auth_service = await auth()
 
-    auth_service = AuthService(provider)
     roles_service = RolesService(provider)
     users_service = UsersService(provider)
 
@@ -96,7 +85,7 @@ async def main():
 
     if users and len(users) > 0:
         first_user = users[0][0] if isinstance(users[0], list) else users[0]
-        user_id = first_user.get("id")
+        user_id = first_user.id
 
         assign_result = await roles_service.assign_client_role_async(
             user_id=user_id,
