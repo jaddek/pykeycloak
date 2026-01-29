@@ -43,7 +43,3 @@ class HeadersFactory:
             HeaderKeys.AUTHORIZATION.value: f"Bearer {bearer_token}",
             HeaderKeys.CONTENT_TYPE.value: ContentTypesEnums.JSON.value,
         }
-
-
-def get_headers_factory() -> HeadersProtocol:
-    return HeadersFactory()

@@ -1,14 +1,16 @@
 import logging
 import os
 
-from pykeycloak.core.clients import get_keycloak_client_wrapper_from_env
-from pykeycloak.core.headers import get_headers_factory
 from pykeycloak.core.realm import Realm, RealmClient
 from pykeycloak.core.validator import KeycloakResponseValidator
+from pykeycloak.dependancies import (
+    get_headers_factory,
+    get_keycloak_client_wrapper_from_env,
+)
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.providers import (
     KeycloakInMemoryProviderAsync,
 )
-from pykeycloak.services.factory import KeycloakServiceFactory
 
 # logging.basicConfig(
 #     level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"

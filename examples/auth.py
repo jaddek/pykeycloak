@@ -2,10 +2,10 @@ import asyncio
 
 from _common import service_factory
 
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     UserCredentialsLoginPayload,
 )
-from pykeycloak.services.factory import KeycloakServiceFactory
 
 username = "admin"
 password = "password"  # noqa: S105

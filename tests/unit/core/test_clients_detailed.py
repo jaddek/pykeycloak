@@ -10,9 +10,9 @@ from httpx import HTTPStatusError, RequestError, Response
 from pykeycloak.core.clients import (
     HttpMethod,
     KeycloakHttpClientWrapperAsync,
-    get_keycloak_client_wrapper,
-    get_keycloak_client_wrapper_from_env,
 )
+
+from pykeycloak.dependancies import get_keycloak_client_wrapper, get_keycloak_client_wrapper_from_env
 from pykeycloak.core.sanitizer import SensitiveDataSanitizer
 from pykeycloak.core.settings import ClientSettings, HttpTransportSettings
 

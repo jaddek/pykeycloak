@@ -3,8 +3,8 @@ import uuid
 
 from _common import service_factory
 
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import ResourcePayload
-from pykeycloak.services.factory import KeycloakServiceFactory
 
 
 async def main():

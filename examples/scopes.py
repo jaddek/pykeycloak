@@ -2,7 +2,7 @@ import asyncio
 
 from _common import service_factory
 
-from pykeycloak.services.factory import KeycloakServiceFactory
+from pykeycloak.factories import KeycloakServiceFactory
 
 
 async def main():

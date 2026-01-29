@@ -3,6 +3,7 @@ import uuid
 
 from _common import service_factory
 
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     CreateUserPayload,
     PasswordCredentialsPayload,
@@ -10,7 +11,6 @@ from pykeycloak.providers.payloads import (
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
 )
-from pykeycloak.services.factory import KeycloakServiceFactory
 
 username = "admin"
 password = "password"  # noqa: S105

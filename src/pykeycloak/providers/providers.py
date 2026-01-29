@@ -7,8 +7,6 @@ from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, Protocol, Unpack, cast
 from uuid import UUID
 
-from httpx import Response
-
 from pykeycloak.core.clients import (
     HttpMethod,
     KeycloakHttpClientWrapperAsync,
@@ -1914,7 +1912,9 @@ class KeycloakProviderAsync:
     #  Token manager
     ##############################################################
 
-    def token_manager_update_access_token(self) -> Callable[[str], Awaitable[Response]]:
+    def token_manager_update_access_token(
+        self,
+    ) -> Callable[[str], Awaitable[ResponseProtocol]]:
         async def _refresh(refresh_token: str) -> ResponseProtocol:
             return await self.refresh_token_async(
                 payload=RefreshTokenPayload(refresh_token=refresh_token)

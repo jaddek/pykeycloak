@@ -3,8 +3,8 @@ from time import time
 
 from _common import service_factory
 
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import RolePayload, UserCredentialsLoginPayload
-from pykeycloak.services.factory import KeycloakServiceFactory
 
 username = "admin"
 password = "password"  # noqa: S105

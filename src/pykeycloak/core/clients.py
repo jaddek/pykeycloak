@@ -6,12 +6,10 @@ from typing import Any, cast
 
 from httpx import (
     AsyncClient,
-    AsyncHTTPTransport,
 )
 
 from .. import logger
 from .protocols import ResponseProtocol
-from .settings import ClientSettings, HttpTransportSettings
 
 
 class HttpMethod(Enum):
@@ -99,38 +97,3 @@ class KeycloakHttpClientWrapperAsync:
 
     async def close_async(self) -> None:
         await self._client.aclose()
-
-
-def get_async_client(
-    client_settings: ClientSettings | None = None,
-    transport_settings: HttpTransportSettings | None = None,
-) -> AsyncClient:
-    transport_settings = transport_settings or HttpTransportSettings()
-    transport = AsyncHTTPTransport(**transport_settings.to_dict())
-
-    client_settings = client_settings or ClientSettings()
-    client_settings.transport = transport
-
-    return AsyncClient(**client_settings.to_dict())
-
-
-def get_async_client_from_env() -> AsyncClient:
-    return get_async_client(
-        client_settings=ClientSettings.from_env(),
-        transport_settings=HttpTransportSettings.from_env(),
-    )
-
-
-def get_keycloak_client_wrapper(
-    *,
-    client: AsyncClient,
-) -> KeycloakHttpClientWrapperAsync:
-    return KeycloakHttpClientWrapperAsync(
-        client=client,
-    )
-
-
-def get_keycloak_client_wrapper_from_env() -> KeycloakHttpClientWrapperAsync:
-    return KeycloakHttpClientWrapperAsync(
-        client=get_async_client_from_env(),
-    )
