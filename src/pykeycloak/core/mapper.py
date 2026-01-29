@@ -107,7 +107,6 @@ class PyKeyCloakDataMapper:
             )
 
         def dataclass_handler(data: Any) -> Any:
-            print(data)
             if type(data) is not dict:
                 raise TypeError(
                     f"Expected dict for {target_cls.__name__}, got {type(data).__name__}"
