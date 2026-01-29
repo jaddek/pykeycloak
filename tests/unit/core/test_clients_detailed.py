@@ -54,7 +54,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         mock_response.headers = {"content-type": "application/json"}
         wrapper._client.request = AsyncMock(return_value=mock_response)
 
-        response = await wrapper.request(HttpMethod.GET, "http://example.com")
+        response = await wrapper.request_async(HttpMethod.GET, "http://example.com")
 
         assert response == mock_response
         wrapper._client.request.assert_called_once()
@@ -70,7 +70,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         )
 
         with pytest.raises(RequestError):
-            await wrapper.request(HttpMethod.GET, "http://example.com")
+            await wrapper.request_async(HttpMethod.GET, "http://example.com")
 
     @pytest.mark.asyncio
     async def test_request_with_http_status_error(self):
@@ -85,7 +85,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         )
 
         with pytest.raises(HTTPStatusError):
-            await wrapper.request(HttpMethod.GET, "http://example.com")
+            await wrapper.request_async(HttpMethod.GET, "http://example.com")
 
     @pytest.mark.asyncio
     async def test_request_with_raise_exception_flag(self):
@@ -99,7 +99,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         mock_response.raise_for_status = MagicMock()
         wrapper._client.request = AsyncMock(return_value=mock_response)
 
-        await wrapper.request(
+        await wrapper.request_async(
             HttpMethod.GET, "http://example.com", raise_exception=True
         )
 
@@ -126,7 +126,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
         wrapper = KeycloakHttpClientWrapperAsync()
         wrapper._client.aclose = AsyncMock()
 
-        await wrapper.close()
+        await wrapper.close_async()
 
         wrapper._client.aclose.assert_called_once()
 

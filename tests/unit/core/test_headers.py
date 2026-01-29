@@ -2,7 +2,7 @@
 Unit tests for the headers module.
 """
 
-from pykeycloak.core.headers import ContentTypesEnums, HeaderFactory, HeaderKeys
+from pykeycloak.core.headers import ContentTypesEnums, HeadersFactory, HeaderKeys
 
 
 class TestContentTypesEnums:
@@ -55,7 +55,7 @@ class TestHeaderFactory:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         result = factory.openid_basic(basic_token)
         assert result == expected_headers
 
@@ -67,7 +67,7 @@ class TestHeaderFactory:
             "Content-Type": "application/x-www-form-urlencoded",
         }
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         result = factory.openid_bearer(bearer_token)
         assert result == expected_headers
 
@@ -79,7 +79,7 @@ class TestHeaderFactory:
             "Content-Type": "application/json",
         }
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         result = factory.keycloak_bearer(bearer_token)
         assert result == expected_headers
 
@@ -88,7 +88,7 @@ class TestHeaderFactory:
         token1 = "first-token"
         token2 = "second-token"
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         headers1 = factory.openid_bearer(token1)
         headers2 = factory.openid_bearer(token2)
 
@@ -101,7 +101,7 @@ class TestHeaderFactory:
         token1 = "first-basic-token"
         token2 = "second-basic-token"
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         headers1 = factory.openid_basic(token1)
         headers2 = factory.openid_basic(token2)
 
@@ -112,7 +112,7 @@ class TestHeaderFactory:
     def test_headers_immutability(self):
         """Test that returned headers dictionaries are independent."""
         basic_token = "test-token"  # noqa: S106 S105
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         headers1 = factory.openid_basic(basic_token)
         headers2 = factory.openid_basic(basic_token)
 
@@ -127,7 +127,7 @@ class TestHeaderFactory:
         """Test that OpenID headers consistently include form urlencoded content type."""
         token = "any-token"  # noqa: S106 S105
 
-        factory = HeaderFactory()
+        factory = HeadersFactory()
         basic_headers = factory.openid_basic(token)
         bearer_headers = factory.openid_bearer(token)
 
@@ -136,8 +136,8 @@ class TestHeaderFactory:
 
     def test_factory_class_has_no_instance_data(self):
         """Test that HeaderFactory class doesn't store any instance data."""
-        factory1 = HeaderFactory()
-        factory2 = HeaderFactory()
+        factory1 = HeadersFactory()
+        factory2 = HeadersFactory()
 
         # Both instances should behave identically
         token = "test-token"  # noqa: S106 S105

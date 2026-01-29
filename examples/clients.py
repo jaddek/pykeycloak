@@ -1,21 +1,19 @@
 import asyncio
 
-from _common import auth
+from _common import service_factory
 
-from pykeycloak.services.services import ClientsService
+from pykeycloak.services.factory import KeycloakServiceFactory
 
 
 async def main():
-    provider, auth_service = await auth()
-
-    clients_service = ClientsService(provider)
+    factory: KeycloakServiceFactory = await service_factory()
 
     # Get specific client raw
-    client_raw = await clients_service.get_client_raw_async()
+    client_raw = await factory.clients.get_client_raw_async()
     print(f"Client raw: {client_raw}")
 
     # Get all clients with typed representation
-    clients = await clients_service.get_clients_async()
+    clients = await factory.clients.get_clients_async()
     print(f"Clients: {clients}")
     print(f"Number of clients: {len(clients)}")
 
@@ -27,17 +25,15 @@ async def main():
         print(f"First client enabled: {first_client.enabled}")
 
     # Get all clients raw
-    clients_raw = await clients_service.get_clients_raw_async()
+    clients_raw = await factory.clients.get_clients_raw_async()
     print(f"Clients raw length: {len(clients_raw)}")
 
     # Get specific client with typed representation
-    client = await clients_service.get_client_async()
+    client = await factory.clients.get_client_async()
     print(f"Specific client: {client}")
     print(f"Specific client name: {client.name}")
     print(f"Specific client client_id: {client.client_id}")
     print(f"Specific client protocol: {client.protocol}")
-
-    await provider.close()
 
 
 if __name__ == "__main__":

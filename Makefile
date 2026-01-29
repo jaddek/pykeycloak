@@ -80,6 +80,13 @@ script-%:
 scripte-%:
 	$(load_env); $(UV_RUN) ./examples/$*
 
+scriptea:
+	@find ./examples -maxdepth 1 -type f -name "[!_]*.py" -print0 | while IFS= read -r -d '' file; do \
+		echo "Running $$file..."; \
+		$(load_env); $(UV_RUN) "$$file"; \
+	done
+
+
 # ========================
 # Formatting & Linting
 # ========================

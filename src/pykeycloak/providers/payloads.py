@@ -137,7 +137,7 @@ class RTPExchangeTokenPayload(ObtainTokenPayload):
 
 @dataclass(frozen=True, kw_only=True)
 class UMAAuthorizationPayload(Payload):
-    audience: str
+    audience: str | None = field(default=None)  # if none the client id will be used
     permissions: dict[str, list[str]]
     response_mode: UrnIetfOauthUmaTicketResponseModeEnum = (
         UrnIetfOauthUmaTicketResponseModeEnum.DECISION
@@ -159,7 +159,7 @@ class UMAAuthorizationPayload(Payload):
 
     @property
     def grant_type(self) -> str:
-        return GrantTypeEnum.URN_IETF_OAUTH_UMA_TICKET
+        return str(GrantTypeEnum.URN_IETF_OAUTH_UMA_TICKET)
 
     def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
         return {
@@ -167,9 +167,9 @@ class UMAAuthorizationPayload(Payload):
             "audience": self.audience,
             "grant_type": self.grant_type,
             "permission": self._normalized_permissions,
-            "response_mode": self.response_mode,
+            "response_mode": str(self.response_mode),
             "response_include_resource_name": self.response_include_resource_name,
-            "permission_resource_format": self.permission_resource_format,
+            "permission_resource_format": str(self.permission_resource_format),
             "permission_resource_matching_uri": self.permission_resource_matching_uri,
         }
 

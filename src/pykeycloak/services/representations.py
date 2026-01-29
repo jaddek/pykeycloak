@@ -27,13 +27,13 @@ class Representation:
 
 @dataclass(frozen=True, kw_only=True)
 class SessionsCountRepresentation(Representation):
-    count: str
+    count: int
 
 
 @dataclass(frozen=True, kw_only=True)
 class SessionsStatsRepresentation(Representation):
     id: str
-    offline: int
+    offline: str
     client_id: str = field(metadata={"alias": "clientId"})
     active: str
 
@@ -338,3 +338,12 @@ class ClientRepresentation(Representation):
         default_factory=list, metadata={"alias": "optionalClientScopes"}
     )
     access: dict[str, bool] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, kw_only=True)
+class DeviceAuthRepresentation(Representation):
+    device_code: str
+    user_code: str
+    verification_uri: str
+    expires_in: int
+    interval: int

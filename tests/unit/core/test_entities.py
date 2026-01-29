@@ -62,7 +62,7 @@ class TestRealmClient:
         client = RealmClient(client_uuid, client_id, client_secret)
         expected_auth = "dGVzdC1jbGllbnQtaWQ6dGVzdC1zZWNyZXQ="  # base64 encoded "test-client-id:test-secret"
 
-        assert client.base64_auth() == expected_auth
+        assert client.base64_encoded_client_secret() == expected_auth
 
     def test_base64_auth_for_public_client_raises_error(self):
         """Test that calling base64_auth on a public client raises AttributeError."""
@@ -74,7 +74,7 @@ class TestRealmClient:
         with pytest.raises(
             AttributeError, match="Public client has no secret for Basic Auth"
         ):
-            client.base64_auth()
+            client.base64_encoded_client_secret()
 
     def test_resolve_id_with_override(self):
         """Test resolve_id method with an override ID."""

@@ -1,27 +1,20 @@
 import asyncio
 
-from _common import auth
+from _common import service_factory
 
-from pykeycloak.services.services import AuthzPermissionService
+from pykeycloak.services.factory import KeycloakServiceFactory
 
 
 async def main():
-    provider, auth_service = await auth()
-
-    authz_permission_service = AuthzPermissionService(provider)
-
-    # Service account login required for admin operations
-    service_account_login = await auth_service.client_login_async()
-
-    print(f"Service account login {service_account_login}")
+    factory: KeycloakServiceFactory = await service_factory()
 
     # Get all permissions
-    permissions = await authz_permission_service.get_permissions_async()
+    permissions = await factory.authz_permission.get_permissions_async()
     print(f"Permissions: {permissions}")
     print(f"Number of permissions: {len(permissions)}")
 
     # Get all permissions raw
-    permissions_raw = await authz_permission_service.get_permissions_raw_async()
+    permissions_raw = await factory.authz_permission.get_permissions_raw_async()
     print(f"Permissions raw: {permissions_raw}")
 
     # NOTE: The following examples show the structure for creating permissions,
@@ -38,7 +31,7 @@ async def main():
     #     policies=["YOUR_POLICY_ID_HERE"],
     # )
     #
-    # created_resource_permission = await authz_permission_service.create_client_authz_permission_resource_based_async(
+    # created_resource_permission = await factory.permissions.create_client_authz_permission_resource_based_async(
     #     payload=resource_based_permission_payload
     # )
     # print(f"Created resource-based permission: {created_resource_permission}")
@@ -52,7 +45,7 @@ async def main():
     #     policies=["YOUR_POLICY_ID_HERE"],
     # )
     #
-    # created_scope_permission = await authz_permission_service.create_client_authz_permission_scope_based_async(
+    # created_scope_permission = await factory.permissions.create_client_authz_permission_scope_based_async(
     #     payload=scope_based_permission_payload
     # )
     # print(f"Created scope-based permission: {created_scope_permission}")
@@ -67,7 +60,7 @@ async def main():
     #     first_permission = permissions[0] if isinstance(permissions[0], dict) else None
     #     if first_permission and 'id' in first_permission:
     #         first_permission_id = first_permission['id']
-    #         updated_permission = await authz_permission_service.update_permission_scopes_async(
+    #         updated_permission = await factory.permissions.update_permission_scopes_async(
     #             permission_id=first_permission_id,
     #             payload=update_scopes_payload
     #         )
@@ -79,12 +72,10 @@ async def main():
     #     first_permission = permissions[0] if isinstance(permissions[0], dict) else None
     #     if first_permission and 'id' in first_permission:
     #         first_permission_id = first_permission['id']
-    #         deleted_permission = await authz_permission_service.delete_permission_async(
+    #         deleted_permission = await factory.permissions.delete_permission_async(
     #             permission_id=first_permission_id
     #         )
     #         print(f"Deleted permission with ID: {first_permission_id}")
-
-    await provider.close()
 
 
 if __name__ == "__main__":

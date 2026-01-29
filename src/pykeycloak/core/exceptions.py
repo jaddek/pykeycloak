@@ -2,7 +2,7 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 
-class PyKeycloakException(Exception):
+class KeycloakException(Exception):
     def __init__(
         self,
         message: str = "",
@@ -13,7 +13,13 @@ class PyKeycloakException(Exception):
         return f"{self.message}"
 
 
-class PyKeycloakUnexpectedBehaviourException(PyKeycloakException):
+class AccessTokenIsRequiredError(KeycloakException): ...
+
+
+class KeycloakDecodingError(KeycloakException): ...
+
+
+class KeycloakUnexpectedBehaviourException(KeycloakException):
     def __init__(
         self,
         message: str = "",
@@ -28,7 +34,7 @@ class PyKeycloakUnexpectedBehaviourException(PyKeycloakException):
         return f"v:[{self.versions}]{self.message}: {self.description}"
 
 
-class PyKeycloakHTTPException(PyKeycloakException):
+class KeycloakHTTPException(KeycloakException):
     def __init__(
         self,
         message: str = "",
@@ -47,25 +53,31 @@ class PyKeycloakHTTPException(PyKeycloakException):
         return f"{self.message}"
 
 
-class PyKeycloakAuthenticationError(PyKeycloakException): ...
+class KeycloakError(KeycloakHTTPException): ...
 
 
-class PyKeycloakConnectionError(PyKeycloakException): ...
+class KeycloakConflictError(KeycloakError): ...
 
 
-class PyKeycloakOperationError(PyKeycloakException): ...
+class KeycloakNotFoundError(KeycloakError): ...
 
 
-class PyKeycloakDeprecationError(PyKeycloakException): ...
+class KeycloakBadRequestError(KeycloakError): ...
 
 
-class PyKeycloakSecretNotFound(PyKeycloakOperationError): ...
+class KeycloakUnprocessableEntityError(KeycloakError): ...
 
 
-class PyKeycloakRPTNotFound(PyKeycloakOperationError): ...
+class KeycloakUnsupportedMediaTypeError(KeycloakError): ...
 
 
-class PyKeycloakAuthorizationConfigError(PyKeycloakOperationError): ...
+class KeycloakUnauthorisedError(KeycloakError): ...
 
 
-class PyKeycloakInvalidTokenError(PyKeycloakOperationError): ...
+class KeycloakForbiddenError(KeycloakError): ...
+
+
+class KeycloakMethodNotAllowedError(KeycloakError): ...
+
+
+class KeycloakServerError(KeycloakError): ...

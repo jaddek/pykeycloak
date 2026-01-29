@@ -23,7 +23,7 @@ class RealmClient:
         self.client_secret = client_secret
         self.is_confidential = client_secret is not None
 
-    def base64_auth(self) -> str:
+    def base64_encoded_client_secret(self) -> str:
         if not self.client_secret:
             raise AttributeError("Public client has no secret for Basic Auth")
 

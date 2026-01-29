@@ -1,7 +1,7 @@
 import asyncio
 import uuid
 
-from _common import auth
+from _common import service_factory
 
 from pykeycloak.providers.payloads import (
     CreateUserPayload,
@@ -10,21 +10,14 @@ from pykeycloak.providers.payloads import (
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
 )
-from pykeycloak.services.services import UsersService
+from pykeycloak.services.factory import KeycloakServiceFactory
 
 username = "admin"
 password = "password"  # noqa: S105
 
 
 async def main():
-    provider, auth_service = await auth()
-
-    users_service = UsersService(provider)
-
-    # Service account login required for admin operations
-    service_account_login = await auth_service.client_login_async()
-
-    print(f"Service account login {service_account_login}")
+    factory: KeycloakServiceFactory = await service_factory()
 
     new_user_payload = CreateUserPayload(
         username="testuser" + uuid.uuid4().hex,
@@ -39,7 +32,7 @@ async def main():
         ],
     )
 
-    user_uuid = await users_service.create_user_async(payload=new_user_payload)
+    user_uuid = await factory.users.create_user_async(payload=new_user_payload)
     print(f"Created user: {user_uuid}")
 
     # Update the user (if creation was successful and returned a user ID)
@@ -50,11 +43,11 @@ async def main():
         last_name="User",
     )
 
-    await users_service.update_user_async(
+    await factory.users.update_user_async(
         user_id=user_uuid, payload=updated_user_payload
     )
 
-    updated_user = await users_service.get_user_async(user_uuid)
+    updated_user = await factory.users.get_user_async(user_uuid)
 
     print(f"Updated user: {updated_user}")
 
@@ -63,8 +56,8 @@ async def main():
         enabled=False  # Disable the user
     )
 
-    await users_service.enable_user_async(user_id=user_uuid, payload=enable_payload)
-    updated_user = await users_service.get_user_async(user_uuid)
+    await factory.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
+    updated_user = await factory.users.get_user_async(user_uuid)
 
     print(f"Disabled user with ID: {not updated_user.enabled}")
 
@@ -72,8 +65,8 @@ async def main():
     enable_payload = UserUpdateEnablePayload(
         enabled=True  # Re-enable the user
     )
-    await users_service.enable_user_async(user_id=user_uuid, payload=enable_payload)
-    updated_user = await users_service.get_user_async(user_uuid)
+    await factory.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
+    updated_user = await factory.users.get_user_async(user_uuid)
 
     print(f"Enabled user with ID: {updated_user.enabled}")
 
@@ -83,15 +76,13 @@ async def main():
             {"type": "password", "value": "newerpassword123", "temporary": False}
         ]
     )
-    await users_service.update_user_password_async(
+    await factory.users.update_user_password_async(
         user_id=user_uuid, payload=password_payload
     )
     print(f"Updated password for user with ID: {user_uuid}")
 
-    await users_service.delete_user_async(user_id=user_uuid)
+    await factory.users.delete_user_async(user_id=user_uuid)
     print(f"Deleted user with ID: {user_uuid}")
-
-    await provider.close()
 
 
 if __name__ == "__main__":

@@ -1,16 +1,16 @@
 import asyncio
 
-from _common import auth
+from _common import service_factory
+
+from pykeycloak.services.factory import KeycloakServiceFactory
 
 
 async def main():
-    provider, auth_service = await auth()
+    factory: KeycloakServiceFactory = await service_factory()
 
     # Get certificates using the access token
-    certs = await auth_service.get_certs_async()
+    certs = await factory.auth.get_certs_async()
     print(f"Certificates: {certs}")
-
-    await provider.close()
 
 
 if __name__ == "__main__":

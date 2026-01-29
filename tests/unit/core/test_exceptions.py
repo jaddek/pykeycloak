@@ -6,7 +6,7 @@ from pykeycloak.core.exceptions import (
     PyKeycloakAuthenticationError,
     PyKeycloakConnectionError,
     PyKeycloakDeprecationError,
-    PyKeycloakException,
+    KeycloakException,
     PyKeycloakOperationError,
     PyKeycloakRPTNotFound,
     PyKeycloakSecretNotFound,
@@ -19,7 +19,7 @@ class TestPyKeycloakException:
     def test_pykeycloak_exception_creation_with_message_only(self):
         """Test creating a PyKeycloakException with only a message."""
         message = "Test exception message"
-        exception = PyKeycloakException(message)
+        exception = KeycloakException(message)
 
         assert str(exception) == message
         assert exception.message == message
@@ -30,7 +30,7 @@ class TestPyKeycloakException:
         """Test creating a PyKeycloakException with message and status code."""
         message = "Test exception message"
         status_code = 404
-        exception = PyKeycloakException(message, status_code)
+        exception = KeycloakException(message, status_code)
 
         assert str(exception) == f"{status_code}: {message}"
         assert exception.message == message
@@ -42,7 +42,7 @@ class TestPyKeycloakException:
         message = "Test exception message"
         content = b"error content"
         status_code = 500
-        exception = PyKeycloakException(message, status_code, content)
+        exception = KeycloakException(message, status_code, content)
 
         assert str(exception) == f"{status_code}: {message}"
         assert exception.message == message
@@ -51,7 +51,7 @@ class TestPyKeycloakException:
 
     def test_pykeycloak_exception_creation_with_none_values(self):
         """Test creating a PyKeycloakException with None values."""
-        exception = PyKeycloakException()
+        exception = KeycloakException()
 
         assert str(exception) == ""
         assert exception.message == ""
@@ -60,7 +60,7 @@ class TestPyKeycloakException:
 
     def test_pykeycloak_exception_inheritance(self):
         """Test that PyKeycloakException inherits from Exception."""
-        exception = PyKeycloakException("Test message")
+        exception = KeycloakException("Test message")
 
         assert isinstance(exception, Exception)
 
@@ -74,7 +74,7 @@ class TestPyKeycloakSubExceptions:
         exception = PyKeycloakAuthenticationError(message)
 
         assert str(exception) == message
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_pykeycloak_connection_error(self):
@@ -84,7 +84,7 @@ class TestPyKeycloakSubExceptions:
         exception = PyKeycloakConnectionError(message, status_code)
 
         assert str(exception) == f"{status_code}: {message}"
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_pykeycloak_operation_error(self):
@@ -93,7 +93,7 @@ class TestPyKeycloakSubExceptions:
         exception = PyKeycloakOperationError(message)
 
         assert str(exception) == message
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_pykeycloak_deprecation_error(self):
@@ -102,7 +102,7 @@ class TestPyKeycloakSubExceptions:
         exception = PyKeycloakDeprecationError(message)
 
         assert str(exception) == message
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_pykeycloak_secret_not_found(self):
@@ -112,7 +112,7 @@ class TestPyKeycloakSubExceptions:
 
         assert str(exception) == message
         assert isinstance(exception, PyKeycloakOperationError)
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_pykeycloak_rpt_not_found(self):
@@ -122,7 +122,7 @@ class TestPyKeycloakSubExceptions:
 
         assert str(exception) == message
         assert isinstance(exception, PyKeycloakOperationError)
-        assert isinstance(exception, PyKeycloakException)
+        assert isinstance(exception, KeycloakException)
         assert isinstance(exception, Exception)
 
     def test_subclass_hierarchy(self):
@@ -134,10 +134,10 @@ class TestPyKeycloakSubExceptions:
         op_error = PyKeycloakOperationError()
         dep_error = PyKeycloakDeprecationError()
 
-        assert isinstance(auth_error, PyKeycloakException)
-        assert isinstance(conn_error, PyKeycloakException)
-        assert isinstance(op_error, PyKeycloakException)
-        assert isinstance(dep_error, PyKeycloakException)
+        assert isinstance(auth_error, KeycloakException)
+        assert isinstance(conn_error, KeycloakException)
+        assert isinstance(op_error, KeycloakException)
+        assert isinstance(dep_error, KeycloakException)
 
         # PyKeycloakSecretNotFound and PyKeycloakRPTNotFound inherit from PyKeycloakOperationError
         secret_error = PyKeycloakSecretNotFound()
@@ -145,5 +145,5 @@ class TestPyKeycloakSubExceptions:
 
         assert isinstance(secret_error, PyKeycloakOperationError)
         assert isinstance(rpt_error, PyKeycloakOperationError)
-        assert isinstance(secret_error, PyKeycloakException)
-        assert isinstance(rpt_error, PyKeycloakException)
+        assert isinstance(secret_error, KeycloakException)
+        assert isinstance(rpt_error, KeycloakException)
