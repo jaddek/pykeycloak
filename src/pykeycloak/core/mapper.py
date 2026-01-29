@@ -5,7 +5,13 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import MISSING, fields, is_dataclass
 from types import UnionType
-from typing import Any, Union, get_args, get_origin, get_type_hints
+from typing import (
+    Any,
+    Union,
+    get_args,
+    get_origin,
+    get_type_hints,
+)
 
 
 class PyKeyCloakDataMapper:
@@ -72,9 +78,12 @@ class PyKeyCloakDataMapper:
         item_h = cls.get_handler(item_type)
 
         def list_handler(data: Any) -> list:
-            if type(data) is not list and type(data) is not tuple:
-                raise TypeError(f"Expected list or tuple, got {type(data).__name__}")
-            return [item_h(item) for item in data]
+            if type(data) is list or type(data) is tuple:
+                return [item_h(item) for item in data]
+
+            raise TypeError(
+                f"Expected list or tuple, got {type(data).__name__}, {data}"
+            )
 
         return list_handler
 
@@ -98,6 +107,7 @@ class PyKeyCloakDataMapper:
             )
 
         def dataclass_handler(data: Any) -> Any:
+            print(data)
             if type(data) is not dict:
                 raise TypeError(
                     f"Expected dict for {target_cls.__name__}, got {type(data).__name__}"

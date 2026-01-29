@@ -23,7 +23,7 @@ class HeadersProtocol(Protocol):
     def keycloak_bearer(self, bearer_token: str) -> dict[str, str]: ...
 
 
-class HeaderFactory:
+class HeadersFactory:
     __slots__ = ()
 
     def openid_basic(self, basic_token: str) -> dict[str, str]:

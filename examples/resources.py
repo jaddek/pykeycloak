@@ -1,30 +1,23 @@
 import asyncio
 import uuid
 
-from _common import auth
+from _common import service_factory
 
+from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import ResourcePayload
-from pykeycloak.services.services import AuthzResourceService
 
 
 async def main():
-    provider, auth_service = await auth()
+    factory: KeycloakServiceFactory = await service_factory()
 
-    authz_resource_service = AuthzResourceService(provider)
+    # Get all authz_resource
+    authz_resource = await factory.authz_resource.get_resources_async()
+    print(f"authz_resource: {authz_resource}")
+    print(f"Number of authz_resource: {len(authz_resource)}")
 
-    # Service account login required for admin operations
-    service_account_login = await auth_service.client_login_async()
-
-    print(f"Service account login {service_account_login}")
-
-    # Get all resources
-    resources = await authz_resource_service.get_resources_async()
-    print(f"Resources: {resources}")
-    print(f"Number of resources: {len(resources)}")
-
-    # Get all resources raw
-    resources_raw = await authz_resource_service.get_resources_raw_async()
-    print(f"Resources raw: {resources_raw}")
+    # Get all authz_resource raw
+    authz_resource_raw = await factory.authz_resource.get_resources_raw_async()
+    print(f"authz_resource raw: {authz_resource_raw}")
 
     id = str(uuid.uuid4())
     # Create a new resource
@@ -37,27 +30,25 @@ async def main():
         scopes=[{"name": "view"}, {"name": "update"}],
     )
 
-    created_resource = await authz_resource_service.create_resource_async(
+    created_resource = await factory.authz_resource.create_resource_async(
         payload=new_resource_payload
     )
     print(f"Created resource: {created_resource}")
 
     # Get resource by ID if creation was successful
-    resource = await authz_resource_service.get_resource_by_id_async(resource_id=id)
+    resource = await factory.authz_resource.get_resource_by_id_async(resource_id=id)
     print(f"Resource by ID: {resource}")
 
     # Get resource permissions
-    resource_permissions = await authz_resource_service.get_resource_permissions_async(
+    resource_permissions = await factory.authz_resource.get_resource_permissions_async(
         resource_id=id
     )
     print(f"Resource permissions: {resource_permissions}")
 
     # Note: Deleting the resource is commented out to prevent accidental deletion
     # Uncomment if you want to test deletion
-    # await authz_resource_service.delete_resource_by_id_async(resource_id=resource_id)
+    # await factory.authz_resource.delete_resource_by_id_async(resource_id=resource_id)
     # print(f"Deleted resource with ID: {resource_id}")
-
-    await provider.close()
 
 
 if __name__ == "__main__":

@@ -5,8 +5,8 @@ import os
 from typing import Any, TypeGuard
 from urllib.parse import urlparse
 
-from pykeycloak.core.aliases import JsonData
 from pykeycloak.core.mapper import PyKeyCloakDataMapper
+from pykeycloak.core.types import JsonData
 
 
 def getenv_required_url(name: str) -> str:

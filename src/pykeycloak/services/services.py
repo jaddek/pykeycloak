@@ -2,19 +2,14 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import asyncio
-import itertools
-import json
 import math
 from collections.abc import Iterable
-from http import HTTPStatus
-from typing import Any
+from typing import cast
 from uuid import UUID
 
-from httpx import Response
-
-from pykeycloak.core.aliases import JsonData
 from pykeycloak.core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
 from pykeycloak.core.helpers import dataclass_from_dict
+from pykeycloak.core.types import JsonData
 from pykeycloak.providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
@@ -46,6 +41,7 @@ from pykeycloak.providers.queries import (
 from pykeycloak.services.representations import (
     AuthzSettingsRepresentation,
     ClientRepresentation,
+    DeviceAuthRepresentation,
     IntrospectRepresentation,
     PermissionRepresentation,
     PolicyRepresentation,
@@ -59,57 +55,23 @@ from pykeycloak.services.representations import (
 )
 
 from .. import logger
+from ..core.exceptions import KeycloakException
+from ..core.protocols import KeycloakResponseValidatorProtocol, ResponseProtocol
 
 
 class BaseService:
     """ """
 
-    def __init__(self, provider: KeycloakProviderProtocol):
+    def __init__(
+        self,
+        provider: KeycloakProviderProtocol,
+        validator: KeycloakResponseValidatorProtocol,
+    ):
         self._provider = provider
+        self._validator = validator
 
-    @staticmethod
-    def validate_response(response: Response) -> JsonData:
-        if response.status_code == HTTPStatus.CREATED:
-            return None
-
-        if response.status_code == HTTPStatus.NO_CONTENT:
-            return None
-
-        if response.status_code == HTTPStatus.NOT_FOUND:
-            return None
-
-        if response.status_code == HTTPStatus.CONFLICT:
-            """
-            """
-            return None
-
-        if response.status_code == HTTPStatus.BAD_REQUEST:
-            """
-            """
-            return None
-
-        if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
-            """
-            """
-            return None
-
-        if response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR:
-            return None
-
-        try:
-            data: dict = {}
-            if response.text:  # if status_code = 200 and empty response.text
-                data = response.json()
-
-        except json.decoder.JSONDecodeError as e:
-            raise ValueError(f"Failed to decode JSON response: {e}") from e
-        except Exception as e:
-            raise ValueError(f"Failed to decode JSON response: {e}") from e
-
-        if not isinstance(data, (dict, list)):
-            raise TypeError(f"Expected JSON dict or list, got {type(data).__name__}")
-
-        return data
+    def validate_response(self, response: ResponseProtocol) -> JsonData:
+        return self._validator.validate(response)
 
 
 class UsersService(BaseService):
@@ -128,12 +90,17 @@ class UsersService(BaseService):
     async def get_users_count_async(self, query: GetUsersQuery | None = None) -> int:
         response = await self._provider.get_users_count_async(query=query)
 
-        return int(response.json())
+        data = response.json()
+
+        if isinstance(data, (str, int, float)):
+            return int(data)
+
+        raise ValueError(f"Expected numeric data from Keycloak, got {type(data)}")
 
     async def get_users_raw_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> Iterable[dict[str, Any]]:
+    ) -> list[JsonData]:
         users_count_response = await self._provider.get_users_count_async(query=query)
 
         try:
@@ -151,9 +118,11 @@ class UsersService(BaseService):
             users_count=int(users_count), query=query
         )
 
-        return itertools.chain.from_iterable(
-            [response.json() for response in responses]
-        )
+        return [
+            item
+            for r in responses
+            for item in cast(Iterable[JsonData], self.validate_response(r))
+        ]
 
     async def get_users_async(
         self,
@@ -161,20 +130,20 @@ class UsersService(BaseService):
     ) -> list[UserRepresentation]:
         data = await self.get_users_raw_async(query=query)
 
-        return dataclass_from_dict(list(data), list[UserRepresentation])
+        return dataclass_from_dict(data, list[UserRepresentation])
 
     async def get_paginated_users_async(
         self,
         users_count: int,
         concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
         query: GetUsersQuery | None = None,
-    ) -> list[Response]:
+    ) -> list[ResponseProtocol]:
         _query = query or GetUsersQuery()
         total_pages = math.ceil(users_count / _query.max)
 
         semaphore = asyncio.Semaphore(concurrency_limit)
 
-        async def fetch_page(first_raw: int, current_max_rows: int) -> Response:
+        async def fetch_page(first_raw: int, current_max_rows: int) -> ResponseProtocol:
             page_query = GetUsersQuery(
                 first=first_raw, max=current_max_rows, search=_query.search
             )
@@ -202,6 +171,9 @@ class UsersService(BaseService):
         response = await self._provider.create_user_async(payload=payload)
 
         self.validate_response(response)
+
+        if not response.headers:
+            raise KeycloakException("Headers should be present.")
 
         location_with_user_uuid: str = response.headers.get("Location", "")
 
@@ -581,7 +553,7 @@ class AuthService(BaseService):
         self,
         access_token: str,
     ) -> JsonData:
-        response = await self._provider.get_user_info_async(access_token)
+        response = await self._provider.get_user_info_async(access_token=access_token)
 
         return self.validate_response(response)
 
@@ -603,10 +575,7 @@ class AuthService(BaseService):
         return self.validate_response(response)
 
     async def logout_async(self, refresh_token: str) -> None:
-        response = await self._provider.logout_async(refresh_token=refresh_token)
-
-        if response.status_code != HTTPStatus.NO_CONTENT:
-            raise ValueError("Unexpected response from Keycloak")
+        await self._provider.logout_async(refresh_token=refresh_token)
 
     ###
     # Introspect
@@ -638,6 +607,13 @@ class AuthService(BaseService):
         response = await self._provider.auth_device_async()
 
         return self.validate_response(response)
+
+    async def auth_device_async(
+        self,
+    ) -> DeviceAuthRepresentation:
+        data = await self.auth_device_raw_async()
+
+        return dataclass_from_dict(data, DeviceAuthRepresentation)
 
     ###
     # Certs

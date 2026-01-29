@@ -5,7 +5,6 @@ import json
 import os
 import re
 from collections.abc import Mapping, Sequence
-from functools import lru_cache
 from typing import Any
 
 from pykeycloak.core.helpers import getenv_bool
@@ -110,8 +109,3 @@ class SensitiveDataSanitizer:
             combined_keys.update(extra_keys)
 
         return cls(sensitive_keys=frozenset(combined_keys))
-
-
-@lru_cache(maxsize=1)
-def get_sanitizer() -> SensitiveDataSanitizer:
-    return SensitiveDataSanitizer.from_env()

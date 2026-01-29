@@ -11,9 +11,9 @@ from typing import Any, Protocol, cast
 
 from httpx import Response
 
-from pykeycloak.core.aliases import AnyCallable
 from pykeycloak.core.constants import KEYCLOAK_TOKEN_VALIDATION_TIME_FRAME_SECONDS
 from pykeycloak.core.helpers import dataclass_from_dict
+from pykeycloak.core.types import AnyCallable
 from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
 
 from .. import logger
@@ -23,7 +23,7 @@ class TokenUpdater(Protocol):
     async def __call__(self, refresh_token: str | None) -> Response: ...
 
 
-def mark_need_token_verification[F: AnyCallable](func: F) -> F:
+def inject_verified_access_token[F: AnyCallable](func: F) -> F:
     setattr(func, "_need_token_verification", True)
     return func
 
