@@ -4,6 +4,7 @@
 import asyncio
 import math
 from collections.abc import Iterable
+from typing import cast
 from uuid import UUID
 
 from pykeycloak.core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
@@ -99,7 +100,7 @@ class UsersService(BaseService):
     async def get_users_raw_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> Iterable[JsonData]:
+    ) -> list[JsonData]:
         users_count_response = await self._provider.get_users_count_async(query=query)
 
         try:
@@ -117,7 +118,11 @@ class UsersService(BaseService):
             users_count=int(users_count), query=query
         )
 
-        return (self.validate_response(r) for r in responses)
+        return [
+            item
+            for r in responses
+            for item in cast(Iterable[JsonData], self.validate_response(r))
+        ]
 
     async def get_users_async(
         self,
@@ -125,7 +130,7 @@ class UsersService(BaseService):
     ) -> list[UserRepresentation]:
         data = await self.get_users_raw_async(query=query)
 
-        return dataclass_from_dict(list(data), list[UserRepresentation])
+        return dataclass_from_dict(data, list[UserRepresentation])
 
     async def get_paginated_users_async(
         self,

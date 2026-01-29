@@ -10,9 +10,9 @@ from pykeycloak.providers.providers import (
 )
 from pykeycloak.services.factory import KeycloakServiceFactory
 
-logging.basicConfig(
-    level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
-)
+# logging.basicConfig(
+#     level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
+# )
 logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
 
 kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "some name")
