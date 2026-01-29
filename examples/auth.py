@@ -1,10 +1,15 @@
 import asyncio
+import logging
 
 from _common import service_factory
 
 from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     UserCredentialsLoginPayload,
+)
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
 )
 
 username = "admin"

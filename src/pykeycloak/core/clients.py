@@ -64,18 +64,20 @@ class KeycloakHttpClientWrapperAsync:
     async def request_async(
         self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
     ) -> ResponseProtocol:
-        logger.debug("Request method: %s, url: %s kwargs %s", method, url, kwargs)
+        logger.debug(
+            "Request method: %s, url: %s", method, url, extra={"content": kwargs}
+        )
+
         self.log_client_config_before_request()
 
         response = await self.client.request(method=method.value, url=url, **kwargs)
 
         logger.debug(
-            "Response method: %s:%s, url: %s, content: %s, headers: %s",
+            "Response method: %s, url: %s, code: %s",
             method,
-            response.status_code,
             url,
-            response.text,
-            response.headers,
+            response.status_code,
+            extra={"content": response.text, "headers": response.headers},
         )
 
         if raise_exception:
