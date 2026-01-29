@@ -2,7 +2,11 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, NotRequired, TypedDict
 
 type JsonData = dict[str, Any] | list[Any] | str | int | float | bool | None
 type AnyCallable = Callable[..., Any]
+
+
+class InternalAccessToken(TypedDict, total=False):
+    access_token: NotRequired[str]

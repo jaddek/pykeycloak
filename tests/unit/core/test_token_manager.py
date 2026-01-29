@@ -5,7 +5,7 @@ Unit tests for the token_manager module.
 from pykeycloak.core.token_manager import (
     AuthToken,
     mark_need_access_token_initialization,
-    mark_need_token_verification,
+    inject_verified_access_token,
 )
 
 
@@ -15,7 +15,7 @@ class TestTokenManagerDecorators:
     def test_mark_need_token_verification_decorator(self):
         """Test the mark_need_token_verification decorator."""
 
-        @mark_need_token_verification
+        @inject_verified_access_token
         def sample_function():
             return "result"
 
@@ -45,7 +45,7 @@ class TestTokenManagerDecorators:
     def test_decorators_on_different_functions(self):
         """Test that decorators work independently on different functions."""
 
-        @mark_need_token_verification
+        @inject_verified_access_token
         def func1():
             return 1
 
@@ -53,7 +53,7 @@ class TestTokenManagerDecorators:
         def func2():
             return 2
 
-        @mark_need_token_verification
+        @inject_verified_access_token
         @mark_need_access_token_initialization
         def func3():
             return 3
