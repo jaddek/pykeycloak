@@ -29,7 +29,12 @@ class KeycloakServiceFactory:
         provider: KeycloakProviderProtocol,
         validator: KeycloakResponseValidatorProtocol,
     ):
+        self._provider = provider
         self._args: ServiceArgs = {"provider": provider, "validator": validator}
+
+    @property
+    def provider(self) -> KeycloakProviderProtocol:
+        return self._provider
 
     @cached_property
     def users(self) -> UsersService:

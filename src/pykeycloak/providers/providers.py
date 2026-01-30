@@ -1465,7 +1465,7 @@ class KeycloakProviderAsync:
 
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {
-            "realm": str(self._realm.realm_name),
+            "realm": str(self._realm.name),
             "client_id": str(self._realm_client.client_id),
             "client_uuid": str(self._realm_client.client_uuid),
             **{k: str(v) for k, v in kwargs.items()},

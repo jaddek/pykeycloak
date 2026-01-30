@@ -1,4 +1,5 @@
 from importlib.metadata import PackageNotFoundError, version
+from typing import Protocol
 
 from httpx import AsyncClient, AsyncHTTPTransport
 
@@ -10,28 +11,37 @@ from .core.realm import Realm, RealmClient
 from .core.settings import ClientSettings, HttpTransportSettings
 from .core.validator import KeycloakResponseValidator
 from .factories import KeycloakServiceFactory
-from .providers.providers import KeycloakInMemoryProviderAsync
 
 
-def get_factory(provider: KeycloakProviderProtocol) -> KeycloakServiceFactory:
-    return KeycloakServiceFactory(
-        provider=provider,
-        validator=KeycloakResponseValidator(),
-    )
+class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):
+    def __call__(
+        self,
+        *,
+        realm: Realm,
+        realm_client: RealmClient,
+        headers: HeadersProtocol,
+        wrapper: KeycloakHttpClientWrapperAsync,
+    ) -> T: ...
 
 
-def get_default_factory(realm: str) -> KeycloakServiceFactory:
-    provider = KeycloakInMemoryProviderAsync(
-        realm=Realm(realm_name=realm),
+def get_factory[T: KeycloakProviderProtocol](
+    realm_name: str, provider_cls: ProviderConstructor[T]
+) -> tuple[Realm, T, KeycloakServiceFactory]:
+    realm = Realm(name=realm_name)
+
+    provider = provider_cls(
+        realm=realm,
         realm_client=RealmClient.from_env(),
         headers=get_headers_factory(),
         wrapper=get_keycloak_client_wrapper_from_env(),
     )
 
-    return KeycloakServiceFactory(
+    factory = KeycloakServiceFactory(
         provider=provider,
         validator=KeycloakResponseValidator(),
     )
+
+    return realm, provider, factory
 
 
 def get_sanitizer() -> SensitiveDataSanitizer:
@@ -68,12 +78,12 @@ def get_async_client(
 
     if not client_settings:
         client_settings = ClientSettings(headers=get_default_user_agent())
-    else:
-        if not client_settings.headers:
-            client_settings.headers = get_default_user_agent()
 
-        if not client_settings.headers.get("User-Agent"):
-            client_settings.headers |= get_default_user_agent()
+    if not client_settings.headers:
+        client_settings.headers = get_default_user_agent()
+
+    if not client_settings.headers.get("User-Agent"):
+        client_settings.headers |= get_default_user_agent()
 
     client_settings.transport = transport
 

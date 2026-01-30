@@ -25,7 +25,7 @@ password = "password"  # noqa: S105
 
 async def service_factory() -> KeycloakServiceFactory:
     realm_client = RealmClient.from_env()
-    realm = Realm(realm_name=kc_realm)
+    realm = Realm(name=kc_realm)
     factory = KeycloakServiceFactory(
         provider=KeycloakInMemoryProviderAsync(
             realm=realm,
