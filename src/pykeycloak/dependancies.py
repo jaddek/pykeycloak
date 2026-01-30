@@ -1,5 +1,5 @@
-from collections.abc import Callable
 from importlib.metadata import PackageNotFoundError, version
+from typing import Protocol
 
 from httpx import AsyncClient, AsyncHTTPTransport
 
@@ -12,9 +12,16 @@ from .core.settings import ClientSettings, HttpTransportSettings
 from .core.validator import KeycloakResponseValidator
 from .factories import KeycloakServiceFactory
 
-type ProviderConstructor[T: KeycloakProviderProtocol] = Callable[
-    [Realm, RealmClient, HeadersProtocol, KeycloakHttpClientWrapperAsync], T
-]
+
+class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):
+    def __call__(
+        self,
+        *,
+        realm: Realm,
+        realm_client: RealmClient,
+        headers: HeadersProtocol,
+        wrapper: KeycloakHttpClientWrapperAsync,
+    ) -> T: ...
 
 
 def get_factory[T: KeycloakProviderProtocol](
@@ -23,10 +30,10 @@ def get_factory[T: KeycloakProviderProtocol](
     realm = Realm(name=realm_name)
 
     provider = provider_cls(
-        realm,
-        RealmClient.from_env(),
-        get_headers_factory(),
-        get_keycloak_client_wrapper_from_env(),
+        realm=realm,
+        realm_client=RealmClient.from_env(),
+        headers=get_headers_factory(),
+        wrapper=get_keycloak_client_wrapper_from_env(),
     )
 
     factory = KeycloakServiceFactory(

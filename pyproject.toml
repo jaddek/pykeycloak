@@ -1,6 +1,6 @@
 [project]
 name = "pykeycloak"
-version = "0.5.3"
+version = "0.5.4"
 description = "Async Keycloak client with automated token management"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
