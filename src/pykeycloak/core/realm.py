@@ -3,12 +3,13 @@
 
 import base64
 import os
+from dataclasses import dataclass
 from typing import Self
 
 
+@dataclass(frozen=True, slots=True, kw_only=True)
 class Realm:
-    def __init__(self, realm_name: str) -> None:
-        self.realm_name = realm_name
+    name: str
 
 
 class RealmClient:
