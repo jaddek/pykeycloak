@@ -7,10 +7,17 @@ from collections.abc import Iterable
 from typing import cast
 from uuid import UUID
 
-from pykeycloak.core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
-from pykeycloak.core.helpers import dataclass_from_dict
-from pykeycloak.core.types import JsonData
-from pykeycloak.providers.payloads import (
+from .. import logger
+from ..core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
+from ..core.exceptions import KeycloakException
+from ..core.helpers import dataclass_from_dict
+from ..core.protocols import (
+    KeycloakProviderProtocol,
+    KeycloakResponseValidatorProtocol,
+    ResponseProtocol,
+)
+from ..core.types import JsonData
+from ..providers.payloads import (
     ClientCredentialsLoginPayload,
     CreateUserPayload,
     PermissionPayload,
@@ -27,10 +34,7 @@ from pykeycloak.providers.payloads import (
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
 )
-from pykeycloak.providers.providers import (
-    KeycloakProviderProtocol,
-)
-from pykeycloak.providers.queries import (
+from ..providers.queries import (
     FilterFindPolicyParams,
     FindPermissionQuery,
     GetUsersQuery,
@@ -38,7 +42,7 @@ from pykeycloak.providers.queries import (
     ResourcesListQuery,
     RoleMembersListQuery,
 )
-from pykeycloak.services.representations import (
+from ..services.representations import (
     AuthzSettingsRepresentation,
     ClientRepresentation,
     DeviceAuthRepresentation,
@@ -53,10 +57,6 @@ from pykeycloak.services.representations import (
     UserInfoRepresentation,
     UserRepresentation,
 )
-
-from .. import logger
-from ..core.exceptions import KeycloakException
-from ..core.protocols import KeycloakResponseValidatorProtocol, ResponseProtocol
 
 
 class BaseService:

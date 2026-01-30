@@ -1,8 +1,6 @@
 from functools import cached_property
 from typing import TypedDict
 
-from pykeycloak.core.protocols import KeycloakResponseValidatorProtocol
-from pykeycloak.providers.providers import KeycloakProviderProtocol
 from pykeycloak.services.services import (
     AuthPolicyService,
     AuthService,
@@ -16,6 +14,8 @@ from pykeycloak.services.services import (
     UmaService,
     UsersService,
 )
+
+from .core.protocols import KeycloakProviderProtocol, KeycloakResponseValidatorProtocol
 
 
 class ServiceArgs(TypedDict):

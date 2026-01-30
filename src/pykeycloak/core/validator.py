@@ -78,4 +78,4 @@ def validate_api_response(method: Callable[..., Any]) -> Callable[..., Any]:
 
 
 if TYPE_CHECKING:
-    _: type[KeycloakResponseValidatorProtocol] = KeycloakResponseValidator
+    _: KeycloakResponseValidatorProtocol = type[KeycloakResponseValidator]
