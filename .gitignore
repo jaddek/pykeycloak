@@ -11,7 +11,7 @@ wheels/
 .env.local
 .env.test
 
-src/keycloak
+keycloak
 main.py
 .python-version
 .coverage

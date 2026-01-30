@@ -1,14 +1,16 @@
-from functools import lru_cache
+from importlib.metadata import PackageNotFoundError, version
 
 from httpx import AsyncClient, AsyncHTTPTransport
 
 from . import SensitiveDataSanitizer
 from .core.clients import KeycloakHttpClientWrapperAsync
 from .core.headers import HeadersFactory, HeadersProtocol
+from .core.protocols import KeycloakProviderProtocol
+from .core.realm import Realm, RealmClient
 from .core.settings import ClientSettings, HttpTransportSettings
 from .core.validator import KeycloakResponseValidator
 from .factories import KeycloakServiceFactory
-from .providers.providers import KeycloakProviderProtocol
+from .providers.providers import KeycloakInMemoryProviderAsync
 
 
 def get_factory(provider: KeycloakProviderProtocol) -> KeycloakServiceFactory:
@@ -18,13 +20,43 @@ def get_factory(provider: KeycloakProviderProtocol) -> KeycloakServiceFactory:
     )
 
 
-@lru_cache(maxsize=1)
+def get_default_factory(realm: str) -> KeycloakServiceFactory:
+    provider = KeycloakInMemoryProviderAsync(
+        realm=Realm(realm_name=realm),
+        realm_client=RealmClient.from_env(),
+        headers=get_headers_factory(),
+        wrapper=get_keycloak_client_wrapper_from_env(),
+    )
+
+    return KeycloakServiceFactory(
+        provider=provider,
+        validator=KeycloakResponseValidator(),
+    )
+
+
 def get_sanitizer() -> SensitiveDataSanitizer:
     return SensitiveDataSanitizer.from_env()
 
 
 def get_headers_factory() -> HeadersProtocol:
     return HeadersFactory()
+
+
+def get_package_name() -> str:
+    return "pykeycloak"
+
+
+def get_default_user_agent() -> dict[str, str]:
+    package = get_package_name()
+
+    try:
+        __version__ = version(package)
+    except PackageNotFoundError:
+        __version__ = "0.1.0-dev"
+
+    return {
+        "User-Agent": f"{package}/{__version__}",
+    }
 
 
 def get_async_client(
@@ -34,7 +66,15 @@ def get_async_client(
     transport_settings = transport_settings or HttpTransportSettings()
     transport = AsyncHTTPTransport(**transport_settings.to_dict())
 
-    client_settings = client_settings or ClientSettings()
+    if not client_settings:
+        client_settings = ClientSettings(headers=get_default_user_agent())
+    else:
+        if not client_settings.headers:
+            client_settings.headers = get_default_user_agent()
+
+        if not client_settings.headers.get("User-Agent"):
+            client_settings.headers |= get_default_user_agent()
+
     client_settings.transport = transport
 
     return AsyncClient(**client_settings.to_dict())
