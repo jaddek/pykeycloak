@@ -1,10 +1,11 @@
 import asyncio
+import uuid
 from time import time
 
 from _common import service_factory
 
 from pykeycloak.factories import KeycloakServiceFactory
-from pykeycloak.providers.payloads import RolePayload, UserCredentialsLoginPayload
+from pykeycloak.providers.payloads import RolePayload
 
 username = "admin"
 password = "password"  # noqa: S105
@@ -14,15 +15,6 @@ prefix_for_updated_role = str(time())
 
 async def main():
     factory: KeycloakServiceFactory = await service_factory()
-
-    user_login = await factory.auth.user_login_async(
-        payload=UserCredentialsLoginPayload(
-            username=username,
-            password=password,
-        )
-    )
-
-    print(f"User login {user_login}")
 
     # Get all client roles
     client_roles = await factory.roles.get_client_roles_async()
@@ -34,7 +26,7 @@ async def main():
 
     # Create a new role
     new_role_payload = RolePayload(
-        name="test-role",
+        name="test-role" + uuid.uuid4().hex,
         description="Test role for demonstration",
     )
 
