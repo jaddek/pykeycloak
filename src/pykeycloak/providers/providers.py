@@ -1381,7 +1381,7 @@ class KeycloakProviderAsync:
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS),
             headers=headers,
-            params=query,
+            params=query.to_dict() if query else None,
         )
 
         return response
