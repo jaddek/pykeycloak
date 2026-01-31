@@ -7,7 +7,6 @@ from collections.abc import Iterable
 from typing import cast
 from uuid import UUID
 
-from .. import logger
 from ..core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
 from ..core.exceptions import KeycloakException
 from ..core.helpers import dataclass_from_dict
@@ -100,37 +99,33 @@ class UsersService(BaseService):
     async def get_users_raw_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> list[JsonData]:
+    ) -> tuple[list[JsonData], int]:
         users_count_response = await self._provider.get_users_count_async(query=query)
+        users_count = limit = int(users_count_response.text.strip())
 
-        try:
-            users_count_text = users_count_response.text.strip()
-
-            logger.debug(f"Users count response: {users_count_text}")
-
-            if not users_count_text.isdigit():
-                raise RuntimeError("Invalid users count response: not a number")
-            users_count = int(users_count_text)
-        except ValueError as e:
-            raise RuntimeError("Invalid users count response") from e
-
-        responses = await self.get_paginated_users_async(
-            users_count=int(users_count), query=query
-        )
+        responses = await self.get_paginated_users_async(users_count=limit, query=query)
 
         return [
             item
             for r in responses
             for item in cast(Iterable[JsonData], self.validate_response(r))
-        ]
+        ], users_count
 
     async def get_users_async(
         self,
         query: GetUsersQuery | None = None,
-    ) -> list[UserRepresentation]:
-        data = await self.get_users_raw_async(query=query)
+    ) -> tuple[list[UserRepresentation], int]:
+        data, users_count = await self.get_users_raw_async(query=query)
 
-        return dataclass_from_dict(data, list[UserRepresentation])
+        return dataclass_from_dict(data, list[UserRepresentation]), users_count
+
+    async def get_all_users_async(
+        self,
+    ) -> tuple[list[UserRepresentation], int]:
+        query = GetUsersQuery(find_all=True)
+        data, users_count = await self.get_users_raw_async(query=query)
+
+        return dataclass_from_dict(data, list[UserRepresentation]), users_count
 
     async def get_paginated_users_async(
         self,
@@ -139,7 +134,11 @@ class UsersService(BaseService):
         query: GetUsersQuery | None = None,
     ) -> list[ResponseProtocol]:
         _query = query or GetUsersQuery()
-        total_pages = math.ceil(users_count / _query.max)
+
+        total_pages: int = 1
+
+        if _query.find_all:
+            total_pages = math.ceil(users_count / _query.max)
 
         semaphore = asyncio.Semaphore(concurrency_limit)
 
@@ -152,9 +151,9 @@ class UsersService(BaseService):
 
         tasks = []
         for page in range(total_pages):
-            first = page * _query.max
-            current_max = min(_query.max, users_count - first)
-            tasks.append(fetch_page(first, current_max))
+            current_first = _query.first + (page * _query.max)
+
+            tasks.append(fetch_page(current_first, _query.max))
 
         return await asyncio.gather(*tasks)
 

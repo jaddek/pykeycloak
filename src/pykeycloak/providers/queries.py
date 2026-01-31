@@ -43,6 +43,22 @@ class PaginationQuery(BaseQuery):
         )
     )
     first: int = KEYCLOAK_PAGINATION_FIRST_DEFAULT
+    find_all: bool = field(default=False)
+
+    def __post_init__(self) -> None:
+        if self.find_all:
+            self.max = int(
+                getenv_int(
+                    "KEYCLOAK_MAX_ROWS_QUERY_LIMIT",
+                    KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT,
+                )
+            )
+
+        if self.max < 0:
+            raise ValueError("The 'max' parameter must be a positive integer or 0")
+
+        if self.first < 0:
+            raise ValueError("The 'first' parameter must be a positive integer or 0")
 
 
 @dataclass(kw_only=True)
@@ -75,11 +91,17 @@ class GetUsersCountQuery(SearchQuery):
 @dataclass(kw_only=True, slots=True)
 class GetUsersQuery(SearchQuery, PaginationQuery):
     def __post_init__(self) -> None:
+        super().__post_init__()
+
         max_users_per_query = getenv_int(
             "KEYCLOAK_MAX_ROWS_QUERY_LIMIT", KEYCLOAK_MAX_ROWS_QUERY_LIMIT_DEFAULT
         )
+
         if self.max > max_users_per_query:
-            raise ValueError(f"Max {self.max} exceeds limit {max_users_per_query}")
+            raise ValueError(
+                f"The requested page size ({self.max}) exceeds the allowed limit ({max_users_per_query}). "
+                f"Please check the 'KEYCLOAK_MAX_ROWS_QUERY_LIMIT' environment variable."
+            )
 
 
 @dataclass(kw_only=True, slots=True)
