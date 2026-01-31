@@ -17,9 +17,15 @@ password = "password"  # noqa: S105
 async def main():
     factory: KeycloakServiceFactory = await service_factory()
 
-    # Get all users with pagination
-    users = await factory.users.get_users_async(query=GetUsersQuery(first=0, max=10))
-    print(f"Number of users: {len(list(users))}")
+    # Get subset of users
+    users, count = await factory.users.get_users_async(
+        query=GetUsersQuery(first=1, max=10)
+    )
+    print(f"Number of users: {count} and received {len(users)}")
+
+    # Get all of users
+    users, count = await factory.users.get_all_users_async()
+    print(f"Number of users: {count} and received {len(users)}")
 
     # Get users count
     users_count = await factory.users.get_users_count_async()
