@@ -4,12 +4,12 @@ version = "0.5.5"
 description = "Async Keycloak client with automated token management"
 readme = "README.md"
 requires-python = ">=3.12,<3.15"
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-    {name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com"},
+    { name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com" },
 ]
 maintainers = [
-    {name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com"},
+    { name = "Anton 'Tony' Nazarov", email = "tonynazarov+dev@gmail.com" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3.12",
@@ -25,15 +25,12 @@ dependencies = [
 
 [tool.black]
 line-length = 88
-# Указываем минимальную поддерживаемую версию для стабильности форматирования
 target-version = ['py312']
 include = '\.pyi?$'
 
 [tool.ruff]
-# Базовая версия для проверок — нижний порог проекта
 target-version = "py312"
 line-length = 88
-# Исключения перенесены в основной блок ruff
 extend-exclude = [
     ".git",
     "__pycache__",
@@ -44,26 +41,25 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-# В 2026 году рекомендуется явно разделять секции select и ignore
 select = [
-    "E",     # pycodestyle errors
-    "W",     # pycodestyle warnings
-    "F",     # pyflakes
-    "I",     # isort
-    "B",     # flake8-bugbear
-    "C4",    # flake8-comprehensions
-    "UP",    # pyupgrade
+    "E", # pycodestyle errors
+    "W", # pycodestyle warnings
+    "F", # pyflakes
+    "I", # isort
+    "B", # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
     "ASYNC", # flake8-async
-    "S",     # flake8-bandit
-    "PYI",   # flake8-pyi (типизация)
+    "S", # flake8-bandit
+    "PYI", # flake8-pyi (типизация)
 ]
 ignore = [
-    "E501",   # Длина строки (доверяем Black/Ruff Format)
-    "B008",   # Вызовы функций в аргументах (удобно для FastAPI-подобных DI)
+    "E501", # Line length (delegated to Black / Ruff Format)
+    "B008", # Function calls in argument defaults (convenient for FastAPI-style DI)
     "B010",
     "B009",
-    "PYI013", # setattr в stub-файлах (разрешаем для декораторов)
-    "UP037",  # Кавычки в аннотациях (полезно для циклических импортов)
+    "PYI013", # Allow setattr in stub files (needed for decorators)
+    "UP037", # Quoted annotations (useful for circular imports)
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -71,7 +67,6 @@ ignore = [
 "tests/**/*.py" = ["S101"]
 
 [tool.mypy]
-# 3.13 — самая стабильная версия для строгой типизации в начале 2026
 python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
@@ -110,9 +105,9 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
-  {include-group = "lint"},
-  {include-group = "test"},
-  "ty>=0.0.13",
+    { include-group = "lint" },
+    { include-group = "test" },
+    "ty>=0.0.13",
 ]
 lint = [
     "black>=25.1.0",
