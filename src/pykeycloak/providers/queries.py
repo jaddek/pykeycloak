@@ -60,6 +60,11 @@ class PaginationQuery(BaseQuery):
         if self.first < 0:
             raise ValueError("The 'first' parameter must be a positive integer or 0")
 
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
+        params = super().to_dict(exclude_none=exclude_none)
+        params.pop("find_all", None)
+        return params
+
 
 @dataclass(kw_only=True)
 class BriefRepresentationQuery(BaseQuery):

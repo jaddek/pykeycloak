@@ -61,7 +61,8 @@ class KeycloakProviderProtocol(Protocol):
     ) -> ResponseProtocol: ...
 
     async def introspect_token_async(
-        self, payload: RTPIntrospectionPayload | TokenIntrospectionPayload
+        self,
+        payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> ResponseProtocol: ...
 
     async def auth_device_async(self) -> ResponseProtocol: ...
