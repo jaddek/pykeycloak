@@ -41,7 +41,7 @@ class RealmClient:
         secret = os.getenv("KEYCLOAK_REALM_CLIENT_SECRET")
 
         if not uuid or not cid:
-            raise OSError("Required Keycloak environment variables are missing")
+            raise RuntimeError("Required Keycloak environment variables are missing")
 
         return cls(client_uuid=uuid, client_id=cid, client_secret=secret)
 

@@ -239,9 +239,9 @@ class KeycloakProviderAsync:
 
         return response
 
-    @inject_verified_access_token
     async def introspect_token_async(
-        self, payload: RTPIntrospectionPayload | TokenIntrospectionPayload
+        self,
+        payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
     ) -> ResponseProtocol:
         if not self._realm_client.is_confidential:
             raise ValueError(

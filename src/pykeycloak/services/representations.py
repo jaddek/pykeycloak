@@ -60,14 +60,14 @@ class TokenRepresentation(Representation):
     not_before_policy: int = field(metadata={"alias": "not-before-policy"})
     session_state: str | None = None
     refresh_token: str | None = None
-    refresh_token_expires_in: int | None = None
+    refresh_expires_in: int | None = None
 
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
             f"scope={self.scope!r}, "
-            f"expires={self.expires_in}s, "  # Добавили 's' для обозначения секунд
-            f"has_refresh={self.refresh_token is not None}"  # Просто флаг наличия
+            f"expires={self.expires_in}s, "
+            f"has_refresh={self.refresh_token is not None}"
             f")"
         )
 
