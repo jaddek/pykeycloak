@@ -38,20 +38,20 @@ from ..core.urls import (
     REALM_CLIENT,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
     REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
-    REALM_CLIENT_AUTHZ_PERMISSION_SCOPE,
+    REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_RESOURCE,
+    REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_SCOPES,
     REALM_CLIENT_AUTHZ_PERMISSIONS,
+    REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_RESOURCE,
+    REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_SCOPES,
     REALM_CLIENT_AUTHZ_POLICIES,
     REALM_CLIENT_AUTHZ_POLICY,
+    REALM_CLIENT_AUTHZ_POLICY_ROLE,
     REALM_CLIENT_AUTHZ_POLICY_SCOPES,
+    REALM_CLIENT_AUTHZ_POLICY_SEARCH,
+    REALM_CLIENT_AUTHZ_POLICY_USER,
     REALM_CLIENT_AUTHZ_RESOURCE,
-    REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION,
-    REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION,
     REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER,
     REALM_CLIENT_AUTHZ_RESOURCES,
-    REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION,
     REALM_CLIENT_AUTHZ_SCOPES,
     REALM_CLIENT_AUTHZ_SETTINGS,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
@@ -1176,7 +1176,7 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request_async(
             method=HttpMethod.GET,
-            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE),
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_ROLE),
             headers=headers,
             data=payload.to_json(),
         )
@@ -1211,7 +1211,7 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request_async(
             method=HttpMethod.POST,
-            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER),
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_USER),
             headers=headers,
             data=payload.to_json(),
         )
@@ -1229,7 +1229,7 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request_async(
             method=HttpMethod.GET,
-            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH),
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_SEARCH),
             headers=headers,
             params=query.to_dict() if query else None,
         )
@@ -1237,7 +1237,7 @@ class KeycloakProviderAsync:
         return response
 
     @inject_verified_access_token
-    async def get_associated_policies_async(
+    async def get_associated_roles_async(
         self,
         policy_id: str,
         **kwargs: Unpack[InternalAccessToken],
@@ -1259,7 +1259,7 @@ class KeycloakProviderAsync:
     @inject_verified_access_token
     async def get_policy_authorisation_scopes_async(
         self,
-        permission_id: str,
+        policy_id: str,
         **kwargs: Unpack[InternalAccessToken],
     ) -> ResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
@@ -1268,7 +1268,7 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
-                path=REALM_CLIENT_AUTHZ_POLICY_SCOPES, permission_id=permission_id
+                path=REALM_CLIENT_AUTHZ_POLICY_SCOPES, policy_id=policy_id
             ),
             headers=headers,
         )
@@ -1291,32 +1291,12 @@ class KeycloakProviderAsync:
 
         return response
 
-    @inject_verified_access_token
-    async def get_policy_associated_role_policies_async(
-        self,
-        policy_id: str,
-        **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
-        access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
-
-        response = await self._wrapper.request_async(
-            method=HttpMethod.GET,
-            url=self._get_path(
-                path=REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
-                policy_id=policy_id,
-            ),
-            headers=headers,
-        )
-
-        return response
-
     ##############################################################
     #  Authz Permissions
     ##############################################################
 
     @inject_verified_access_token
-    async def create_client_authz_permission_resource_based_async(
+    async def create_client_authz_permission_based_on_resource_async(
         self,
         payload: PermissionPayload,
         **kwargs: Unpack[InternalAccessToken],
@@ -1326,7 +1306,7 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request_async(
             method=HttpMethod.POST,
-            url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCE_BASED_PERMISSION),
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_RESOURCE),
             headers=headers,
             data=payload.to_dict(),
         )
@@ -1334,7 +1314,7 @@ class KeycloakProviderAsync:
         return response
 
     @inject_verified_access_token
-    async def create_client_authz_permission_scope_based_async(
+    async def create_client_authz_permission_based_on_scope_async(
         self,
         payload: PermissionPayload,
         **kwargs: Unpack[InternalAccessToken],
@@ -1344,7 +1324,7 @@ class KeycloakProviderAsync:
 
         response = await self._wrapper.request_async(
             method=HttpMethod.POST,
-            url=self._get_path(path=REALM_CLIENT_AUTHZ_SCOPE_BASED_PERMISSION),
+            url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_SCOPES),
             headers=headers,
             data=payload.to_dict(),
         )
@@ -1370,7 +1350,7 @@ class KeycloakProviderAsync:
         return response
 
     @inject_verified_access_token
-    async def get_permissions_for_scope_by_id_async(
+    async def get_permission_based_on_scope_by_id_async(
         self,
         permission_id: str,
         **kwargs: Unpack[InternalAccessToken],
@@ -1381,7 +1361,28 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
-                path=REALM_CLIENT_AUTHZ_PERMISSION_SCOPE, permission_id=permission_id
+                path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_SCOPES,
+                permission_id=permission_id,
+            ),
+            headers=headers,
+        )
+
+        return response
+
+    @inject_verified_access_token
+    async def get_permission_based_on_resource_by_id_async(
+        self,
+        permission_id: str,
+        **kwargs: Unpack[InternalAccessToken],
+    ) -> ResponseProtocol:
+        access_token: str = self.get_access_token(**kwargs)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request_async(
+            method=HttpMethod.GET,
+            url=self._get_path(
+                path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_RESOURCE,
+                permission_id=permission_id,
             ),
             headers=headers,
         )
@@ -1400,23 +1401,13 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(
-                path=REALM_CLIENT_AUTHZ_RESOURCE_PERMISSION, permission_id=permission_id
+                path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_RESOURCE,
+                permission_id=permission_id,
             ),
             headers=headers,
         )
 
         return response
-
-    @staticmethod
-    def get_access_token(**kwargs: Unpack[InternalAccessToken]) -> str:
-        access_token = kwargs.pop("access_token")
-
-        if not access_token:
-            raise AccessTokenIsRequiredError(
-                "Access token should be injected using TokenManager or manually"
-            )
-
-        return access_token
 
     @inject_verified_access_token
     async def update_permission_scopes_async(
@@ -1431,7 +1422,8 @@ class KeycloakProviderAsync:
         response = await self._wrapper.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(
-                path=REALM_CLIENT_AUTHZ_PERMISSION_SCOPE, permission_id=permission_id
+                path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_SCOPES,
+                permission_id=permission_id,
             ),
             headers=headers,
             data=payload.to_dict(),
@@ -1445,6 +1437,17 @@ class KeycloakProviderAsync:
 
     async def close(self) -> None:
         await self._wrapper.client.aclose()
+
+    @staticmethod
+    def get_access_token(**kwargs: Unpack[InternalAccessToken]) -> str:
+        access_token = kwargs.pop("access_token")
+
+        if not access_token:
+            raise AccessTokenIsRequiredError(
+                "Access token should be injected using TokenManager or manually"
+            )
+
+        return access_token
 
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {

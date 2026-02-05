@@ -48,7 +48,6 @@ from ..services.representations import (
     DeviceAuthRepresentation,
     IntrospectRepresentation,
     PermissionRepresentation,
-    PolicyRepresentation,
     ScopeRepresentation,
     SessionRepresentation,
     SessionsCountRepresentation,
@@ -767,22 +766,22 @@ class AuthzScopeService(BaseService):
 
 
 class AuthzPermissionService(BaseService):
-    async def create_client_authz_permission_resource_based_async(
+    async def create_client_authz_permission_based_on_resource_async(
         self, payload: PermissionPayload
     ) -> JsonData:
         response = (
-            await self._provider.create_client_authz_permission_resource_based_async(
+            await self._provider.create_client_authz_permission_based_on_resource_async(
                 payload=payload
             )
         )
 
         return self.validate_response(response)
 
-    async def create_client_authz_permission_scope_based_async(
+    async def create_client_authz_permission_based_on_scope_async(
         self, payload: PermissionPayload
     ) -> JsonData:
         response = (
-            await self._provider.create_client_authz_permission_scope_based_async(
+            await self._provider.create_client_authz_permission_based_on_scope_async(
                 payload=payload
             )
         )
@@ -803,11 +802,19 @@ class AuthzPermissionService(BaseService):
 
         return dataclass_from_dict(data, list[PermissionRepresentation])
 
-    async def get_permissions_for_scope_by_id_async(
+    async def get_permission_based_on_scope_by_id_async(
         self, permission_id: str
     ) -> JsonData:
-        """?! не понимаю что этот метод делает"""
-        response = await self._provider.get_permissions_for_scope_by_id_async(
+        response = await self._provider.get_permission_based_on_scope_by_id_async(
+            permission_id=permission_id
+        )
+
+        return self.validate_response(response)
+
+    async def get_permission_based_on_resource_by_id_async(
+        self, permission_id: str
+    ) -> JsonData:
+        response = await self._provider.get_permission_based_on_resource_by_id_async(
             permission_id=permission_id
         )
 
@@ -833,24 +840,6 @@ class AuthzPermissionService(BaseService):
 
 
 class AuthPolicyService(BaseService):
-    async def get_policy_associated_role_policies_raw_async(
-        self, policy_id: str
-    ) -> JsonData:
-        response = await self._provider.get_policy_associated_role_policies_async(
-            policy_id=policy_id
-        )
-
-        return self.validate_response(response)
-
-    async def get_policy_associated_role_policies_async(
-        self, policy_id: str
-    ) -> list[PolicyRepresentation]:
-        data = await self.get_policy_associated_role_policies_raw_async(
-            policy_id=policy_id
-        )
-
-        return dataclass_from_dict(data, list[PolicyRepresentation])
-
     async def create_policy_role_async(self, payload: RolePolicyPayload) -> JsonData:
         response = await self._provider.create_policy_role_async(payload=payload)
 
@@ -880,18 +869,14 @@ class AuthPolicyService(BaseService):
 
         return data
 
-    async def get_associated_policies_async(self, policy_id: str) -> JsonData:
-        response = await self._provider.get_associated_policies_async(
-            policy_id=policy_id
-        )
+    async def get_associated_roles_async(self, policy_id: str) -> JsonData:
+        response = await self._provider.get_associated_roles_async(policy_id=policy_id)
 
         return self.validate_response(response)
 
-    async def get_policy_authorisation_scopes_async(
-        self, permission_id: str
-    ) -> JsonData:
+    async def get_policy_authorisation_scopes_async(self, policy_id: str) -> JsonData:
         response = await self._provider.get_policy_authorisation_scopes_async(
-            permission_id=permission_id
+            policy_id=policy_id
         )
 
         return self.validate_response(response)
