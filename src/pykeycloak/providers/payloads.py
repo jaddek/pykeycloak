@@ -257,13 +257,19 @@ class UserUpdatePasswordPayload(Payload):
 
 @dataclass(frozen=True, kw_only=True)
 class RolePayload(Payload):
+    name: str
     id: str | None = None
-    name: str | None = None
     description: str | None = None
     scope_param_required: bool | None = None
     composite: bool | None = None
     container_id: str | None = None
     attributes: dict[str, list[str]] | None = None
+
+
+@dataclass(frozen=True, kw_only=True)
+class RoleAssignPayload(Payload):
+    id: str
+    name: str
 
 
 @dataclass(frozen=True, kw_only=True)

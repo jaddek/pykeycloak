@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
-import json
 import logging
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, Unpack
@@ -16,6 +15,7 @@ from pykeycloak.providers.payloads import (
     PermissionPayload,
     PermissionScopesPayload,
     ResourcePayload,
+    RoleAssignPayload,
     RolePayload,
     RolePolicyPayload,
     UpdateUserPayload,
@@ -795,23 +795,6 @@ class KeycloakProviderAsync:
         return response
 
     @inject_verified_access_token
-    async def get_client_role_id_async(
-        self,
-        role_name: str,
-        **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
-        access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
-
-        response = await self._wrapper.request_async(
-            method=HttpMethod.GET,
-            url=self._get_path(path=REALM_CLIENT_ROLE, role_name=role_name),
-            headers=headers,
-        )
-
-        return response
-
-    @inject_verified_access_token
     async def get_role_by_name_async(
         self,
         role_name: str,
@@ -948,10 +931,10 @@ class KeycloakProviderAsync:
         return response
 
     @inject_verified_access_token
-    async def assign_client_role_async(
+    async def assign_role_async(
         self,
         user_id: UUID | str,
-        roles: list[str],
+        roles: list[RoleAssignPayload],
         **kwargs: Unpack[InternalAccessToken],
     ) -> ResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
@@ -963,7 +946,26 @@ class KeycloakProviderAsync:
                 path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=str(user_id)
             ),
             headers=headers,
-            data=json.dumps(roles),
+            json=[role.to_dict() for role in roles],
+        )
+
+        return response
+
+    @inject_verified_access_token
+    async def unassign_role_async(
+        self,
+        user_id: UUID | str,
+        roles: list[RoleAssignPayload],
+        **kwargs: Unpack[InternalAccessToken],
+    ) -> ResponseProtocol:
+        access_token: str = self.get_access_token(**kwargs)
+        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+
+        response = await self._wrapper.request_async(
+            method=HttpMethod.DELETE,
+            url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
+            headers=headers,
+            json=[role.to_dict() for role in roles],
         )
 
         return response
@@ -1021,25 +1023,6 @@ class KeycloakProviderAsync:
                 path=REALM_CLIENT_USER_ROLE_MAPPING_AVAILABLE, user_id=user_id
             ),
             headers=headers,
-        )
-
-        return response
-
-    @inject_verified_access_token
-    async def delete_client_roles_of_user_async(
-        self,
-        user_id: UUID | str,
-        roles: list[str],
-        **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
-        access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
-
-        response = await self._wrapper.request_async(
-            method=HttpMethod.DELETE,
-            url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
-            headers=headers,
-            data=json.dumps(roles),
         )
 
         return response

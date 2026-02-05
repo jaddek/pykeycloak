@@ -11,6 +11,7 @@ from pykeycloak.providers.payloads import (
     PermissionScopesPayload,
     RefreshTokenPayload,
     ResourcePayload,
+    RoleAssignPayload,
     RolePayload,
     RolePolicyPayload,
     RTPExchangeTokenPayload,
@@ -232,13 +233,6 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> ResponseProtocol: ...
 
-    async def get_client_role_id_async(
-        self,
-        role_name: str,
-        *,
-        access_token: str = ...,
-    ) -> ResponseProtocol: ...
-
     async def get_role_by_name_async(
         self,
         role_name: str,
@@ -284,10 +278,18 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> ResponseProtocol: ...
 
-    async def assign_client_role_async(
+    async def assign_role_async(
         self,
         user_id: UUID | str,
-        roles: list[str],
+        roles: list[RoleAssignPayload],
+        *,
+        access_token: str = ...,
+    ) -> ResponseProtocol: ...
+
+    async def unassign_role_async(
+        self,
+        user_id: UUID | str,
+        roles: list[RoleAssignPayload],
         *,
         access_token: str = ...,
     ) -> ResponseProtocol: ...
@@ -310,14 +312,6 @@ class KeycloakProviderProtocol(Protocol):
     async def get_available_client_roles_of_user_async(
         self,
         user_id: UUID | str,
-        *,
-        access_token: str = ...,
-    ) -> ResponseProtocol: ...
-
-    async def delete_client_roles_of_user_async(
-        self,
-        user_id: UUID | str,
-        roles: list[str],
         *,
         access_token: str = ...,
     ) -> ResponseProtocol: ...

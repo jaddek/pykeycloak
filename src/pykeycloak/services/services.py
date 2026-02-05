@@ -23,6 +23,7 @@ from ..providers.payloads import (
     PermissionScopesPayload,
     RefreshTokenPayload,
     ResourcePayload,
+    RoleAssignPayload,
     RolePayload,
     RolePolicyPayload,
     RTPIntrospectionPayload,
@@ -229,11 +230,6 @@ class RolesService(BaseService):
 
         return data
 
-    async def get_role_id_async(self, role_name: str) -> JsonData:
-        response = await self._provider.get_client_role_id_async(role_name=role_name)
-
-        return self.validate_response(response)
-
     async def get_role_by_name_raw_async(self, role_name: str) -> JsonData:
         response = await self._provider.get_role_by_name_async(role_name=role_name)
 
@@ -294,11 +290,19 @@ class RolesService(BaseService):
 
         return data
 
-    async def assign_client_role_async(
-        self, user_id: UUID | str, roles: list[str]
+    async def assign_role_async(
+        self, user_id: UUID | str, roles: list[RoleAssignPayload]
     ) -> JsonData:
-        response = await self._provider.assign_client_role_async(
-            user_id=user_id, roles=roles
+        response = await self._provider.assign_role_async(user_id=user_id, roles=roles)
+
+        return self.validate_response(response)
+
+    async def unassign_role_async(
+        self, user_id: UUID | str, roles: list[RoleAssignPayload]
+    ) -> JsonData:
+        response = await self._provider.unassign_role_async(
+            user_id=user_id,
+            roles=roles,
         )
 
         return self.validate_response(response)
@@ -325,14 +329,6 @@ class RolesService(BaseService):
         )
 
         return self.validate_response(response)
-
-    async def delete_client_roles_of_user_async(
-        self, user_id: UUID | str, roles: list[str]
-    ) -> None:
-        await self._provider.delete_client_roles_of_user_async(
-            user_id=user_id,
-            roles=roles,
-        )
 
     async def get_user_roles_async(self, user_id: UUID | str) -> JsonData:
         response = await self._provider.get_user_roles_async(user_id=user_id)

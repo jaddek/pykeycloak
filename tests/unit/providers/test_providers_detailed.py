@@ -641,22 +641,6 @@ class TestKeycloakProviderAsyncDetailed:
         )
 
     @pytest.mark.asyncio
-    async def test_get_client_role_id_async(self, provider, mock_wrapper):
-        """Test get_client_role_id_async method."""
-        await provider.get_client_role_id_async(
-            role_name="test_role",
-            access_token="test_token",  # noqa: S106
-        )
-
-        mock_wrapper.request.assert_called_once()
-        args, kwargs = mock_wrapper.request.call_args
-        assert kwargs["method"] == HttpMethod.GET
-        assert (
-            "/admin/realms/test_realm/clients/test_client/roles/test_role"
-            in kwargs["url"]
-        )
-
-    @pytest.mark.asyncio
     async def test_create_role(self, provider, mock_wrapper):
         """Test create_role method."""
         payload = {"name": "test_role", "description": "Test role"}
@@ -760,7 +744,7 @@ class TestKeycloakProviderAsyncDetailed:
     async def test_delete_client_roles_of_user_async(self, provider, mock_wrapper):
         """Test delete_client_roles_of_user_async method."""
         roles = ["role1", "role2"]
-        await provider.delete_client_roles_of_user_async(
+        await provider.unassign_user_role(
             user_id=uuid.uuid4(),
             roles=roles,
             access_token="test_token",  # noqa: S106

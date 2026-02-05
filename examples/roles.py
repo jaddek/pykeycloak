@@ -5,7 +5,7 @@ from time import time
 from _common import service_factory
 
 from pykeycloak.factories import KeycloakServiceFactory
-from pykeycloak.providers.payloads import RolePayload
+from pykeycloak.providers.payloads import RoleAssignPayload, RolePayload
 
 username = "admin"
 password = "password"  # noqa: S105
@@ -36,10 +36,6 @@ async def main():
     # Get role by name
     role_by_name = await factory.roles.get_role_by_name_async(role_name="test-role")
     print(f"Role by name: {role_by_name}")
-
-    # Get role ID by name
-    role_id = await factory.roles.get_role_id_async(role_name="test-role")
-    print(f"Role ID: {role_id}")
 
     # Get role by name raw
     role_by_name_raw = await factory.roles.get_role_by_name_raw_async(
@@ -72,9 +68,9 @@ async def main():
         first_user = users[0][0] if isinstance(users[0], list) else users[0]
         user_id = first_user.id
 
-        assign_result = await factory.roles.assign_client_role_async(
+        assign_result = await factory.roles.assign_role_async(
             user_id=user_id,
-            roles=[role_id],
+            roles=[RoleAssignPayload(name="test-role", id=role_id_str)],
         )
         print(f"Assigned role to user: {assign_result}")
 
