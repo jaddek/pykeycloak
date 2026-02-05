@@ -347,14 +347,14 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> ResponseProtocol: ...
 
-    async def create_client_authz_permission_resource_based_async(
+    async def create_client_authz_permission_based_on_resource_async(
         self,
         payload: PermissionPayload,
         *,
         access_token: str = ...,
     ) -> ResponseProtocol: ...
 
-    async def create_client_authz_permission_scope_based_async(
+    async def create_client_authz_permission_based_on_scope_async(
         self,
         payload: PermissionPayload,
         *,
@@ -368,7 +368,14 @@ class KeycloakProviderProtocol(Protocol):
         query: FindPermissionQuery | None = None,
     ) -> ResponseProtocol: ...
 
-    async def get_permissions_for_scope_by_id_async(
+    async def get_permission_based_on_scope_by_id_async(
+        self,
+        permission_id: str,
+        *,
+        access_token: str = ...,
+    ) -> ResponseProtocol: ...
+
+    async def get_permission_based_on_resource_by_id_async(
         self,
         permission_id: str,
         *,
@@ -386,13 +393,6 @@ class KeycloakProviderProtocol(Protocol):
         self,
         permission_id: str,  # resource OR scope based permission
         payload: PermissionScopesPayload,
-        *,
-        access_token: str = ...,
-    ) -> ResponseProtocol: ...
-
-    async def get_policy_associated_role_policies_async(
-        self,
-        policy_id: str,
         *,
         access_token: str = ...,
     ) -> ResponseProtocol: ...
@@ -457,7 +457,7 @@ class KeycloakProviderProtocol(Protocol):
         query: FilterFindPolicyParams | None = None,
     ) -> ResponseProtocol: ...
 
-    async def get_associated_policies_async(
+    async def get_associated_roles_async(
         self,
         policy_id: str,
         *,
@@ -466,7 +466,7 @@ class KeycloakProviderProtocol(Protocol):
 
     async def get_policy_authorisation_scopes_async(
         self,
-        permission_id: str,
+        policy_id: str,
         *,
         access_token: str = ...,
     ) -> ResponseProtocol: ...

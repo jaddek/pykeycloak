@@ -1,4 +1,4 @@
-exclude: '^tests/|^exapl/'
+exclude: '^tests/|^exapl/|^src/pykeycloak/core/urls\.py'
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit

@@ -8,9 +8,9 @@ from pykeycloak.core.urls import (
     BASE_REALMS,
     REALM_CLIENT_ACTIVE_SESSION_COUNT,
     REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH,
-    REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER,
+    REALM_CLIENT_AUTHZ_POLICY_ROLE,
+    REALM_CLIENT_AUTHZ_POLICY_SEARCH,
+    REALM_CLIENT_AUTHZ_POLICY_USER,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
     REALM_CLIENT_OFFLINE_SESSIONS,
     REALM_CLIENT_OPENID_URL_AUTH_DEVICE,
@@ -67,7 +67,7 @@ class TestURLConstants:
     def test_realm_client_authz_resource_policy_search_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH constant."""
         expected = "/admin/realms/{realm}/clients/{client_id}/authz/resource-server/policy/search"
-        assert REALM_CLIENT_AUTHZ_RESOURCE_POLICY_SEARCH == expected
+        assert REALM_CLIENT_AUTHZ_POLICY_SEARCH == expected
 
     def test_realm_client_authz_resource_permissions_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS constant."""
@@ -82,12 +82,12 @@ class TestURLConstants:
     def test_realm_client_authz_resource_policy_user_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER constant."""
         expected = "/admin/realms/{realm}/clients/{client_id}/authz/resource-server/policy/user"
-        assert REALM_CLIENT_AUTHZ_RESOURCE_POLICY_USER == expected
+        assert REALM_CLIENT_AUTHZ_POLICY_USER == expected
 
     def test_realm_client_authz_resource_policy_role_constant(self):
         """Test the REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE constant."""
         expected = "/admin/realms/{realm}/clients/{client_id}/authz/resource-server/policy/role"
-        assert REALM_CLIENT_AUTHZ_RESOURCE_POLICY_ROLE == expected
+        assert REALM_CLIENT_AUTHZ_POLICY_ROLE == expected
 
     def test_base_protocol_openid_connect_constant(self):
         """Test the BASE_PROTOCOL_OPENID_CONNECT constant."""

@@ -17,11 +17,6 @@ async def main():
     permissions_raw = await factory.authz_permission.get_permissions_raw_async()
     print(f"Permissions raw: {permissions_raw}")
 
-    # NOTE: The following examples show the structure for creating permissions,
-    # but require existing resource, scope, and policy IDs in your Keycloak instance.
-    # Since we don't have specific IDs available in this example, these are commented out.
-    # To use these, replace placeholder IDs with actual IDs from your Keycloak instance.
-
     # Example of creating a permission (resource-based)
     # resource_based_permission_payload = PermissionPayload(
     #     name="test-resource-permission",
@@ -31,7 +26,7 @@ async def main():
     #     policies=["YOUR_POLICY_ID_HERE"],
     # )
     #
-    # created_resource_permission = await factory.permissions.create_client_authz_permission_resource_based_async(
+    # created_resource_permission = await factory.permissions.create_client_authz_permission_based_on_resource_async(
     #     payload=resource_based_permission_payload
     # )
     # print(f"Created resource-based permission: {created_resource_permission}")
@@ -45,7 +40,7 @@ async def main():
     #     policies=["YOUR_POLICY_ID_HERE"],
     # )
     #
-    # created_scope_permission = await factory.permissions.create_client_authz_permission_scope_based_async(
+    # created_scope_permission = await factory.permissions.create_client_authz_permission_based_on_scope_async(
     #     payload=scope_based_permission_payload
     # )
     # print(f"Created scope-based permission: {created_scope_permission}")
