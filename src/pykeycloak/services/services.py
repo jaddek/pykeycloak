@@ -2,14 +2,20 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 import asyncio
+import logging
 import math
 from collections.abc import Iterable
-from typing import cast
+from dataclasses import replace
+from typing import Any, Final, cast
 from uuid import UUID
 
-from ..core.constants import KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT
-from ..core.exceptions import KeycloakException
-from ..core.helpers import dataclass_from_dict
+from ..core.constants import (
+    KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
+    UMA_PERMISSIONS_CHUNK_SIZE_DEFAULT,
+)
+from ..core.enums import UrnIetfOauthUmaTicketResponseModeEnum
+from ..core.exceptions import KeycloakException, KeycloakHTTPException
+from ..core.helpers import dataclass_from_dict, getenv_int
 from ..core.protocols import (
     KeycloakProviderProtocol,
     KeycloakResponseValidatorProtocol,
@@ -48,6 +54,7 @@ from ..services.representations import (
     DeviceAuthRepresentation,
     IntrospectRepresentation,
     PermissionRepresentation,
+    ResourceRepresentation,
     ScopeRepresentation,
     SessionRepresentation,
     SessionsCountRepresentation,
@@ -56,6 +63,8 @@ from ..services.representations import (
     UserInfoRepresentation,
     UserRepresentation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BaseService:
@@ -654,12 +663,82 @@ class AuthService(BaseService):
 
 
 class UmaService(BaseService):
+    def __init__(
+        self,
+        provider: KeycloakProviderProtocol,
+        validator: KeycloakResponseValidatorProtocol,
+        uma_permissions_chunk_size: int | None = None,
+    ):
+        super().__init__(provider=provider, validator=validator)
+
+        self._permissions_chunk_size: Final = uma_permissions_chunk_size or getenv_int(
+            "UMA_PERMISSIONS_CHUNK_SIZE", UMA_PERMISSIONS_CHUNK_SIZE_DEFAULT
+        )
+
     async def get_uma_permissions_async(
         self, payload: UMAAuthorizationPayload
     ) -> JsonData:
         response = await self._provider.get_uma_permission_async(payload=payload)
 
         return self.validate_response(response)
+
+    async def get_permissions_by_uris_chunks_async(
+        self,
+        payload: UMAAuthorizationPayload,
+        chunk_size: int | None = None,
+    ) -> list:
+        """
+        If decision -> [{'result': True}]
+        if permissions -> [{'scopes': ['view'], 'rsid': '31abd30f-51a2-462e-83e0-88dc0a76e77b'}, {'scopes': ['view', 'update'], 'rsid': '053b36cc-9478-4878-bfcc-d11752e35acb'}]
+        :param payload:
+        :param chunk_size:
+        :return:
+        """
+        chunk_size = chunk_size or self._permissions_chunk_size
+
+        chunks = [
+            payload.permissions[i : i + chunk_size]
+            for i in range(0, len(payload.permissions), chunk_size)
+        ]
+
+        tasks = [
+            self.get_uma_permissions_async(
+                payload=replace(
+                    payload,
+                    permissions=chunk,
+                )
+            )
+            for chunk in chunks
+        ]
+
+        permissions: list = await asyncio.gather(*tasks, return_exceptions=True)
+
+        permissions_mode = UrnIetfOauthUmaTicketResponseModeEnum.PERMISSIONS
+
+        unique_filtered_results: dict[str | tuple, Any] = {}
+
+        for i, resp in enumerate(permissions):
+            if isinstance(resp, KeycloakHTTPException):
+                if getattr(resp, "status_code", None) == 403:
+                    logger.warning(f"For uris chunk {chunks[i]} permissions not found")
+                else:
+                    logger.warning(
+                        f"For uris chunk {chunks[i]} response is {getattr(resp, 'message', None)}"
+                    )
+
+                continue
+
+            if payload.response_mode == permissions_mode:
+                for inner_data in resp:
+                    key = (inner_data["rsid"], tuple(inner_data.get("scopes", [])))
+
+                    unique_filtered_results[key] = inner_data
+            else:
+                unique_filtered_results["result"] = {
+                    "result": resp.get("result", False)
+                }
+
+        return list(unique_filtered_results.values())
 
 
 class ClientsService(BaseService):
@@ -733,10 +812,12 @@ class AuthzResourceService(BaseService):
 
         return self.validate_response(response)
 
-    async def get_resource_by_id_async(self, resource_id: str) -> JsonData:
+    async def get_resource_by_id_async(
+        self, resource_id: str
+    ) -> ResourceRepresentation:
         data = await self.get_resource_by_id_raw_async(resource_id=resource_id)
 
-        return data
+        return dataclass_from_dict(data, ResourceRepresentation)
 
     async def delete_resource_by_id_async(self, resource_id: str) -> JsonData:
         response = await self._provider.delete_resource_by_id_async(

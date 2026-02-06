@@ -138,7 +138,7 @@ class RTPExchangeTokenPayload(ObtainTokenPayload):
 @dataclass(frozen=True, kw_only=True)
 class UMAAuthorizationPayload(Payload):
     audience: str | None = field(default=None)  # if none the client id will be used
-    permissions: dict[str, list[str]]
+    permissions: list[str]
     response_mode: UrnIetfOauthUmaTicketResponseModeEnum = (
         UrnIetfOauthUmaTicketResponseModeEnum.DECISION
     )
@@ -148,14 +148,6 @@ class UMAAuthorizationPayload(Payload):
     subject_token: str
     permission_resource_matching_uri: bool = False
     response_include_resource_name: bool = False
-    _normalized_permissions: list[str] = field(init=False)
-
-    def __post_init__(self) -> None:
-        object.__setattr__(
-            self,
-            "_normalized_permissions",
-            self.build_permission_param(self.permissions),
-        )
 
     @property
     def grant_type(self) -> str:
@@ -166,35 +158,12 @@ class UMAAuthorizationPayload(Payload):
             "subject_token": self.subject_token,
             "audience": self.audience,
             "grant_type": self.grant_type,
-            "permission": self._normalized_permissions,
+            "permission": self.permissions,
             "response_mode": str(self.response_mode),
             "response_include_resource_name": self.response_include_resource_name,
             "permission_resource_format": str(self.permission_resource_format),
             "permission_resource_matching_uri": self.permission_resource_matching_uri,
         }
-
-    @staticmethod
-    def build_permission_param(permissions: dict[str, list[str]]) -> list[str]:
-        result = set()
-
-        for resource, scopes in permissions.items():
-            if not isinstance(resource, str):
-                raise TypeError("Resource must be a string")
-
-            if not scopes:
-                result.add(resource)
-                continue
-
-            if not isinstance(scopes, list):
-                raise TypeError("Scopes must be a list of strings")
-
-            for scope in scopes:
-                if not isinstance(scope, str) or not scope:
-                    raise ValueError("Scope must be a non-empty string")
-
-                result.add(f"{resource}#{scope}")
-
-        return list(result)
 
 
 @dataclass(frozen=True, kw_only=True)

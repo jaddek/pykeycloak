@@ -23,16 +23,16 @@ async def main():
         )
     )
 
-    ## response with available permissions (could be 401 if no permissions)
-    ## this request should be batched as KC has limitations on amount of permissions it could check at one request
-    await factory.uma.get_uma_permissions_async(
+    res = await factory.uma.get_permissions_by_uris_chunks_async(
         payload=UMAAuthorizationPayload(
             audience=None,
-            permissions={"/otago/users": ["view"]},
+            permissions=["/otago/roles#update", "/otago/users#update"],
             subject_token=result.access_token,
             response_mode=UrnIetfOauthUmaTicketResponseModeEnum.PERMISSIONS,
         )
     )
+
+    print(res)
 
 
 if __name__ == "__main__":
