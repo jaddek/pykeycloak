@@ -43,6 +43,38 @@ class RTPIntrospectionPayload(TokenIntrospectionPayload):
 
 
 @dataclass(frozen=True, kw_only=True)
+class AuthRedirectPayload(Payload):
+    client_id: str
+    redirect_uri: str
+    scopes: str | None = field(default=None, repr=False)
+
+    @staticmethod
+    def _get_default_scope() -> str:
+        return "openid profile email"
+
+    @property
+    def scope(self) -> str | None:
+        if self.scopes is None:
+            return self._get_default_scope()
+
+        return self.scopes
+
+    @property
+    def response_type(self) -> str:
+        return "code"
+
+    def to_dict(self, exclude_none: bool = True) -> dict[str, Any]:
+        result = asdict(self)
+
+        del result["scopes"]
+
+        if scope := self.scope:
+            result |= {"scope": scope}
+
+        return result
+
+
+@dataclass(frozen=True, kw_only=True)
 class ObtainTokenPayload(Payload):
     scopes: str | None = field(default=None, repr=False, init=False)
 
@@ -73,6 +105,16 @@ class ObtainTokenPayload(Payload):
             result |= {"scope": scope}
 
         return result
+
+
+@dataclass(frozen=True, kw_only=True)
+class UserAuthorisationCodePayload(ObtainTokenPayload):
+    code: str
+    redirect_uri: str
+
+    @property
+    def grant_type(self) -> str:
+        return GrantTypeEnum.AUTHORIZATION_CODE
 
 
 @dataclass(frozen=True, kw_only=True)

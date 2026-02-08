@@ -61,6 +61,9 @@ class KeycloakHttpClientWrapperAsync:
             self.client.headers,
         )
 
+    def build_full_url(self, path: str, query: str) -> str:
+        return f"{self.client.base_url}{path}?{query}"
+
     async def request_async(
         self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
     ) -> ResponseProtocol:

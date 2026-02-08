@@ -23,6 +23,7 @@ from ..core.protocols import (
 )
 from ..core.types import JsonData
 from ..providers.payloads import (
+    AuthRedirectPayload,
     ClientCredentialsLoginPayload,
     CreateUserPayload,
     PermissionPayload,
@@ -36,6 +37,7 @@ from ..providers.payloads import (
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
     UpdateUserPayload,
+    UserAuthorisationCodePayload,
     UserCredentialsLoginPayload,
     UserUpdateEnablePayload,
     UserUpdatePasswordPayload,
@@ -470,6 +472,9 @@ class AuthService(BaseService):
     # Client Login
     ###
 
+    def get_redirect_code_url(self, payload: AuthRedirectPayload) -> str:
+        return self._provider.get_sso_redirect_url(payload=payload)
+
     async def client_login_raw_async(
         self,
     ) -> JsonData:
@@ -493,6 +498,14 @@ class AuthService(BaseService):
     async def user_login_raw_async(
         self,
         payload: UserCredentialsLoginPayload,
+    ) -> JsonData:
+        response = await self._provider.obtain_token_async(payload=payload)
+
+        return self.validate_response(response)
+
+    async def exchange_code_to_token(
+        self,
+        payload: UserAuthorisationCodePayload,
     ) -> JsonData:
         response = await self._provider.obtain_token_async(payload=payload)
 
