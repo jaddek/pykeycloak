@@ -5,6 +5,7 @@ from httpx._types import HeaderTypes
 
 from pykeycloak.core.types import JsonData
 from pykeycloak.providers.payloads import (
+    AuthRedirectPayload,
     CreateUserPayload,
     ObtainTokenPayload,
     PermissionPayload,
@@ -51,6 +52,8 @@ class KeycloakResponseValidatorProtocol(Protocol):
 
 
 class KeycloakProviderProtocol(Protocol):
+    def get_sso_redirect_url(self, payload: AuthRedirectPayload) -> str: ...
+
     async def refresh_token_async(
         self,
         payload: RefreshTokenPayload | RTPExchangeTokenPayload,

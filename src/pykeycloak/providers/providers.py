@@ -4,6 +4,7 @@
 import logging
 from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, Any, Unpack
+from urllib.parse import urlencode
 from uuid import UUID
 
 from pykeycloak.core.clients import (
@@ -12,6 +13,7 @@ from pykeycloak.core.clients import (
 )
 from pykeycloak.core.headers import HeadersProtocol
 from pykeycloak.providers.payloads import (
+    AuthRedirectPayload,
     PermissionPayload,
     PermissionScopesPayload,
     ResourcePayload,
@@ -56,6 +58,7 @@ from ..core.urls import (
     REALM_CLIENT_AUTHZ_SETTINGS,
     REALM_CLIENT_OFFLINE_SESSION_COUNT,
     REALM_CLIENT_OFFLINE_SESSIONS,
+    REALM_CLIENT_OPENID_URL_AUTH,
     REALM_CLIENT_OPENID_URL_AUTH_DEVICE,
     REALM_CLIENT_OPENID_URL_CERTS,
     REALM_CLIENT_OPENID_URL_INTROSPECT,
@@ -220,6 +223,13 @@ class KeycloakProviderAsync:
         )
 
         return response
+
+    def get_sso_redirect_url(self, payload: AuthRedirectPayload) -> str:
+        path = self._get_path(path=REALM_CLIENT_OPENID_URL_AUTH)
+
+        query_string = urlencode(payload.to_dict())
+
+        return self._wrapper.build_full_url(path=path, query=query_string)
 
     @mark_need_access_token_initialization
     async def obtain_token_async(
