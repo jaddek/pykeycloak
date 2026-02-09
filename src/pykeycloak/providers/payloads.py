@@ -43,9 +43,10 @@ class RTPIntrospectionPayload(TokenIntrospectionPayload):
 
 
 @dataclass(frozen=True, kw_only=True)
-class AuthRedirectPayload(Payload):
+class SSOLoginPayload(Payload):
     client_id: str
     redirect_uri: str
+    state: str
     scopes: str | None = field(default=None, repr=False)
 
     @staticmethod
@@ -67,6 +68,8 @@ class AuthRedirectPayload(Payload):
         result = asdict(self)
 
         del result["scopes"]
+
+        result |= {"response_type": self.response_type}
 
         if scope := self.scope:
             result |= {"scope": scope}

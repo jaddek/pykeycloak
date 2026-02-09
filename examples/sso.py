@@ -5,7 +5,7 @@ from _common import service_factory
 
 from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
-    AuthRedirectPayload,
+    SSOLoginPayload,
 )
 
 logging.basicConfig(
@@ -16,7 +16,7 @@ logging.basicConfig(
 async def main():
     factory: KeycloakServiceFactory = await service_factory()
 
-    payload = AuthRedirectPayload(
+    payload = SSOLoginPayload(
         redirect_uri="http://localhost:8000/auth/callback",
         client_id="SSO",
         scopes="openid",

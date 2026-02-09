@@ -23,7 +23,6 @@ from ..core.protocols import (
 )
 from ..core.types import JsonData
 from ..providers.payloads import (
-    AuthRedirectPayload,
     ClientCredentialsLoginPayload,
     CreateUserPayload,
     PermissionPayload,
@@ -34,6 +33,7 @@ from ..providers.payloads import (
     RolePayload,
     RolePolicyPayload,
     RTPIntrospectionPayload,
+    SSOLoginPayload,
     TokenIntrospectionPayload,
     UMAAuthorizationPayload,
     UpdateUserPayload,
@@ -472,7 +472,7 @@ class AuthService(BaseService):
     # Client Login
     ###
 
-    def get_redirect_code_url(self, payload: AuthRedirectPayload) -> str:
+    def get_redirect_code_url(self, payload: SSOLoginPayload) -> str:
         return self._provider.get_sso_redirect_url(payload=payload)
 
     async def client_login_raw_async(
