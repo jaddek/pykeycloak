@@ -13,13 +13,13 @@ from pykeycloak.core.clients import (
 )
 from pykeycloak.core.headers import HeadersProtocol
 from pykeycloak.providers.payloads import (
-    AuthRedirectPayload,
     PermissionPayload,
     PermissionScopesPayload,
     ResourcePayload,
     RoleAssignPayload,
     RolePayload,
     RolePolicyPayload,
+    SSOLoginPayload,
     UpdateUserPayload,
 )
 
@@ -224,7 +224,7 @@ class KeycloakProviderAsync:
 
         return response
 
-    def get_sso_redirect_url(self, payload: AuthRedirectPayload) -> str:
+    def get_sso_redirect_url(self, payload: SSOLoginPayload) -> str:
         path = self._get_path(path=REALM_CLIENT_OPENID_URL_AUTH)
 
         query_string = urlencode(payload.to_dict())
