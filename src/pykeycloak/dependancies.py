@@ -25,13 +25,13 @@ class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):
 
 
 def get_factory[T: KeycloakProviderProtocol](
-    realm_name: str, provider_cls: ProviderConstructor[T]
+    realm_name: str, client_name: str, provider_cls: ProviderConstructor[T]
 ) -> tuple[Realm, T, KeycloakServiceFactory]:
     realm = Realm(name=realm_name)
 
     provider = provider_cls(
         realm=realm,
-        realm_client=RealmClient.from_env(),
+        realm_client=RealmClient.from_env(client_name=client_name),
         headers=get_headers_factory(),
         wrapper=get_keycloak_client_wrapper_from_env(),
     )
