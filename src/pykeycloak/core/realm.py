@@ -35,13 +35,16 @@ class RealmClient:
         return override_id or self.client_id
 
     @classmethod
-    def from_env(cls) -> Self:
-        uuid = os.getenv("KEYCLOAK_REALM_CLIENT_UUID")
-        cid = os.getenv("KEYCLOAK_REALM_CLIENT_ID")
-        secret = os.getenv("KEYCLOAK_REALM_CLIENT_SECRET")
+    def from_env(cls, client_name: str) -> Self:
+        client_kw = client_name.upper()
+        uuid = os.getenv(f"KEYCLOAK_REALM_{client_kw}_CLIENT_UUID")
+        cid = os.getenv(f"KEYCLOAK_REALM_{client_kw}_CLIENT_ID")
+        secret = os.getenv(f"KEYCLOAK_REALM_{client_kw}_CLIENT_SECRET")
 
         if not uuid or not cid:
-            raise RuntimeError("Required Keycloak environment variables are missing")
+            raise RuntimeError(
+                f"Required Keycloak environment variables for {client_kw} are missing"
+            )
 
         return cls(client_uuid=uuid, client_id=cid, client_secret=secret)
 
