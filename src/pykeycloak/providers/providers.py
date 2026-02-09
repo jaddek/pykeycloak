@@ -237,7 +237,7 @@ class KeycloakProviderAsync:
         payload: ObtainTokenPayload,
     ) -> ResponseProtocol:
         headers = self._headers.openid_basic(
-            self._realm_client.base64_encoded_client_secret()
+            basic_token=self._realm_client.base64_encoded_client_secret()
         )
 
         response = await self._wrapper.request_async(
