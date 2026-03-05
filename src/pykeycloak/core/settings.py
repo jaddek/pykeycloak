@@ -98,7 +98,7 @@ class HttpTransportSettings:
         }
 
     @classmethod
-    def from_env(cls) -> "HttpTransportSettings":
+    def with_env(cls) -> "HttpTransportSettings":
         return cls(
             verify=getenv_bool(
                 "KEYCLOAK_HTTPX_HTTP_TRANSPORT_HTTP_VERIFY",
@@ -200,7 +200,7 @@ class ClientSettings:
             raise ValueError("max_redirects must be >= 0")
 
     @classmethod
-    def from_env(cls) -> "ClientSettings":
+    def with_env(cls) -> "ClientSettings":
         """Create ClientSettings using .env variables."""
         return cls(
             base_url=getenv_required_url("KEYCLOAK_BASE_URL"),

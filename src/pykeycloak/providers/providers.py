@@ -27,7 +27,7 @@ from ..core.exceptions import (
     AccessTokenIsRequiredError,
     KeycloakUnexpectedBehaviourException,
 )
-from ..core.protocols import KeycloakProviderProtocol, ResponseProtocol
+from ..core.protocols import KeycloakProviderProtocol, KeycloakResponseProtocol
 from ..core.realm import Realm, RealmClient
 from ..core.token_manager import (
     TokenAutoRefresher,
@@ -135,7 +135,7 @@ class KeycloakProviderAsync:
     async def get_clients_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -151,7 +151,7 @@ class KeycloakProviderAsync:
     async def get_client_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -171,7 +171,7 @@ class KeycloakProviderAsync:
     async def get_client_authz_settings(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -190,7 +190,7 @@ class KeycloakProviderAsync:
     async def refresh_token_async(
         self,
         payload: RefreshTokenPayload | RTPExchangeTokenPayload,
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         if not self._realm_client.is_confidential:
             raise ValueError(
                 "Introspection could be invoked only by confidential clients"
@@ -235,7 +235,7 @@ class KeycloakProviderAsync:
     async def obtain_token_async(
         self,
         payload: ObtainTokenPayload,
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         headers = self._headers.openid_basic(
             basic_token=self._realm_client.base64_encoded_client_secret()
         )
@@ -252,7 +252,7 @@ class KeycloakProviderAsync:
     async def introspect_token_async(
         self,
         payload: RTPIntrospectionPayload | TokenIntrospectionPayload,
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         if not self._realm_client.is_confidential:
             raise ValueError(
                 "Introspection could be invoked only by confidential clients"
@@ -283,7 +283,7 @@ class KeycloakProviderAsync:
 
         return response
 
-    async def auth_device_async(self) -> ResponseProtocol:
+    async def auth_device_async(self) -> KeycloakResponseProtocol:
         headers: dict[str, str] | None = None
         data = {
             "client_id": self._realm_client.client_id,
@@ -308,7 +308,7 @@ class KeycloakProviderAsync:
     async def get_certs_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers: dict[str, str] = self._headers.openid_bearer(bearer_token=access_token)
 
@@ -320,7 +320,7 @@ class KeycloakProviderAsync:
 
         return response
 
-    async def logout_async(self, refresh_token: str) -> ResponseProtocol:
+    async def logout_async(self, refresh_token: str) -> KeycloakResponseProtocol:
         payload = {
             "client_id": self._realm_client.client_id,
             "refresh_token": refresh_token,
@@ -344,7 +344,7 @@ class KeycloakProviderAsync:
 
         return response
 
-    async def revoke_async(self, refresh_token: str) -> ResponseProtocol:
+    async def revoke_async(self, refresh_token: str) -> KeycloakResponseProtocol:
         payload: ConfidentialClientRevokePayload | PublicClientRevokePayload | None = (
             None
         )
@@ -377,7 +377,7 @@ class KeycloakProviderAsync:
     async def get_user_info_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.openid_bearer(bearer_token=str(access_token))
 
@@ -396,7 +396,7 @@ class KeycloakProviderAsync:
     async def get_uma_permission_async(
         self,
         payload: UMAAuthorizationPayload,
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         headers = self._headers.openid_basic(
             basic_token=self._realm_client.base64_encoded_client_secret()
         )
@@ -424,7 +424,7 @@ class KeycloakProviderAsync:
         self,
         query: GetUsersQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -440,7 +440,7 @@ class KeycloakProviderAsync:
         self,
         query: GetUsersQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -458,7 +458,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -475,7 +475,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -492,7 +492,7 @@ class KeycloakProviderAsync:
         self,
         payload: CreateUserPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -511,7 +511,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         payload: UpdateUserPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -530,7 +530,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         payload: UserUpdateEnablePayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -549,7 +549,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         payload: UserUpdatePasswordPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -568,7 +568,7 @@ class KeycloakProviderAsync:
         role_name: str,
         request_query: RoleMembersListQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -593,7 +593,7 @@ class KeycloakProviderAsync:
         self,
         query: PaginationQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -613,7 +613,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -631,7 +631,7 @@ class KeycloakProviderAsync:
         session_id: UUID | str,
         is_offline: bool,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -651,7 +651,7 @@ class KeycloakProviderAsync:
         self,
         request_query: PaginationQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -668,7 +668,7 @@ class KeycloakProviderAsync:
     async def get_client_sessions_count_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -685,7 +685,7 @@ class KeycloakProviderAsync:
         self,
         query: PaginationQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -702,7 +702,7 @@ class KeycloakProviderAsync:
     async def get_offline_sessions_count_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -719,7 +719,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -735,7 +735,7 @@ class KeycloakProviderAsync:
     async def logout_all_users_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -751,7 +751,7 @@ class KeycloakProviderAsync:
     async def get_client_session_stats_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -768,7 +768,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -790,7 +790,7 @@ class KeycloakProviderAsync:
     async def get_client_roles_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -809,7 +809,7 @@ class KeycloakProviderAsync:
         self,
         role_name: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -826,7 +826,7 @@ class KeycloakProviderAsync:
         self,
         payload: RolePayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -846,7 +846,7 @@ class KeycloakProviderAsync:
         payload: RolePayload,
         skip_unexpected_behaviour_exception: bool = False,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         """
         !!!WARNING!!!
         v26.3.3 will create a new role if you send description and name.
@@ -888,7 +888,7 @@ class KeycloakProviderAsync:
         role_name: str,
         payload: RolePayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -909,7 +909,7 @@ class KeycloakProviderAsync:
         self,
         role_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -926,7 +926,7 @@ class KeycloakProviderAsync:
         self,
         role_name: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -946,7 +946,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         roles: list[RoleAssignPayload],
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -967,7 +967,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         roles: list[RoleAssignPayload],
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -985,7 +985,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1003,7 +1003,7 @@ class KeycloakProviderAsync:
         user_id: UUID | str,
         request_query: BriefRepresentationQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1023,7 +1023,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1042,7 +1042,7 @@ class KeycloakProviderAsync:
         self,
         user_id: UUID | str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1062,7 +1062,7 @@ class KeycloakProviderAsync:
     async def get_client_authz_scopes_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1083,7 +1083,7 @@ class KeycloakProviderAsync:
         self,
         query: ResourcesListQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1101,7 +1101,7 @@ class KeycloakProviderAsync:
         self,
         payload: ResourcePayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1119,7 +1119,7 @@ class KeycloakProviderAsync:
         self,
         resource_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1138,7 +1138,7 @@ class KeycloakProviderAsync:
         self,
         resource_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1157,7 +1157,7 @@ class KeycloakProviderAsync:
         self,
         resource_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1180,7 +1180,7 @@ class KeycloakProviderAsync:
         self,
         payload: RolePolicyPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1198,7 +1198,7 @@ class KeycloakProviderAsync:
         self,
         policy_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1215,7 +1215,7 @@ class KeycloakProviderAsync:
         self,
         payload: PermissionPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1233,7 +1233,7 @@ class KeycloakProviderAsync:
         self,
         query: FilterFindPolicyParams | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1251,7 +1251,7 @@ class KeycloakProviderAsync:
         self,
         policy_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1271,7 +1271,7 @@ class KeycloakProviderAsync:
         self,
         policy_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1289,7 +1289,7 @@ class KeycloakProviderAsync:
     async def get_policies_async(
         self,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1310,7 +1310,7 @@ class KeycloakProviderAsync:
         self,
         payload: PermissionPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1328,7 +1328,7 @@ class KeycloakProviderAsync:
         self,
         payload: PermissionPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1346,7 +1346,7 @@ class KeycloakProviderAsync:
         self,
         query: FindPermissionQuery | None = None,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1364,7 +1364,7 @@ class KeycloakProviderAsync:
         self,
         permission_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1384,7 +1384,7 @@ class KeycloakProviderAsync:
         self,
         permission_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1404,7 +1404,7 @@ class KeycloakProviderAsync:
         self,
         permission_id: str,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1425,7 +1425,7 @@ class KeycloakProviderAsync:
         permission_id: str,  # resource OR scope based permission
         payload: PermissionScopesPayload,
         **kwargs: Unpack[InternalAccessToken],
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         access_token = self.get_access_token(**kwargs)
         headers = self._headers.keycloak_bearer(bearer_token=access_token)
 
@@ -1474,8 +1474,8 @@ class KeycloakProviderAsync:
 
     def token_manager_update_access_token(
         self,
-    ) -> Callable[[str], Awaitable[ResponseProtocol]]:
-        async def _refresh(refresh_token: str) -> ResponseProtocol:
+    ) -> Callable[[str], Awaitable[KeycloakResponseProtocol]]:
+        async def _refresh(refresh_token: str) -> KeycloakResponseProtocol:
             return await self.refresh_token_async(
                 payload=RefreshTokenPayload(refresh_token=refresh_token)
             )

@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
+
 from mypyc.ir.class_ir import NamedTuple
 
-from .factories import KeycloakServiceFactory
+from .core.protocols import KeycloakServiceFactoryProtocol
+from .factories import KeycloakServiceFactory, KeycloakWellKnownFactory
 
 
 class KeycloakClientInstanceKey(NamedTuple):
@@ -10,16 +12,25 @@ class KeycloakClientInstanceKey(NamedTuple):
     realm_client_name: str
 
 
+class KeycloakWellKnownClientInstanceKey(KeycloakClientInstanceKey):
+    realm_name: str
+    realm_client_name: str
+
+
 class FactoryRegistry:
     def __init__(self) -> None:
-        self._map: dict[KeycloakClientInstanceKey, KeycloakServiceFactory] = {}
+        self._map: dict[
+            KeycloakClientInstanceKey, KeycloakServiceFactory | KeycloakWellKnownFactory
+        ] = {}
 
     def register(
         self, instance_key: KeycloakClientInstanceKey, factory: KeycloakServiceFactory
     ) -> None:
         self._map[instance_key] = factory
 
-    def get(self, instance_key: KeycloakClientInstanceKey) -> KeycloakServiceFactory:
+    def get(
+        self, instance_key: KeycloakClientInstanceKey
+    ) -> KeycloakServiceFactoryProtocol:
         instance = self._map.get(instance_key)
         if not instance:
             raise ValueError(

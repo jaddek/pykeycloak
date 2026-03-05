@@ -20,7 +20,7 @@ from ..core.exceptions import (
     KeycloakUnprocessableEntityError,
 )
 from .exceptions import KeycloakUnsupportedMediaTypeError
-from .protocols import KeycloakResponseValidatorProtocol, ResponseProtocol
+from .protocols import KeycloakResponseProtocol, KeycloakResponseValidatorProtocol
 
 
 class KeycloakResponseValidator:
@@ -39,13 +39,13 @@ class KeycloakResponseValidator:
 
     _NO_BODY_STATUSES = {HTTPStatus.CREATED, HTTPStatus.NO_CONTENT}
 
-    def validate(self, response: ResponseProtocol) -> JsonData:
+    def validate(self, response: KeycloakResponseProtocol) -> JsonData:
         if response.status_code in self._SUCCESS_STATUSES:
             return self._parse_json(response)
 
         raise self._create_error(response)
 
-    def _create_error(self, response: ResponseProtocol) -> KeycloakException:
+    def _create_error(self, response: KeycloakResponseProtocol) -> KeycloakException:
         status = response.status_code
         error = self._EXCEPTION_MAP.get(status, KeycloakServerError)
 
@@ -56,7 +56,7 @@ class KeycloakResponseValidator:
             content=response.content,
         )
 
-    def _parse_json(self, response: ResponseProtocol) -> JsonData:
+    def _parse_json(self, response: KeycloakResponseProtocol) -> JsonData:
         if response.status_code in self._NO_BODY_STATUSES or not response.text.strip():
             return None
 

@@ -6,11 +6,10 @@ from httpx import AsyncClient, AsyncHTTPTransport
 from . import SensitiveDataSanitizer
 from .core.clients import KeycloakHttpClientWrapperAsync
 from .core.headers import HeadersFactory, HeadersProtocol
-from .core.protocols import KeycloakProviderProtocol
+from .core.protocols import KeycloakProviderProtocol, KeycloakServiceFactoryProtocol
 from .core.realm import Realm, RealmClient
 from .core.settings import ClientSettings, HttpTransportSettings
 from .core.validator import KeycloakResponseValidator
-from .factories import KeycloakServiceFactory
 
 
 class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):
@@ -23,25 +22,28 @@ class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):
         wrapper: KeycloakHttpClientWrapperAsync,
     ) -> T: ...
 
-
-def get_factory[T: KeycloakProviderProtocol](
-    realm_name: str, client_name: str, provider_cls: ProviderConstructor[T]
-) -> tuple[Realm, T, KeycloakServiceFactory]:
-    realm = Realm(name=realm_name)
-
+def get_factory[T: KeycloakProviderProtocol, F: KeycloakServiceFactoryProtocol](
+    *,
+        realm: Realm,
+        realm_client: RealmClient,
+        headers: HeadersProtocol,
+        http_client_wrapper: KeycloakHttpClientWrapperAsync,
+        provider_cls: ProviderConstructor[T],
+        factory_cls: type[F],
+) -> F:
     provider = provider_cls(
         realm=realm,
-        realm_client=RealmClient.from_env(client_name=client_name),
-        headers=get_headers_factory(),
-        wrapper=get_keycloak_client_wrapper_from_env(),
+        realm_client=realm_client,
+        headers=headers,
+        wrapper=http_client_wrapper,
     )
 
-    factory = KeycloakServiceFactory(
+    factory = factory_cls(
         provider=provider,
         validator=KeycloakResponseValidator(),
     )
 
-    return realm, provider, factory
+    return factory
 
 
 def get_sanitizer() -> SensitiveDataSanitizer:
@@ -90,10 +92,10 @@ def get_async_client(
     return AsyncClient(**client_settings.to_dict())
 
 
-def get_async_client_from_env() -> AsyncClient:
+def get_async_client_with_env() -> AsyncClient:
     return get_async_client(
-        client_settings=ClientSettings.from_env(),
-        transport_settings=HttpTransportSettings.from_env(),
+        client_settings=ClientSettings.with_env(),
+        transport_settings=HttpTransportSettings.with_env(),
     )
 
 
@@ -108,5 +110,5 @@ def get_keycloak_client_wrapper(
 
 def get_keycloak_client_wrapper_from_env() -> KeycloakHttpClientWrapperAsync:
     return KeycloakHttpClientWrapperAsync(
-        client=get_async_client_from_env(),
+        client=get_async_client_with_env(),
     )

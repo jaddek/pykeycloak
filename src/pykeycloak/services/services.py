@@ -18,8 +18,8 @@ from ..core.exceptions import KeycloakException, KeycloakHTTPException
 from ..core.helpers import dataclass_from_dict, getenv_int
 from ..core.protocols import (
     KeycloakProviderProtocol,
+    KeycloakResponseProtocol,
     KeycloakResponseValidatorProtocol,
-    ResponseProtocol,
 )
 from ..core.types import JsonData
 from ..providers.payloads import (
@@ -80,7 +80,7 @@ class BaseService:
         self._provider = provider
         self._validator = validator
 
-    def validate_response(self, response: ResponseProtocol) -> JsonData:
+    def validate_response(self, response: KeycloakResponseProtocol) -> JsonData:
         return self._validator.validate(response)
 
 
@@ -143,7 +143,7 @@ class UsersService(BaseService):
         users_count: int,
         concurrency_limit: int = KEYCLOAK_CONCURRENCY_LIMIT_DEFAULT,
         query: GetUsersQuery | None = None,
-    ) -> list[ResponseProtocol]:
+    ) -> list[KeycloakResponseProtocol]:
         _query = query or GetUsersQuery()
 
         total_pages: int = 1
@@ -153,7 +153,9 @@ class UsersService(BaseService):
 
         semaphore = asyncio.Semaphore(concurrency_limit)
 
-        async def fetch_page(first_raw: int, current_max_rows: int) -> ResponseProtocol:
+        async def fetch_page(
+            first_raw: int, current_max_rows: int
+        ) -> KeycloakResponseProtocol:
             page_query = GetUsersQuery(
                 first=first_raw, max=current_max_rows, search=_query.search
             )
@@ -632,17 +634,6 @@ class AuthService(BaseService):
         return dataclass_from_dict(data, DeviceAuthRepresentation)
 
     ###
-    # Certs
-    ###
-
-    async def get_certs_async(
-        self,
-    ) -> JsonData:
-        response = await self._provider.get_certs_async()
-
-        return self.validate_response(response)
-
-    ###
     # Revoke
     ###
 
@@ -984,3 +975,15 @@ class AuthPolicyService(BaseService):
         data = await self.get_policies_raw_async()
 
         return data
+
+
+class WellKnownService(BaseService):
+    ###
+    # Certs
+    ###
+    async def get_certs_async(
+        self,
+    ) -> JsonData:
+        response = await self._provider.get_certs_async()
+
+        return self.validate_response(response)

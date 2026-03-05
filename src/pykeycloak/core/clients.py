@@ -9,7 +9,7 @@ from httpx import (
 )
 
 from .. import logger
-from .protocols import ResponseProtocol
+from .protocols import KeycloakResponseProtocol
 
 
 class HttpMethod(Enum):
@@ -66,7 +66,7 @@ class KeycloakHttpClientWrapperAsync:
 
     async def request_async(
         self, method: HttpMethod, url: str, raise_exception: bool = False, **kwargs: Any
-    ) -> ResponseProtocol:
+    ) -> KeycloakResponseProtocol:
         logger.debug(
             "Request method: %s, url: %s", method, url, extra={"content": kwargs}
         )
@@ -86,7 +86,7 @@ class KeycloakHttpClientWrapperAsync:
         if raise_exception:
             response.raise_for_status()
 
-        return cast(ResponseProtocol, response)
+        return cast(KeycloakResponseProtocol, response)
 
     async def __aenter__(self) -> "KeycloakHttpClientWrapperAsync":
         await self._client.__aenter__()
