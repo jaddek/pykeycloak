@@ -6,6 +6,8 @@ import os
 from dataclasses import dataclass
 from typing import Self
 
+from pykeycloak.core.validations.uuid import is_uuid
+
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class Realm:
@@ -45,6 +47,9 @@ class RealmClient:
             raise RuntimeError(
                 f"Required Keycloak environment variables for {client_kw} are missing"
             )
+
+        if not is_uuid(uuid):
+            raise RuntimeError(f"Client uuid {uuid} has invalid format. Expected UUID")
 
         return cls(client_uuid=uuid, client_id=cid, client_secret=secret)
 

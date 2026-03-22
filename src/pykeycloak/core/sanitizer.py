@@ -7,8 +7,6 @@ import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from pykeycloak.core.helpers import getenv_bool
-
 JSONType = dict[str, Any] | list[Any] | str | int | float | bool | None
 
 
@@ -31,6 +29,7 @@ class SensitiveDataSanitizer:
             if sensitive_keys is not None
             else self.DEFAULT_SENSITIVE_KEYS
         )
+
         self._sensitive_keys_lower = frozenset(k.lower() for k in self.sensitive_keys)
 
         keys_pattern = "|".join(re.escape(k) for k in self.sensitive_keys)
@@ -98,10 +97,6 @@ class SensitiveDataSanitizer:
     @classmethod
     def from_env(cls) -> "SensitiveDataSanitizer":
         extra_keys_str = os.getenv("DATA_SANITIZER_EXTRA_SENSITIVE_KEYS", "")
-        debug = getenv_bool("DATA_SANITIZER_DEBUG", default=False)
-
-        if debug:
-            return cls(sensitive_keys=frozenset())
 
         combined_keys = set(cls.DEFAULT_SENSITIVE_KEYS)
         if extra_keys_str:

@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
 from functools import cached_property
-from typing import TypedDict, cast
+from typing import TypedDict
 
 from pykeycloak.services.services import (
     AuthPolicyService,
@@ -20,7 +19,6 @@ from pykeycloak.services.services import (
 from .core.protocols import (
     KeycloakProviderProtocol,
     KeycloakResponseValidatorProtocol,
-    KeycloakServiceProtocol,
 )
 
 
@@ -29,7 +27,7 @@ class ServiceArgs(TypedDict):
     validator: KeycloakResponseValidatorProtocol
 
 
-class KeycloakBaseServiceFactory(ABC):
+class KeycloakServiceFactory:
     def __init__(
         self,
         provider: KeycloakProviderProtocol,
@@ -37,42 +35,6 @@ class KeycloakBaseServiceFactory(ABC):
     ):
         self._provider = provider
         self._args: ServiceArgs = {"provider": provider, "validator": validator}
-
-    @property
-    def provider(self) -> KeycloakProviderProtocol:
-        return self._provider
-
-    def service(self, name: str | None = None) -> KeycloakServiceProtocol:
-        if not name:
-            return self.default_service()
-
-        if not hasattr(self, name):
-            raise ValueError(f"Service method name '{name}' is not defined")
-
-        return cast(KeycloakServiceProtocol, getattr(self, name))
-
-    @abstractmethod
-    def default_service(self) -> KeycloakServiceProtocol: ...
-
-
-class KeycloakWellKnownFactory(KeycloakBaseServiceFactory):
-    __default_service_name = "well_known"
-
-
-
-    @cached_property
-    def well_known(self) -> WellKnownService:
-        return WellKnownService(**self._args)
-
-    def default_service(self) -> KeycloakServiceProtocol:
-        return self.service(name=self.__default_service_name)
-
-
-class KeycloakServiceFactory(KeycloakBaseServiceFactory):
-    __default_service_name = "auth"
-
-    def default_service(self) -> KeycloakServiceProtocol:
-        return self.service(name=self.__default_service_name)
 
     @property
     def provider(self) -> KeycloakProviderProtocol:
@@ -121,3 +83,7 @@ class KeycloakServiceFactory(KeycloakBaseServiceFactory):
     @cached_property
     def auth_policy(self) -> AuthPolicyService:
         return AuthPolicyService(**self._args)
+
+    @cached_property
+    def well_known(self) -> WellKnownService:
+        return WellKnownService(**self._args)

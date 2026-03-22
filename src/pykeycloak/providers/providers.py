@@ -9,7 +9,7 @@ from uuid import UUID
 
 from pykeycloak.core.clients import (
     HttpMethod,
-    KeycloakHttpClientWrapperAsync,
+    KeycloakHttpClientAsync,
 )
 from pykeycloak.core.headers import HeadersProtocol
 from pykeycloak.providers.payloads import (
@@ -119,7 +119,7 @@ class KeycloakProviderAsync:
         realm: Realm,
         realm_client: RealmClient,
         headers: HeadersProtocol,
-        wrapper: KeycloakHttpClientWrapperAsync,
+        wrapper: KeycloakHttpClientAsync,
     ) -> None:
         self._realm: Realm = realm
         self._realm_client: RealmClient = realm_client
@@ -1445,7 +1445,7 @@ class KeycloakProviderAsync:
     #  ...
     ##############################################################
 
-    async def close(self) -> None:
+    async def close_connection(self) -> None:
         await self._wrapper.client.aclose()
 
     @staticmethod

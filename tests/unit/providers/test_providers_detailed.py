@@ -419,7 +419,7 @@ class TestKeycloakProviderAsyncDetailed:
     @pytest.mark.asyncio
     async def test_close_method(self, provider, mock_wrapper):
         """Test close method."""
-        await provider.close()
+        await provider.close_connection()
         mock_wrapper.client.aclose.assert_called_once()
 
     @pytest.mark.asyncio

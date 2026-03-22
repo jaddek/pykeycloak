@@ -5,7 +5,7 @@ from pykeycloak.core.realm import Realm, RealmClient
 from pykeycloak.core.validator import KeycloakResponseValidator
 from pykeycloak.dependancies import (
     get_headers_factory,
-    get_keycloak_client_wrapper_from_env,
+    get_keycloak_http_client_from_env,
 )
 from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.providers import (
@@ -31,7 +31,7 @@ async def service_factory() -> KeycloakServiceFactory:
             realm=realm,
             realm_client=realm_client,
             headers=get_headers_factory(),
-            wrapper=get_keycloak_client_wrapper_from_env(),
+            wrapper=get_keycloak_http_client_from_env(),
         ),
         validator=KeycloakResponseValidator(),
     )

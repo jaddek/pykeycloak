@@ -6,7 +6,11 @@ from .core.logger import SanitizingFilter
 from .core.sanitizer import SensitiveDataSanitizer
 
 logger = logging.getLogger(__package__)
-logger.addHandler(logging.NullHandler())
-logger.propagate = True
-sanitizer = SensitiveDataSanitizer.from_env()
-logger.addFilter(SanitizingFilter(sanitizer))
+logger.setLevel(logging.NOTSET)
+logger.propagate = False
+
+_sanitizer = SensitiveDataSanitizer.from_env()
+_handler = logging.NullHandler()
+_handler.addFilter(SanitizingFilter(_sanitizer))
+
+logger.addHandler(_handler)

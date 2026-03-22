@@ -22,10 +22,10 @@ class HttpMethod(Enum):
     OPTIONS = "OPTIONS"
 
 
-class KeycloakHttpClientWrapperSync: ...
+class KeycloakHttpClientSync: ...
 
 
-class KeycloakHttpClientWrapperAsync:
+class KeycloakHttpClientAsync:
     def __init__(
         self,
         client: AsyncClient,
@@ -37,8 +37,8 @@ class KeycloakHttpClientWrapperAsync:
         return self._client
 
     @staticmethod
-    def init_default_client(client: AsyncClient) -> "KeycloakHttpClientWrapperAsync":
-        return KeycloakHttpClientWrapperAsync(client=client)
+    def init_default_client(client: AsyncClient) -> "KeycloakHttpClientAsync":
+        return KeycloakHttpClientAsync(client=client)
 
     def log_client_config_before_request(self) -> None:
         pool = getattr(self.client._transport, "_pool", None)
@@ -75,20 +75,12 @@ class KeycloakHttpClientWrapperAsync:
 
         response = await self.client.request(method=method.value, url=url, **kwargs)
 
-        logger.debug(
-            "Response method: %s, url: %s, code: %s",
-            method,
-            url,
-            response.status_code,
-            extra={"content": response.text, "headers": response.headers},
-        )
-
         if raise_exception:
             response.raise_for_status()
 
         return cast(KeycloakResponseProtocol, response)
 
-    async def __aenter__(self) -> "KeycloakHttpClientWrapperAsync":
+    async def __aenter__(self) -> "KeycloakHttpClientAsync":
         await self._client.__aenter__()
         return self
 

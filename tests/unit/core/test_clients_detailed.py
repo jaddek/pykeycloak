@@ -9,10 +9,10 @@ from httpx import HTTPStatusError, RequestError, Response
 
 from pykeycloak.core.clients import (
     HttpMethod,
-    KeycloakHttpClientWrapperAsync,
+    KeycloakHttpClientAsync,
 )
 
-from pykeycloak.dependancies import get_keycloak_client_wrapper, get_keycloak_client_wrapper_from_env
+from pykeycloak.dependancies import get_keycloak_http_client, get_keycloak_http_client_from_env
 from pykeycloak.core.sanitizer import SensitiveDataSanitizer
 from pykeycloak.core.settings import ClientSettings, HttpTransportSettings
 
@@ -29,14 +29,14 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
 
     def test_init_with_defaults(self, mock_settings):
         """Test initialization with default values."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         assert wrapper._client is not None
 
     def test_init_with_custom_values(self, mock_settings):
         """Test initialization with custom values."""
         client_settings, transport_settings = mock_settings
-        wrapper = KeycloakHttpClientWrapperAsync(
+        wrapper = KeycloakHttpClientAsync(
             client_settings=client_settings,
             transport_settings=transport_settings,
         )
@@ -46,7 +46,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_request_success(self):
         """Test successful request."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         # Mock the client.request method
         mock_response = MagicMock(spec=Response)
@@ -62,7 +62,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_request_with_request_error(self):
         """Test request with RequestError exception."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         # Mock the client.request method to raise RequestError
         wrapper._client.request = AsyncMock(
@@ -75,7 +75,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_request_with_http_status_error(self):
         """Test request with HTTPStatusError exception."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         # Mock the client.request method to raise HTTPStatusError
         wrapper._client.request = AsyncMock(
@@ -90,7 +90,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_request_with_raise_exception_flag(self):
         """Test request with raise_exception flag."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         # Mock the client.request method
         mock_response = MagicMock(spec=Response)
@@ -108,7 +108,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_context_manager(self):
         """Test context manager functionality."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
 
         # Mock the client context manager methods
         wrapper._client.__aenter__ = AsyncMock()
@@ -123,7 +123,7 @@ class TestKeycloakHttpClientWrapperAsyncDetailed:
     @pytest.mark.asyncio
     async def test_close_method(self):
         """Test close method."""
-        wrapper = KeycloakHttpClientWrapperAsync()
+        wrapper = KeycloakHttpClientAsync()
         wrapper._client.aclose = AsyncMock()
 
         await wrapper.close_async()
@@ -137,13 +137,13 @@ def test_get_keycloak_client_wrapper():
     transport_settings = HttpTransportSettings()
     sanitizer = SensitiveDataSanitizer()
 
-    wrapper = get_keycloak_client_wrapper(
+    wrapper = get_keycloak_http_client(
         client_settings=client_settings,
         transport_settings=transport_settings,
         sanitizer=sanitizer,
     )
 
-    assert isinstance(wrapper, KeycloakHttpClientWrapperAsync)
+    assert isinstance(wrapper, KeycloakHttpClientAsync)
     assert wrapper._sanitizer is sanitizer
 
 
@@ -158,9 +158,9 @@ def test_get_keycloak_client_wrapper_from_env(
     mock_transport.return_value = HttpTransportSettings()
     mock_sanitizer.return_value = SensitiveDataSanitizer()
 
-    wrapper = get_keycloak_client_wrapper_from_env()
+    wrapper = get_keycloak_http_client_from_env()
 
-    assert isinstance(wrapper, KeycloakHttpClientWrapperAsync)
+    assert isinstance(wrapper, KeycloakHttpClientAsync)
     mock_client.assert_called_once()
     mock_transport.assert_called_once()
     mock_sanitizer.assert_called_once()
