@@ -57,7 +57,7 @@ class TestKeycloakProviderAsyncDetailed:
     def provider(self, mock_realm_client, mock_wrapper):
         """Fixture to create a KeycloakProviderAsync instance."""
         return KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
     @pytest.mark.asyncio
@@ -106,7 +106,7 @@ class TestKeycloakProviderAsyncDetailed:
         mock_realm_client.is_confidential = False
 
         provider = KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
         payload = RefreshTokenPayload(refresh_token="test_refresh_token")  # noqa: S106
@@ -170,7 +170,7 @@ class TestKeycloakProviderAsyncDetailed:
         mock_realm_client.is_confidential = False
 
         provider = KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
         payload = TokenIntrospectionPayload(token="test_token")  # noqa: S106
@@ -214,7 +214,7 @@ class TestKeycloakProviderAsyncDetailed:
         mock_realm_client.is_confidential = False
 
         provider = KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
         await provider.logout_async(refresh_token="test_refresh_token")  # noqa: S106
@@ -249,7 +249,7 @@ class TestKeycloakProviderAsyncDetailed:
         mock_realm_client.is_confidential = False
 
         provider = KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
         await provider.revoke_async(refresh_token="test_refresh_token")  # noqa: S106
@@ -431,7 +431,7 @@ class TestKeycloakProviderAsyncDetailed:
         mock_realm_client.client_uuid = "test-client-uuid"
 
         provider = KeycloakProviderAsync(
-            realm="test_realm", realm_client=mock_realm_client, wrapper=mock_wrapper
+            realm="test_realm", realm_client=mock_realm_client, kc_client=mock_wrapper
         )
 
         await provider.get_client_roles_async(access_token="test_token")  # noqa: S106

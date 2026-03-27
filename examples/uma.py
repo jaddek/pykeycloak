@@ -3,7 +3,7 @@ import asyncio
 from _common import service_factory
 
 from pykeycloak.core.enums import UrnIetfOauthUmaTicketResponseModeEnum
-from pykeycloak.factories import KeycloakServiceFactory
+from pykeycloak.dependencies import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     UMAAuthorizationPayload,
     UserCredentialsLoginPayload,

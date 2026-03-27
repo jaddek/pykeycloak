@@ -56,7 +56,7 @@ from .helpers import (
 class HttpTransportSettings:
     verify: ssl.SSLContext | str | bool = True
     cert: CertTypes | None = None
-    trust_env: bool = True
+    trust_env: bool = False
     http1: bool = True
     http2: bool = False
     limits: Limits = field(
@@ -173,7 +173,7 @@ class ClientSettings:
     event_hooks: dict[str, list[Callable[..., Any]]] | None = None
     base_url: URLTypes = ""
     transport: AsyncHTTPTransport | HTTPTransport | None = None
-    trust_env: bool = KEYCLOAK_HTTPX_CLIENT_PARAMS_TRUST_ENV_DEFAULT
+    trust_env: bool = False
     default_encoding: str | Callable[[bytes], str] = (
         KEYCLOAK_HTTPX_CLIENT_PARAMS_DEFAULT_ENCODING_DEFAULT
     )

@@ -28,7 +28,7 @@ from ..core.exceptions import (
     KeycloakUnexpectedBehaviourException,
 )
 from ..core.protocols import KeycloakProviderProtocol, KeycloakResponseProtocol
-from ..core.realm import Realm, RealmClient
+from ..core.realm import RealmClient
 from ..core.token_manager import (
     TokenAutoRefresher,
     TokenManager,
@@ -116,16 +116,14 @@ class KeycloakProviderAsync:
     def __init__(
         self,
         *,
-        realm: Realm,
         realm_client: RealmClient,
-        headers: HeadersProtocol,
-        wrapper: KeycloakHttpClientAsync,
+        kc_headers: HeadersProtocol,
+        kc_client: KeycloakHttpClientAsync,
     ) -> None:
-        self._realm: Realm = realm
         self._realm_client: RealmClient = realm_client
 
-        self._headers = headers
-        self._wrapper = wrapper
+        self._kc_headers = kc_headers
+        self._kc_client = kc_client
 
     ##############################################################
     #  Clint endpoints
@@ -137,9 +135,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENTS),
             headers=headers,
@@ -153,9 +151,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT),
             headers=headers,
@@ -173,9 +171,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_SETTINGS),
             headers=headers,
@@ -200,12 +198,12 @@ class KeycloakProviderAsync:
 
         match payload:
             case payload if isinstance(payload, RTPExchangeTokenPayload):
-                headers = self._headers.openid_bearer(
+                headers = self._kc_headers.openid_bearer(
                     bearer_token=str(payload.refresh_token)
                 )
 
             case payload if isinstance(payload, RefreshTokenPayload):
-                headers = self._headers.openid_basic(
+                headers = self._kc_headers.openid_basic(
                     basic_token=self._realm_client.base64_encoded_client_secret()
                 )
 
@@ -215,7 +213,7 @@ class KeycloakProviderAsync:
                     "Expected RTPExchangeTokenPayload or RefreshTokenPayload"
                 )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),
             data=payload.to_dict(),
@@ -229,18 +227,18 @@ class KeycloakProviderAsync:
 
         query_string = urlencode(payload.to_dict())
 
-        return self._wrapper.build_full_url(path=path, query=query_string)
+        return self._kc_client.build_full_url(path=path, query=query_string)
 
     @mark_need_access_token_initialization
     async def obtain_token_async(
         self,
         payload: ObtainTokenPayload,
     ) -> KeycloakResponseProtocol:
-        headers = self._headers.openid_basic(
+        headers = self._kc_headers.openid_basic(
             basic_token=self._realm_client.base64_encoded_client_secret()
         )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),
             data=payload.to_dict(),
@@ -262,9 +260,11 @@ class KeycloakProviderAsync:
 
         match payload:
             case payload if isinstance(payload, RTPIntrospectionPayload):
-                headers = self._headers.openid_bearer(bearer_token=str(payload.token))
+                headers = self._kc_headers.openid_bearer(
+                    bearer_token=str(payload.token)
+                )
             case payload if isinstance(payload, TokenIntrospectionPayload):
-                headers = self._headers.openid_basic(
+                headers = self._kc_headers.openid_basic(
                     basic_token=self._realm_client.base64_encoded_client_secret()
                 )
 
@@ -274,7 +274,7 @@ class KeycloakProviderAsync:
                     "Expected RTPIntrospectionPayload or TokenIntrospectionPayload"
                 )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_INTROSPECT),
             data=payload.to_dict(),
@@ -291,11 +291,11 @@ class KeycloakProviderAsync:
         }
 
         if self._realm_client.is_confidential:
-            headers = self._headers.openid_basic(
+            headers = self._kc_headers.openid_basic(
                 basic_token=self._realm_client.base64_encoded_client_secret()
             )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_AUTH_DEVICE),
             headers=headers,
@@ -310,9 +310,11 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers: dict[str, str] = self._headers.openid_bearer(bearer_token=access_token)
+        headers: dict[str, str] = self._kc_headers.openid_bearer(
+            bearer_token=access_token
+        )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_CERTS),
             headers=headers,
@@ -331,11 +333,11 @@ class KeycloakProviderAsync:
                 "client_secret": self._realm_client.client_secret,
             }
 
-        headers: dict[str, str] = self._headers.openid_bearer(
+        headers: dict[str, str] = self._kc_headers.openid_bearer(
             bearer_token=self._realm_client.base64_encoded_client_secret()
         )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_LOGOUT),
             data=payload,
@@ -354,7 +356,7 @@ class KeycloakProviderAsync:
             case True:
                 payload = ConfidentialClientRevokePayload(token=refresh_token)
 
-                headers = self._headers.openid_basic(
+                headers = self._kc_headers.openid_basic(
                     basic_token=self._realm_client.base64_encoded_client_secret()
                 )
 
@@ -363,9 +365,11 @@ class KeycloakProviderAsync:
                     client_id=self._realm_client.client_id, token=refresh_token
                 )
 
-                headers = self._headers.openid_bearer(bearer_token=str(payload.token))
+                headers = self._kc_headers.openid_bearer(
+                    bearer_token=str(payload.token)
+                )
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_REVOKE),
             data=payload.to_dict(),
@@ -379,9 +383,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.openid_bearer(bearer_token=str(access_token))
+        headers = self._kc_headers.openid_bearer(bearer_token=str(access_token))
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_USERINFO),
             headers=headers,
@@ -397,7 +401,7 @@ class KeycloakProviderAsync:
         self,
         payload: UMAAuthorizationPayload,
     ) -> KeycloakResponseProtocol:
-        headers = self._headers.openid_basic(
+        headers = self._kc_headers.openid_basic(
             basic_token=self._realm_client.base64_encoded_client_secret()
         )
 
@@ -406,7 +410,7 @@ class KeycloakProviderAsync:
         if not data.get("audience"):
             data["audience"] = self._realm_client.client_id
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_OPENID_URL_TOKEN),
             data=data,
@@ -426,9 +430,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        return await self._wrapper.request_async(
+        return await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USERS_COUNT),
             headers=headers,
@@ -442,11 +446,11 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
         _query = query or GetUsersQuery()
 
-        return await self._wrapper.request_async(
+        return await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USERS_LIST),
             headers=headers,
@@ -460,9 +464,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
@@ -477,9 +481,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
@@ -494,9 +498,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_USERS_LIST),
             headers=headers,
@@ -513,9 +517,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
@@ -532,9 +536,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
@@ -551,9 +555,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_USER, user_id=user_id),
             headers=headers,
@@ -570,9 +574,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_ROLE_MEMBERS,
@@ -595,9 +599,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_USER_SESSIONS, id=self._realm_client.client_uuid
@@ -615,9 +619,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_USER_SESSIONS, user_id=user_id),
             headers=headers,
@@ -633,11 +637,11 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
         offline_status = "true" if is_offline else "false"
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_DELETE_SESSION, session_id=session_id),
             headers=headers,
@@ -653,9 +657,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_USER_SESSIONS),
             headers=headers,
@@ -670,9 +674,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_ACTIVE_SESSION_COUNT),
             headers=headers,
@@ -687,9 +691,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OFFLINE_SESSIONS),
             headers=headers,
@@ -704,9 +708,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_OFFLINE_SESSION_COUNT),
             headers=headers,
@@ -721,9 +725,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_USER_LOGOUT, user_id=user_id),
             headers=headers,
@@ -737,9 +741,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_LOGOUT_ALL),
             headers=headers,
@@ -753,9 +757,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_SESSION_STATS),
             headers=headers,
@@ -770,9 +774,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_USER_OFFLINE_SESSIONS, user_id=user_id
@@ -792,9 +796,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_ROLES, client_id=self._realm_client.client_uuid
@@ -811,9 +815,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_ROLE, role_name=role_name),
             headers=headers,
@@ -828,9 +832,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_ROLES),
             headers=headers,
@@ -871,9 +875,9 @@ class KeycloakProviderAsync:
                 affected_versions=["26.3.3"],
             )
 
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=str(role_id)),
             headers=headers,
@@ -890,9 +894,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(
                 path=REALM_CLIENT_ROLE,
@@ -911,9 +915,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_ROLES_ROLE_BY_ID, role_id=role_id),
             headers=headers,
@@ -928,9 +932,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(
                 path=REALM_ROLES_DELETE_ROLE_BY_NAME, role_name=role_name
@@ -948,9 +952,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(
                 path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=str(user_id)
@@ -969,9 +973,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
             headers=headers,
@@ -987,9 +991,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
             headers=headers,
@@ -1005,9 +1009,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_USER_ROLE_MAPPING_COMPOSITE, user_id=user_id
@@ -1025,9 +1029,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_USER_ROLE_MAPPING_AVAILABLE, user_id=user_id
@@ -1044,9 +1048,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_USER_ROLE_MAPPING, user_id=user_id),
             headers=headers,
@@ -1064,9 +1068,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_SCOPES),
             headers=headers,
@@ -1085,9 +1089,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCES),
             headers=headers,
@@ -1103,9 +1107,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_RESOURCES),
             headers=headers,
@@ -1121,9 +1125,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_RESOURCE, resource_id=resource_id
@@ -1140,9 +1144,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_RESOURCE, resource_id=resource_id
@@ -1159,9 +1163,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_RESOURCE_PERMISSIONS, resource_id=resource_id
@@ -1182,10 +1186,10 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
-            method=HttpMethod.GET,
+        response = await self._kc_client.request_async(
+            method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_ROLE),
             headers=headers,
             data=payload.to_json(),
@@ -1200,9 +1204,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY, policy_id=policy_id),
             headers=headers,
@@ -1217,9 +1221,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_USER),
             headers=headers,
@@ -1235,9 +1239,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICY_SEARCH),
             headers=headers,
@@ -1253,9 +1257,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_CLIENT_POLICY_ASSOCIATED_ROLE_POLICIES,
@@ -1273,9 +1277,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_POLICY_SCOPES, policy_id=policy_id
@@ -1291,9 +1295,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_POLICIES),
             headers=headers,
@@ -1312,9 +1316,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_RESOURCE),
             headers=headers,
@@ -1330,9 +1334,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.POST,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS_BASED_ON_SCOPES),
             headers=headers,
@@ -1348,9 +1352,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(path=REALM_CLIENT_AUTHZ_PERMISSIONS),
             headers=headers,
@@ -1366,9 +1370,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_SCOPES,
@@ -1386,9 +1390,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.GET,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_RESOURCE,
@@ -1406,9 +1410,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token: str = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.DELETE,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_RESOURCE,
@@ -1427,9 +1431,9 @@ class KeycloakProviderAsync:
         **kwargs: Unpack[InternalAccessToken],
     ) -> KeycloakResponseProtocol:
         access_token = self.get_access_token(**kwargs)
-        headers = self._headers.keycloak_bearer(bearer_token=access_token)
+        headers = self._kc_headers.keycloak_bearer(bearer_token=access_token)
 
-        response = await self._wrapper.request_async(
+        response = await self._kc_client.request_async(
             method=HttpMethod.PUT,
             url=self._get_path(
                 path=REALM_CLIENT_AUTHZ_PERMISSION_BASED_ON_SCOPES,
@@ -1446,7 +1450,7 @@ class KeycloakProviderAsync:
     ##############################################################
 
     async def close_connection(self) -> None:
-        await self._wrapper.client.aclose()
+        await self._kc_client.client.aclose()
 
     @staticmethod
     def get_access_token(**kwargs: Unpack[InternalAccessToken]) -> str:
@@ -1461,7 +1465,7 @@ class KeycloakProviderAsync:
 
     def _get_path(self, path: str, **kwargs: Any) -> str:
         params = {
-            "realm": str(self._realm.name),
+            "realm": str(self._realm_client.realm_name),
             "client_id": str(self._realm_client.client_id),
             "client_uuid": str(self._realm_client.client_uuid),
             **{k: str(v) for k, v in kwargs.items()},

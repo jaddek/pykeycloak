@@ -1,42 +1,21 @@
 import logging
-import os
 
-from pykeycloak.core.realm import Realm, RealmClient
-from pykeycloak.core.validator import KeycloakResponseValidator
-from pykeycloak.dependancies import (
-    get_headers_factory,
-    get_keycloak_http_client_from_env,
+from pykeycloak.core.protocols import KeycloakServiceFactoryProtocol
+from pykeycloak.core.realm import RealmClient
+from pykeycloak.pykeycloak import PyKeycloak
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
 )
-from pykeycloak.factories import KeycloakServiceFactory
-from pykeycloak.providers.providers import (
-    KeycloakInMemoryProviderAsync,
-)
-
-# logging.basicConfig(
-#     level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
-# )
-logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
-
-kc_realm = os.getenv("KEYCLOAK_REALM_NAME", "some name")
+# logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
 
 username = "admin"
 password = "password"  # noqa: S105
+default_realm_client = "otago_service"
+__pkc = PyKeycloak()
 
 
-async def service_factory() -> KeycloakServiceFactory:
-    realm_client = RealmClient.from_env(client_name="otago_service")
-    realm = Realm(name=kc_realm)
-    factory = KeycloakServiceFactory(
-        provider=KeycloakInMemoryProviderAsync(
-            realm=realm,
-            realm_client=realm_client,
-            headers=get_headers_factory(),
-            wrapper=get_keycloak_http_client_from_env(),
-        ),
-        validator=KeycloakResponseValidator(),
-    )
+def get_keycloak(key: str) -> KeycloakServiceFactoryProtocol:
+    __pkc.register(key, RealmClient.from_env(client_name=key))
 
-    ## this step is required as the service account client get the access token and refresh tokens for further operations
-    await factory.auth.client_login_async()  # or client_login_raw_async()
-
-    return factory
+    return __pkc.get(key)

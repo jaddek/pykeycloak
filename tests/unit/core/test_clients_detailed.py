@@ -12,7 +12,7 @@ from pykeycloak.core.clients import (
     KeycloakHttpClientAsync,
 )
 
-from pykeycloak.dependancies import get_keycloak_http_client, get_keycloak_http_client_from_env
+from pykeycloak.dependencies import get_keycloak_http_client, get_keycloak_http_client_from_env
 from pykeycloak.core.sanitizer import SensitiveDataSanitizer
 from pykeycloak.core.settings import ClientSettings, HttpTransportSettings
 

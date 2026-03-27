@@ -30,8 +30,6 @@ The library can be used in 3 different ways:
 ## Constants
 
 ```shell
-KEYCLOAK_ACCESS_TOKEN=
-KEYCLOAK_REALM_NAME=
 KEYCLOAK_REALM_OTAGO_SERVICE_CLIENT_UUID= # !!! OTAGO_SERVICE_CLIENT - is the keyword when from_env(realm_name='otago_service_client')
 KEYCLOAK_REALM_OTAGO_SERVICE_CLIENT_ID=
 KEYCLOAK_REALM_OTAGO_SERVICE_CLIENT_SECRET=

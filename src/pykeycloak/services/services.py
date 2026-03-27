@@ -661,9 +661,9 @@ class AuthService(BaseService):
         self,
         payload: UMAAuthorizationPayload,
     ) -> JsonData:
-        data = await self.get_uma_permission_async(payload=payload)
+        response = await self._provider.get_uma_permission_async(payload=payload)
 
-        return data
+        return self.validate_response(response)
 
 
 class UmaService(BaseService):
