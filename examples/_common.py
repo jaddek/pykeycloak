@@ -8,7 +8,6 @@ from pykeycloak.pykeycloak import PyKeycloak
 logging.basicConfig(
     level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
 )
-# logging.getLogger("pykeycloak").setLevel(logging.DEBUG)
 
 username = "admin"
 password = "password"  # noqa: S105

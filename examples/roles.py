@@ -32,17 +32,21 @@ async def main():
     print(f"Created role: {created_role}")
 
     # Get role by name
-    role_by_name = await keycloak.roles.get_role_by_name_async(role_name="test-role")
+    role_by_name = await keycloak.roles.get_role_by_name_async(
+        role_name=new_role_payload.name
+    )
     print(f"Role by name: {role_by_name}")
 
     # Get role by name raw
     role_by_name_raw = await keycloak.roles.get_role_by_name_raw_async(
-        role_name="test-role"
+        role_name=new_role_payload.name
     )
     print(f"Role by name raw: {role_by_name_raw}")
 
     # Get the role ID to use for update
-    role_data = await keycloak.roles.get_role_by_name_raw_async(role_name="test-role")
+    role_data = await keycloak.roles.get_role_by_name_raw_async(
+        role_name=new_role_payload.name
+    )
     role_id_str = role_data.get("id")
 
     if role_id_str:
@@ -68,7 +72,7 @@ async def main():
 
         assign_result = await keycloak.roles.assign_role_async(
             user_id=user_id,
-            roles=[RoleAssignPayload(name="test-role", id=role_id_str)],
+            roles=[RoleAssignPayload(name=new_role_payload.name, id=role_id_str)],
         )
         print(f"Assigned role to user: {assign_result}")
 
@@ -94,7 +98,7 @@ async def main():
         print(f"Available client roles of user: {available_roles}")
 
     # Delete the role by name
-    await keycloak.roles.delete_role_by_name_async(role_name="test-role")
+    await keycloak.roles.delete_role_by_name_async(role_name=new_role_payload.name)
 
 
 if __name__ == "__main__":

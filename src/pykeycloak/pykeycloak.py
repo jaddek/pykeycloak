@@ -28,7 +28,7 @@ class PyKeycloak:
         keycloak_http_client: KeycloakHttpClientAsync | None = None,
         keycloak_response_validator: KeycloakResponseValidator | None = None,
     ) -> None:
-        factory: KeycloakServiceFactoryProtocol = KeycloakServiceFactory(
+        factory = KeycloakServiceFactory(
             provider=KeycloakInMemoryProviderAsync(
                 realm_client=realm_client,
                 kc_headers=headers or get_headers_factory(),

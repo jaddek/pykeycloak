@@ -15,6 +15,8 @@ from pykeycloak.providers.payloads import (
 async def main():
     keycloak = get_keycloak(default_realm_client)
 
+    await keycloak.auth.client_login_async()
+
     new_user_payload = CreateUserPayload(
         username="testuser" + uuid.uuid4().hex,
         email="testuser+" + uuid.uuid4().hex + "@example.com",

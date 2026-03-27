@@ -207,11 +207,16 @@ class TokenAutoRefresher:
     ) -> Callable[P, Awaitable[R]]:
         @wraps(method)
         async def wrapper(instance: Any, *args: P.args, **kwargs: P.kwargs) -> R:
-            if not self.token_manager.is_access_token_valid():
-                await self.token_manager.fetch_access_token_using_refresh_token()
-
             if self.token_manager.auth_tokens is None:
                 raise RuntimeError("Token manager must initialize access_token first")
+
+            if not self.token_manager.is_access_token_valid():
+                if self.token_manager.auth_tokens.refresh_token:
+                    await self.token_manager.fetch_access_token_using_refresh_token()
+                else:
+                    raise RuntimeError(
+                        "Token manager must initialize refresh_token first"
+                    )
 
             if self.token_manager.auth_tokens.access_token is None:
                 raise ValueError("Access token is missing")

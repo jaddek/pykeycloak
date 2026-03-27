@@ -1,6 +1,6 @@
 import asyncio
 
-from _common import default_realm_client, get_keycloak, get_user_credentials
+from _common import default_realm_client, get_keycloak
 
 from pykeycloak.providers.queries import PaginationQuery
 
@@ -8,9 +8,7 @@ from pykeycloak.providers.queries import PaginationQuery
 async def main():
     keycloak = get_keycloak(default_realm_client)
 
-    user_login = await keycloak.auth.user_login_async(payload=get_user_credentials())
-
-    print(f"User login {user_login}")
+    await keycloak.auth.client_login_async()
 
     client_sessions = await keycloak.sessions.get_client_sessions_async(
         query=PaginationQuery(first=0, max=10)

@@ -1,4 +1,3 @@
-from functools import cached_property
 from typing import Any, Protocol
 from uuid import UUID
 
@@ -884,38 +883,38 @@ class KeycloakServiceFactoryProtocol(Protocol):
     @property
     def provider(self) -> KeycloakProviderProtocol: ...
 
-    @cached_property
+    @property
     def users(self) -> UsersServiceProtocol: ...
 
-    @cached_property
+    @property
     def auth(self) -> AuthServiceProtocol: ...
 
-    @cached_property
+    @property
     def authz(self) -> AuthzServiceProtocol: ...
 
-    @cached_property
+    @property
     def roles(self) -> RolesServiceProtocol: ...
 
-    @cached_property
+    @property
     def sessions(self) -> SessionsServiceProtocol: ...
 
-    @cached_property
+    @property
     def uma(self) -> UmaServiceProtocol: ...
 
-    @cached_property
+    @property
     def clients(self) -> ClientsServiceProtocol: ...
 
-    @cached_property
+    @property
     def authz_resource(self) -> AuthzResourceServiceProtocol: ...
 
-    @cached_property
+    @property
     def authz_permission(self) -> AuthzPermissionServiceProtocol: ...
 
-    @cached_property
+    @property
     def authz_scope(self) -> AuthzScopeServiceProtocol: ...
 
-    @cached_property
+    @property
     def auth_policy(self) -> AuthPolicyServiceProtocol: ...
 
-    @cached_property
+    @property
     def well_known(self) -> WellKnownServiceProtocol: ...

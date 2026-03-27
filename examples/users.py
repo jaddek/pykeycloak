@@ -3,15 +3,14 @@ import uuid
 
 from _common import default_realm_client, get_keycloak
 
-from pykeycloak.providers.payloads import (
-    CreateUserPayload,
-    PasswordCredentialsPayload,
-)
+from pykeycloak.providers.payloads import CreateUserPayload, PasswordCredentialsPayload
 from pykeycloak.providers.queries import GetUsersQuery
 
 
 async def main():
     keycloak = get_keycloak(default_realm_client)
+
+    await keycloak.auth.client_login_async()
 
     # Get subset of users
     users, count = await keycloak.users.get_users_async(

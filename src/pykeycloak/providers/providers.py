@@ -1493,4 +1493,4 @@ class KeycloakInMemoryProviderAsync(KeycloakProviderAsync): ...
 
 if TYPE_CHECKING:
     _ch_kpa: KeycloakProviderProtocol = type[KeycloakProviderAsync]
-    _ch_kimpa: KeycloakProviderProtocol = type[KeycloakInMemoryProviderAsync]
+    _ch_kpa_im: KeycloakProviderProtocol = type[KeycloakInMemoryProviderAsync]
