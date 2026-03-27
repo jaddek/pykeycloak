@@ -1,47 +1,37 @@
 import asyncio
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak, get_user_credentials
 
-from pykeycloak.factories import KeycloakServiceFactory
-from pykeycloak.providers.payloads import UserCredentialsLoginPayload
 from pykeycloak.providers.queries import PaginationQuery
-
-username = "admin"
-password = "password"  # noqa: S105
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
-    user_login = await factory.auth.user_login_async(
-        payload=UserCredentialsLoginPayload(
-            username=username,
-            password=password,
-        )
-    )
+    user_login = await keycloak.auth.user_login_async(payload=get_user_credentials())
 
     print(f"User login {user_login}")
 
-    client_sessions = await factory.sessions.get_client_sessions_async(
+    client_sessions = await keycloak.sessions.get_client_sessions_async(
         query=PaginationQuery(first=0, max=10)
     )
     print(f"Client sessions: {client_sessions}")
 
-    client_sessions_count = await factory.sessions.get_client_sessions_count_async()
+    client_sessions_count = await keycloak.sessions.get_client_sessions_count_async()
     print(f"Client sessions count: {client_sessions_count}")
 
-    offline_sessions = await factory.sessions.get_offline_sessions_async(
+    offline_sessions = await keycloak.sessions.get_offline_sessions_async(
         query=PaginationQuery(first=0, max=10)
     )
     print(f"Offline sessions: {offline_sessions}")
 
-    offline_sessions_count = await factory.sessions.get_offline_sessions_count_async()
+    offline_sessions_count = await keycloak.sessions.get_offline_sessions_count_async()
     print(f"Offline sessions count: {offline_sessions_count}")
 
-    client_session_stats = await factory.sessions.get_client_session_stats_async()
+    client_session_stats = await keycloak.sessions.get_client_session_stats_async()
     print(f"Client session stats: {client_session_stats}")
 
-    logout_result = await factory.sessions.logout_all_users_async()
+    logout_result = await keycloak.sessions.logout_all_users_async()
     print(f"Logout all users result: {logout_result}")
 
 

@@ -2,6 +2,7 @@ import logging
 
 from pykeycloak.core.protocols import KeycloakServiceFactoryProtocol
 from pykeycloak.core.realm import RealmClient
+from pykeycloak.providers.payloads import UserCredentialsLoginPayload
 from pykeycloak.pykeycloak import PyKeycloak
 
 logging.basicConfig(
@@ -19,3 +20,10 @@ def get_keycloak(key: str) -> KeycloakServiceFactoryProtocol:
     __pkc.register(key, RealmClient.from_env(client_name=key))
 
     return __pkc.get(key)
+
+
+def get_user_credentials() -> UserCredentialsLoginPayload:
+    return UserCredentialsLoginPayload(
+        username=username,
+        password=password,
+    )

@@ -1,29 +1,21 @@
 import asyncio
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak, get_user_credentials
 
 from pykeycloak.core.enums import UrnIetfOauthUmaTicketResponseModeEnum
-from pykeycloak.dependencies import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     UMAAuthorizationPayload,
-    UserCredentialsLoginPayload,
 )
-
-username = "admin"
-password = "password"  # noqa: S105
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
-    result = await factory.auth.user_login_async(  # or user_login_raw_async
-        payload=UserCredentialsLoginPayload(
-            username=username,
-            password=password,
-        )
+    result = await keycloak.auth.user_login_async(  # or user_login_raw_async
+        payload=get_user_credentials()
     )
 
-    res = await factory.uma.get_permissions_by_uris_chunks_async(
+    res = await keycloak.uma.get_permissions_by_uris_chunks_async(
         payload=UMAAuthorizationPayload(
             audience=None,
             permissions=["/otago/roles#update", "/otago/users#update"],

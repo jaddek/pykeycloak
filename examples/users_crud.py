@@ -1,9 +1,8 @@
 import asyncio
 import uuid
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak
 
-from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     CreateUserPayload,
     PasswordCredentialsPayload,
@@ -12,12 +11,9 @@ from pykeycloak.providers.payloads import (
     UserUpdatePasswordPayload,
 )
 
-username = "admin"
-password = "password"  # noqa: S105
-
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
     new_user_payload = CreateUserPayload(
         username="testuser" + uuid.uuid4().hex,
@@ -32,7 +28,7 @@ async def main():
         ],
     )
 
-    user_uuid = await factory.users.create_user_async(payload=new_user_payload)
+    user_uuid = await keycloak.users.create_user_async(payload=new_user_payload)
     print(f"Created user: {user_uuid}")
 
     # Update the user (if creation was successful and returned a user ID)
@@ -43,11 +39,11 @@ async def main():
         last_name="User",
     )
 
-    await factory.users.update_user_async(
+    await keycloak.users.update_user_async(
         user_id=user_uuid, payload=updated_user_payload
     )
 
-    updated_user = await factory.users.get_user_async(user_uuid)
+    updated_user = await keycloak.users.get_user_async(user_uuid)
 
     print(f"Updated user: {updated_user}")
 
@@ -56,8 +52,8 @@ async def main():
         enabled=False  # Disable the user
     )
 
-    await factory.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
-    updated_user = await factory.users.get_user_async(user_uuid)
+    await keycloak.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
+    updated_user = await keycloak.users.get_user_async(user_uuid)
 
     print(f"Disabled user with ID: {not updated_user.enabled}")
 
@@ -65,8 +61,8 @@ async def main():
     enable_payload = UserUpdateEnablePayload(
         enabled=True  # Re-enable the user
     )
-    await factory.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
-    updated_user = await factory.users.get_user_async(user_uuid)
+    await keycloak.users.enable_user_async(user_id=user_uuid, payload=enable_payload)
+    updated_user = await keycloak.users.get_user_async(user_uuid)
 
     print(f"Enabled user with ID: {updated_user.enabled}")
 
@@ -76,12 +72,12 @@ async def main():
             {"type": "password", "value": "newerpassword123", "temporary": False}
         ]
     )
-    await factory.users.update_user_password_async(
+    await keycloak.users.update_user_password_async(
         user_id=user_uuid, payload=password_payload
     )
     print(f"Updated password for user with ID: {user_uuid}")
 
-    await factory.users.delete_user_async(user_id=user_uuid)
+    await keycloak.users.delete_user_async(user_id=user_uuid)
     print(f"Deleted user with ID: {user_uuid}")
 
 

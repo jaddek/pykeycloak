@@ -1,28 +1,23 @@
 import asyncio
-import logging
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak
 
-from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     SSOLoginPayload,
 )
 
-logging.basicConfig(
-    level=logging.DEBUG, format="%(name)s - %(levelname)s - %(message)s"
-)
-
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
     payload = SSOLoginPayload(
         redirect_uri="http://localhost:8000/auth/callback",
         client_id="SSO",
         scopes="openid",
+        state="1234567890",
     )
 
-    redirect_url = factory.auth.get_redirect_code_url(payload=payload)
+    redirect_url = keycloak.auth.get_redirect_code_url(payload=payload)
 
     print(redirect_url)
 

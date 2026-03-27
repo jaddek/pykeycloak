@@ -2,26 +2,24 @@ import asyncio
 import uuid
 from time import time
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak
 
-from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import RoleAssignPayload, RolePayload
-
-username = "admin"
-password = "password"  # noqa: S105
 
 prefix_for_updated_role = str(time())
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
+
+    await keycloak.auth.client_login_async()
 
     # Get all client roles
-    client_roles = await factory.roles.get_client_roles_async()
+    client_roles = await keycloak.roles.get_client_roles_async()
     print(f"Client roles: {client_roles}")
 
     # Get client roles raw
-    client_roles_raw = await factory.roles.get_client_roles_raw_async()
+    client_roles_raw = await keycloak.roles.get_client_roles_raw_async()
     print(f"Client roles raw: {client_roles_raw}")
 
     # Create a new role
@@ -30,21 +28,21 @@ async def main():
         description="Test role for demonstration",
     )
 
-    created_role = await factory.roles.create_role_async(payload=new_role_payload)
+    created_role = await keycloak.roles.create_role_async(payload=new_role_payload)
     print(f"Created role: {created_role}")
 
     # Get role by name
-    role_by_name = await factory.roles.get_role_by_name_async(role_name="test-role")
+    role_by_name = await keycloak.roles.get_role_by_name_async(role_name="test-role")
     print(f"Role by name: {role_by_name}")
 
     # Get role by name raw
-    role_by_name_raw = await factory.roles.get_role_by_name_raw_async(
+    role_by_name_raw = await keycloak.roles.get_role_by_name_raw_async(
         role_name="test-role"
     )
     print(f"Role by name raw: {role_by_name_raw}")
 
     # Get the role ID to use for update
-    role_data = await factory.roles.get_role_by_name_raw_async(role_name="test-role")
+    role_data = await keycloak.roles.get_role_by_name_raw_async(role_name="test-role")
     role_id_str = role_data.get("id")
 
     if role_id_str:
@@ -55,48 +53,48 @@ async def main():
             + prefix_for_updated_role,
         )
 
-        updated_role = await factory.roles.update_role_by_name_async(
+        updated_role = await keycloak.roles.update_role_by_name_async(
             role_name=new_role_payload.name,
             payload=updated_role_payload,
         )
         print(f"Updated role: {updated_role}")
 
     # Get all users to pick one for role assignment
-    users = await factory.users.get_users_async()
+    users = await keycloak.users.get_users_async()
 
     if users and len(users) > 0:
         first_user = users[0][0] if isinstance(users[0], list) else users[0]
         user_id = first_user.id
 
-        assign_result = await factory.roles.assign_role_async(
+        assign_result = await keycloak.roles.assign_role_async(
             user_id=user_id,
             roles=[RoleAssignPayload(name="test-role", id=role_id_str)],
         )
         print(f"Assigned role to user: {assign_result}")
 
-        user_roles = await factory.roles.get_user_roles_async(user_id=user_id)
+        user_roles = await keycloak.roles.get_user_roles_async(user_id=user_id)
         print(f"User roles: {user_roles}")
 
         # Get client roles of the user
-        client_roles_of_user = await factory.roles.get_client_roles_of_user_async(
+        client_roles_of_user = await keycloak.roles.get_client_roles_of_user_async(
             user_id=user_id
         )
         print(f"Client roles of user: {client_roles_of_user}")
 
         # Get composite client roles of user
-        composite_roles = await factory.roles.get_composite_client_roles_of_user_async(
+        composite_roles = await keycloak.roles.get_composite_client_roles_of_user_async(
             user_id=user_id
         )
         print(f"Composite client roles of user: {composite_roles}")
 
         # Get available client roles of user
-        available_roles = await factory.roles.get_available_client_roles_of_user_async(
+        available_roles = await keycloak.roles.get_available_client_roles_of_user_async(
             user_id=user_id
         )
         print(f"Available client roles of user: {available_roles}")
 
     # Delete the role by name
-    await factory.roles.delete_role_by_name_async(role_name="test-role")
+    await keycloak.roles.delete_role_by_name_async(role_name="test-role")
 
 
 if __name__ == "__main__":

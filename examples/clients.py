@@ -1,19 +1,19 @@
 import asyncio
 
-from _common import service_factory
-
-from pykeycloak.factories import KeycloakServiceFactory
+from _common import default_realm_client, get_keycloak
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
+
+    await keycloak.auth.client_login_async()
 
     # Get specific client raw
-    client_raw = await factory.clients.get_client_raw_async()
+    client_raw = await keycloak.clients.get_client_raw_async()
     print(f"Client raw: {client_raw}")
 
     # Get all clients with typed representation
-    clients = await factory.clients.get_clients_async()
+    clients = await keycloak.clients.get_clients_async()
     print(f"Clients: {clients}")
     print(f"Number of clients: {len(clients)}")
 
@@ -25,11 +25,11 @@ async def main():
         print(f"First client enabled: {first_client.enabled}")
 
     # Get all clients raw
-    clients_raw = await factory.clients.get_clients_raw_async()
+    clients_raw = await keycloak.clients.get_clients_raw_async()
     print(f"Clients raw length: {len(clients_raw)}")
 
     # Get specific client with typed representation
-    client = await factory.clients.get_client_async()
+    client = await keycloak.clients.get_client_async()
     print(f"Specific client: {client}")
     print(f"Specific client name: {client.name}")
     print(f"Specific client client_id: {client.client_id}")

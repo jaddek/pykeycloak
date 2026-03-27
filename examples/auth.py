@@ -1,9 +1,8 @@
 import asyncio
 import logging
 
-from _common import service_factory
+from _common import default_realm_client, get_keycloak
 
-from pykeycloak.factories import KeycloakServiceFactory
 from pykeycloak.providers.payloads import (
     UserCredentialsLoginPayload,
 )
@@ -17,16 +16,17 @@ password = "password"  # noqa: S105
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
+    await keycloak.auth.client_login_async()
     ## device login flow
-    result = await factory.auth.auth_device_async()  # noqa: F841
+    result = await keycloak.auth.auth_device_async()  # noqa: F841
 
     print(result)
 
     ## User login
     user_tokens = (
-        await factory.auth.user_login_async(  # or user_login_raw_async #noqa: F841
+        await keycloak.auth.user_login_async(  # or user_login_raw_async #noqa: F841
             payload=UserCredentialsLoginPayload(
                 username=username,
                 password=password,
@@ -35,12 +35,12 @@ async def main():
     )
 
     ## getting user info
-    result = await factory.auth.get_user_info_async(  # noqa: F841
+    result = await keycloak.auth.get_user_info_async(  # noqa: F841
         access_token=user_tokens.access_token
     )
 
     ## logout
-    result = await factory.auth.logout_async(user_tokens.refresh_token)  # noqa: F841
+    result = await keycloak.auth.logout_async(user_tokens.refresh_token)  # noqa: F841
 
 
 if __name__ == "__main__":

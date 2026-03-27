@@ -1,15 +1,15 @@
 import asyncio
 
-from _common import service_factory
-
-from pykeycloak.factories import KeycloakServiceFactory
+from _common import default_realm_client, get_keycloak
 
 
 async def main():
-    factory: KeycloakServiceFactory = await service_factory()
+    keycloak = get_keycloak(default_realm_client)
 
-    raw_scopes = await factory.authz_scope.get_client_authz_scopes_raw_async()
-    scopes = await factory.authz_scope.get_client_authz_scopes_async()
+    await keycloak.auth.client_login_async()
+
+    raw_scopes = await keycloak.authz_scope.get_client_authz_scopes_raw_async()
+    scopes = await keycloak.authz_scope.get_client_authz_scopes_async()
 
     print(f"Scopes raw: {raw_scopes}")
     print(f"Scopes objects: {scopes}")
