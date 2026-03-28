@@ -1,6 +1,6 @@
 from functools import cached_property
 from importlib.metadata import PackageNotFoundError, version
-from typing import TYPE_CHECKING, Protocol, TypedDict
+from typing import TYPE_CHECKING, Protocol
 
 from httpx import AsyncClient, AsyncHTTPTransport
 
@@ -69,11 +69,6 @@ class FactoryRegistry:
             raise RuntimeError(f"Errors during close_all: {error_details}")
 
 
-class ServiceArgs(TypedDict):
-    provider: KeycloakProviderProtocol
-    validator: KeycloakResponseValidatorProtocol
-
-
 class KeycloakServiceFactory:
     def __init__(
         self,
@@ -81,7 +76,7 @@ class KeycloakServiceFactory:
         validator: KeycloakResponseValidatorProtocol,
     ):
         self._provider = provider
-        self._args: ServiceArgs = {"provider": provider, "validator": validator}
+        self._validator = validator
 
     @property
     def provider(self) -> KeycloakProviderProtocol:
@@ -89,51 +84,63 @@ class KeycloakServiceFactory:
 
     @cached_property
     def users(self) -> UsersService:
-        return UsersService(**self._args)
+        return UsersService(provider=self._provider.users, validator=self._validator)
 
     @cached_property
     def auth(self) -> AuthService:
-        return AuthService(**self._args)
+        return AuthService(provider=self._provider.auth, validator=self._validator)
 
     @cached_property
     def authz(self) -> AuthzService:
-        return AuthzService(**self._args)
+        return AuthzService(provider=self._provider.authz, validator=self._validator)
 
     @cached_property
     def roles(self) -> RolesService:
-        return RolesService(**self._args)
+        return RolesService(provider=self._provider.roles, validator=self._validator)
 
     @cached_property
     def sessions(self) -> SessionsService:
-        return SessionsService(**self._args)
+        return SessionsService(
+            provider=self._provider.sessions, validator=self._validator
+        )
 
     @cached_property
     def uma(self) -> UmaService:
-        return UmaService(**self._args)
+        return UmaService(provider=self._provider.auth, validator=self._validator)
 
     @cached_property
     def clients(self) -> ClientsService:
-        return ClientsService(**self._args)
+        return ClientsService(
+            provider=self._provider.clients, validator=self._validator
+        )
 
     @cached_property
     def authz_resource(self) -> AuthzResourceService:
-        return AuthzResourceService(**self._args)
+        return AuthzResourceService(
+            provider=self._provider.authz_resource, validator=self._validator
+        )
 
     @cached_property
     def authz_permission(self) -> AuthzPermissionService:
-        return AuthzPermissionService(**self._args)
+        return AuthzPermissionService(
+            provider=self._provider.authz_permission, validator=self._validator
+        )
 
     @cached_property
     def authz_scope(self) -> AuthzScopeService:
-        return AuthzScopeService(**self._args)
+        return AuthzScopeService(
+            provider=self._provider.authz_scope, validator=self._validator
+        )
 
     @cached_property
     def auth_policy(self) -> AuthPolicyService:
-        return AuthPolicyService(**self._args)
+        return AuthPolicyService(
+            provider=self._provider.authz_policy, validator=self._validator
+        )
 
     @cached_property
     def well_known(self) -> WellKnownService:
-        return WellKnownService(**self._args)
+        return WellKnownService(provider=self._provider.auth, validator=self._validator)
 
 
 class ProviderConstructor[T: KeycloakProviderProtocol](Protocol):

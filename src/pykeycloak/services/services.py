@@ -30,7 +30,6 @@ from ..core.protocols import (
     SessionsProviderProtocol,
     UmaProviderProtocol,
     UsersProviderProtocol,
-    WellKnownProviderProtocol,
 )
 from ..core.types import JsonData
 from ..providers.payloads import (
@@ -589,18 +588,12 @@ class AuthService(BaseService[AuthProviderProtocol]):
     # User info
     ###
 
-    async def get_user_info_raw_async(
-        self,
-        access_token: str,
-    ) -> JsonData:
+    async def get_user_info_raw_async(self, access_token: str) -> JsonData:
         response = await self._provider.get_user_info_async(access_token=access_token)
 
         return self.validate_response(response)
 
-    async def get_user_info_async(
-        self,
-        access_token: str,
-    ) -> UserInfoRepresentation:
+    async def get_user_info_async(self, access_token: str) -> UserInfoRepresentation:
         data = await self.get_user_info_raw_async(access_token)
 
         return dataclass_from_dict(data, UserInfoRepresentation)
@@ -1001,7 +994,7 @@ class AuthPolicyService(BaseService[AuthzPolicyProviderProtocol]):
         return data
 
 
-class WellKnownService(BaseService[WellKnownProviderProtocol]):
+class WellKnownService(BaseService[AuthProviderProtocol]):
     ###
     # Certs
     ###

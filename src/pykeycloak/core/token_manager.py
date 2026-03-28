@@ -19,8 +19,12 @@ from pykeycloak.providers.payloads import ClientCredentialsLoginPayload
 from .. import logger
 
 
+class _JsonDeserializable(Protocol):
+    def json(self, **kwargs: Any) -> Any: ...
+
+
 class TokenUpdater(Protocol):
-    async def __call__(self, refresh_token: str | None) -> Response: ...
+    async def __call__(self, refresh_token: str | None) -> _JsonDeserializable: ...
 
 
 def inject_verified_access_token[F: AnyCallable](func: F) -> F:
@@ -110,6 +114,8 @@ class TokenManagerProtocol(Protocol):
 
     def update_auth_tokens(self, tokens: AuthToken) -> None: ...
 
+    async def get_valid_token(self) -> AuthToken: ...
+
     async def fetch_access_token_using_refresh_token(self) -> AuthToken: ...
 
 
@@ -141,7 +147,7 @@ class TokenManager:
     ) -> None:
         self._update_access_token_method = update_access_token_method
 
-    async def refresh_token(self) -> AuthToken:
+    async def get_valid_token(self) -> AuthToken:
         if AuthTokenValidator.is_access_token_valid(self._auth_tokens):
             return self._auth_tokens
 

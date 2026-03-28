@@ -31,8 +31,8 @@ class PyKeycloak:
         factory = KeycloakServiceFactory(
             provider=KeycloakInMemoryProviderAsync(
                 realm_client=realm_client,
-                kc_headers=headers or get_headers_factory(),
-                kc_client=keycloak_http_client or get_keycloak_http_client_from_env(),
+                headers=headers or get_headers_factory(),
+                wrapper=keycloak_http_client or get_keycloak_http_client_from_env(),
             ),
             validator=keycloak_response_validator or get_response_validator(),
         )

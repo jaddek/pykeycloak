@@ -64,10 +64,10 @@ async def main():
         print(f"Updated role: {updated_role}")
 
     # Get all users to pick one for role assignment
-    users = await keycloak.users.get_users_async()
+    users, _count = await keycloak.users.get_users_async()
 
-    if users and len(users) > 0:
-        first_user = users[0][0] if isinstance(users[0], list) else users[0]
+    if users:
+        first_user = users[0]
         user_id = first_user.id
 
         assign_result = await keycloak.roles.assign_role_async(
