@@ -212,8 +212,8 @@ class ResourceRepresentation(Representation):
     icon_uri: str | None = None
     owner: dict | None = None
     uri: str | None = None
-    scopes_uma: set["ScopeRepresentation"] = field(
-        default_factory=set, metadata={"alias": "scopesUma"}
+    scopes_uma: frozenset["ScopeRepresentation"] = field(
+        default_factory=frozenset, metadata={"alias": "scopesUma"}
     )
 
 

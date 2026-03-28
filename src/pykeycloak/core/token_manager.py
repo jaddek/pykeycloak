@@ -46,6 +46,10 @@ class AuthToken:
     refresh_token: str | None = None
     id_token: str | None = None
     refresh_expires_in: int | None = None
+    issued_at: datetime = field(
+        default_factory=lambda: datetime.now(UTC),
+        metadata={"exclude_from_dict": True},
+    )
 
 
 class AuthTokenValidator:
@@ -59,7 +63,7 @@ class AuthTokenValidator:
 
         now = datetime.now(UTC)
 
-        expires_at = now + timedelta(seconds=token.expires_in or 0)
+        expires_at = token.issued_at + timedelta(seconds=token.expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
         is_valid = now < expires_at - buffer
@@ -78,7 +82,7 @@ class AuthTokenValidator:
 
         now = datetime.now(UTC)
 
-        expires_at = now + timedelta(seconds=token.refresh_expires_in or 0)
+        expires_at = token.issued_at + timedelta(seconds=token.refresh_expires_in or 0)
         buffer = timedelta(seconds=available_time_frame)
 
         is_valid = now < expires_at - buffer
@@ -104,6 +108,8 @@ class TokenManagerProtocol(Protocol):
         update_access_token_method: TokenUpdater,
     ) -> None: ...
 
+    def update_auth_tokens(self, tokens: AuthToken) -> None: ...
+
     async def fetch_access_token_using_refresh_token(self) -> AuthToken: ...
 
 
@@ -125,6 +131,9 @@ class TokenManager:
 
     def is_access_token_exists(self) -> bool:
         return self._auth_tokens.access_token is not None
+
+    def update_auth_tokens(self, tokens: AuthToken) -> None:
+        self._auth_tokens = tokens
 
     def init_update_access_token_api(
         self,
@@ -152,7 +161,7 @@ class TokenManager:
             refresh_token=self._auth_tokens.refresh_token,
         )
 
-        return AuthToken(**response.json())
+        return dataclass_from_dict(response.json(), AuthToken)
 
 
 class TokenAutoRefresher:
@@ -194,8 +203,8 @@ class TokenAutoRefresher:
             result = await method(instance, *args, **kwargs)
 
             if isinstance(kwargs.get("payload", None), ClientCredentialsLoginPayload):
-                self.token_manager._auth_tokens = dataclass_from_dict(
-                    result.json(), AuthToken
+                self.token_manager.update_auth_tokens(
+                    dataclass_from_dict(result.json(), AuthToken)
                 )
 
             return result
@@ -212,7 +221,8 @@ class TokenAutoRefresher:
 
             if not self.token_manager.is_access_token_valid():
                 if self.token_manager.auth_tokens.refresh_token:
-                    await self.token_manager.fetch_access_token_using_refresh_token()
+                    new_token = await self.token_manager.fetch_access_token_using_refresh_token()
+                    self.token_manager.update_auth_tokens(new_token)
                 else:
                     raise RuntimeError(
                         "Token manager must initialize refresh_token first"

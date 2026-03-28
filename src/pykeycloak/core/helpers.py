@@ -5,7 +5,7 @@ import os
 from typing import Any, TypeGuard
 from urllib.parse import urlparse
 
-from pykeycloak.core.mapper import PyKeyCloakDataMapper
+from pykeycloak.core.mapper import PyKeycloakDataMapper
 from pykeycloak.core.types import JsonData
 
 
@@ -59,7 +59,7 @@ def getenv_float(name: str, default: float) -> float:
 def dataclass_from_dict[T](data: Any, cls: type[T]) -> T:
     if data is None:
         raise TypeError(f"Required data '{data}' is None")
-    return PyKeyCloakDataMapper.get_handler(cls)(data)
+    return PyKeycloakDataMapper.get_handler(cls)(data)
 
 
 def is_json_data(val: Any) -> TypeGuard[JsonData]:

@@ -1454,7 +1454,7 @@ class KeycloakProviderAsync:
 
     @staticmethod
     def get_access_token(**kwargs: Unpack[InternalAccessToken]) -> str:
-        access_token = kwargs.pop("access_token")
+        access_token = kwargs.get("access_token")
 
         if not access_token:
             raise AccessTokenIsRequiredError(

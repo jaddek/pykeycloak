@@ -60,7 +60,7 @@ class GrantTypeEnum(StrEnum):
     URN_IETF_OAUTH_TOKEN_EXCHANGE = "urn:ietf:params:oauth:grant-type:token-exchange"  # noqa: S105
     URN_IETF_OAUTH_UMA_TICKET = "urn:ietf:params:oauth:grant-type:uma-ticket"  # noqa: S105
     URN_IETF_OAUTH_CIBA = "urn:ietf:params:oauth:grant-type:ciba"  # noqa: S105
-    URN_IETF_ACCESS_TOKEn = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105
+    URN_IETF_ACCESS_TOKEN = "urn:ietf:params:oauth:token-type:access_token"  # noqa: S105
 
 
 class ClientAuthenticatorTypeEnum(StrEnum):

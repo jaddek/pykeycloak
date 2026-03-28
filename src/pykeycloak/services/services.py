@@ -187,12 +187,23 @@ class UsersService(BaseService):
         if not response.headers:
             raise KeycloakException("Headers should be present.")
 
-        location_with_user_uuid: str = response.headers.get("Location", "")
+        def extract_uuid(value: str) -> str | None:
+            if not value:
+                return None
 
-        user_uuid = location_with_user_uuid[location_with_user_uuid.rindex("/") + 1 :]
+            candidate = value.rsplit("/", 1)[-1]
 
-        if not user_uuid:
-            raise ValueError("Invalid user uuid")
+            try:
+                return str(UUID(candidate))
+            except (ValueError, TypeError):
+                return None
+
+        location = response.headers.get("Location")
+
+        user_uuid = extract_uuid(location)
+
+        if user_uuid is None:
+            raise ValueError(f"Invalid user uuid in Location header: {location!r}")
 
         return user_uuid
 
@@ -733,10 +744,12 @@ class UmaService(BaseService):
                 continue
 
             if payload.response_mode == permissions_mode:
-                for inner_data in resp:
-                    key = (inner_data["rsid"], tuple(inner_data.get("scopes", [])))
+                for item in resp:
+                    rsid = item.get("rsid")
+                    scopes = tuple(item.get("scopes") or ())
 
-                    unique_filtered_results[key] = inner_data
+                    key = (rsid, scopes)
+                    unique_filtered_results[key] = item
             else:
                 unique_filtered_results["result"] = {
                     "result": resp.get("result", False)

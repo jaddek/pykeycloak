@@ -3,10 +3,10 @@ from typing import Any
 
 from .sanitizer import SensitiveDataSanitizer
 
+keycloak_log_keys = ["content", "headers"]
+
 
 class SanitizingFilter(logging.Filter):
-    keycloak_log_keys = ["content", "headers"]
-
     def __init__(self, sanitizer: SensitiveDataSanitizer):
         super().__init__()
         self.sanitizer = sanitizer
@@ -14,7 +14,7 @@ class SanitizingFilter(logging.Filter):
     def filter(self, record: Any) -> bool:
         extra_info = []
 
-        for key in self.keycloak_log_keys:
+        for key in keycloak_log_keys:
             if hasattr(record, key):
                 val = getattr(record, key)
                 sanitized_val = self.sanitizer.sanitize(val)
@@ -28,11 +28,14 @@ class SanitizingFilter(logging.Filter):
             )
 
         if extra_info:
+            extra_str = " | ".join(map(str, extra_info))
+
             try:
-                formatted_msg = record.msg % record.args
-                record.msg = f"{formatted_msg} | {' | '.join(extra_info)}"
-                record.args = ()
-            except Exception:
-                record.msg = f"{record.msg} | {' | '.join(extra_info)}"
+                message = record.getMessage()
+            except (TypeError, ValueError):
+                message = str(record.msg)
+
+            record.msg = f"{message} | {extra_str}"
+            record.args = ()
 
         return True

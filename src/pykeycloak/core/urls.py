@@ -2,7 +2,6 @@
 # Copyright (c) 2026 Anton "Tony" Nazarov <tonynazarov+dev@gmail.com>
 
 # ###
-# Mess
 # ###
 
 # ######################################################################

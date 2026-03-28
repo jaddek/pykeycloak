@@ -14,7 +14,7 @@ from typing import (
 )
 
 
-class PyKeyCloakDataMapper:
+class PyKeycloakDataMapper:
     _cache: dict[Any, Callable] = {}
 
     @classmethod
@@ -167,4 +167,4 @@ class PyKeyCloakDataMapper:
 def dataclass_from_dict[T](data: Any, cls: type[T]) -> T | None:
     if data is None:
         return None
-    return PyKeyCloakDataMapper.get_handler(cls)(data)
+    return PyKeycloakDataMapper.get_handler(cls)(data)
