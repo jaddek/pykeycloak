@@ -69,17 +69,17 @@ class KeycloakResponseValidatorProtocol(Protocol):
     def validate(self, /, response: KeycloakResponseProtocol) -> JsonData: ...
 
 
-class KeycloakProviderProtocol(Protocol):
+class AuthProviderProtocol(Protocol):
     def get_sso_redirect_url(self, payload: SSOLoginPayload) -> str: ...
-
-    async def refresh_token_async(
-        self,
-        payload: RefreshTokenPayload | RTPExchangeTokenPayload,
-    ) -> KeycloakResponseProtocol: ...
 
     async def obtain_token_async(
         self,
         payload: ObtainTokenPayload,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def refresh_token_async(
+        self,
+        payload: RefreshTokenPayload | RTPExchangeTokenPayload,
     ) -> KeycloakResponseProtocol: ...
 
     async def introspect_token_async(
@@ -88,12 +88,6 @@ class KeycloakProviderProtocol(Protocol):
     ) -> KeycloakResponseProtocol: ...
 
     async def auth_device_async(self) -> KeycloakResponseProtocol: ...
-
-    async def get_certs_async(
-        self,
-        *,
-        access_token: str = ...,
-    ) -> KeycloakResponseProtocol: ...
 
     async def logout_async(self, refresh_token: str) -> KeycloakResponseProtocol: ...
 
@@ -110,6 +104,15 @@ class KeycloakProviderProtocol(Protocol):
         payload: UMAAuthorizationPayload,
     ) -> KeycloakResponseProtocol: ...
 
+
+class UmaProviderProtocol(Protocol):
+    async def get_uma_permission_async(
+        self,
+        payload: UMAAuthorizationPayload,
+    ) -> KeycloakResponseProtocol: ...
+
+
+class UsersProviderProtocol(Protocol):
     async def get_users_count_async(
         self,
         *,
@@ -177,6 +180,8 @@ class KeycloakProviderProtocol(Protocol):
         request_query: RoleMembersListQuery | None = None,
     ) -> KeycloakResponseProtocol: ...
 
+
+class SessionsProviderProtocol(Protocol):
     async def get_user_sessions_async(
         self,
         user_id: UUID | str,
@@ -238,7 +243,10 @@ class KeycloakProviderProtocol(Protocol):
     ) -> KeycloakResponseProtocol: ...
 
     async def get_client_sessions_async(
-        self, *, access_token: str = ..., query: PaginationQuery | None = None
+        self,
+        *,
+        access_token: str = ...,
+        query: PaginationQuery | None = None,
     ) -> KeycloakResponseProtocol: ...
 
     async def get_client_user_offline_sessions_async(
@@ -248,6 +256,8 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class RolesProviderProtocol(Protocol):
     async def get_client_roles_async(
         self,
         *,
@@ -344,6 +354,8 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class ClientsProviderProtocol(Protocol):
     async def get_clients_async(
         self,
         *,
@@ -356,18 +368,61 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class AuthzProviderProtocol(Protocol):
     async def get_client_authz_settings(
         self,
         *,
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class AuthzScopeProviderProtocol(Protocol):
     async def get_client_authz_scopes_async(
         self,
         *,
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class AuthzResourceProviderProtocol(Protocol):
+    async def get_resources_async(
+        self,
+        *,
+        access_token: str = ...,
+        query: ResourcesListQuery | None = None,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def create_resource_async(
+        self,
+        payload: ResourcePayload,
+        *,
+        access_token: str = ...,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def get_resource_by_id_async(
+        self,
+        resource_id: str,
+        *,
+        access_token: str = ...,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def delete_resource_by_id_async(
+        self,
+        resource_id: str,
+        *,
+        access_token: str = ...,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def get_resource_permissions_async(
+        self,
+        resource_id: str,
+        *,
+        access_token: str = ...,
+    ) -> KeycloakResponseProtocol: ...
+
+
+class AuthzPermissionProviderProtocol(Protocol):
     async def create_client_authz_permission_based_on_resource_async(
         self,
         payload: PermissionPayload,
@@ -412,44 +467,14 @@ class KeycloakProviderProtocol(Protocol):
 
     async def update_permission_scopes_async(
         self,
-        permission_id: str,  # resource OR scope based permission
+        permission_id: str,
         payload: PermissionScopesPayload,
         *,
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
-    async def get_resources_async(
-        self, *, access_token: str = ..., query: ResourcesListQuery | None = None
-    ) -> KeycloakResponseProtocol: ...
 
-    async def create_resource_async(
-        self,
-        payload: ResourcePayload,
-        *,
-        access_token: str = ...,
-    ) -> KeycloakResponseProtocol: ...
-
-    async def get_resource_by_id_async(
-        self,
-        resource_id: str,
-        *,
-        access_token: str = ...,
-    ) -> KeycloakResponseProtocol: ...
-
-    async def delete_resource_by_id_async(
-        self,
-        resource_id: str,
-        *,
-        access_token: str = ...,
-    ) -> KeycloakResponseProtocol: ...
-
-    async def get_resource_permissions_async(
-        self,
-        resource_id: str,
-        *,
-        access_token: str = ...,
-    ) -> KeycloakResponseProtocol: ...
-
+class AuthzPolicyProviderProtocol(Protocol):
     async def create_policy_role_async(
         self,
         payload: RolePolicyPayload,
@@ -498,6 +523,30 @@ class KeycloakProviderProtocol(Protocol):
         access_token: str = ...,
     ) -> KeycloakResponseProtocol: ...
 
+
+class WellKnownProviderProtocol(Protocol):
+    async def get_certs_async(
+        self,
+        *,
+        access_token: str = ...,
+    ) -> KeycloakResponseProtocol: ...
+
+
+class KeycloakProviderProtocol(
+    AuthProviderProtocol,
+    UmaProviderProtocol,
+    UsersProviderProtocol,
+    SessionsProviderProtocol,
+    RolesProviderProtocol,
+    ClientsProviderProtocol,
+    AuthzProviderProtocol,
+    AuthzScopeProviderProtocol,
+    AuthzResourceProviderProtocol,
+    AuthzPermissionProviderProtocol,
+    AuthzPolicyProviderProtocol,
+    WellKnownProviderProtocol,
+    Protocol,
+):
     async def close_connection(self) -> None: ...
 
 

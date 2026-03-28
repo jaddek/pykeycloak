@@ -17,9 +17,20 @@ from ..core.enums import UrnIetfOauthUmaTicketResponseModeEnum
 from ..core.exceptions import KeycloakException, KeycloakHTTPException
 from ..core.helpers import dataclass_from_dict, getenv_int
 from ..core.protocols import (
-    KeycloakProviderProtocol,
+    AuthProviderProtocol,
+    AuthzPermissionProviderProtocol,
+    AuthzPolicyProviderProtocol,
+    AuthzProviderProtocol,
+    AuthzResourceProviderProtocol,
+    AuthzScopeProviderProtocol,
+    ClientsProviderProtocol,
     KeycloakResponseProtocol,
     KeycloakResponseValidatorProtocol,
+    RolesProviderProtocol,
+    SessionsProviderProtocol,
+    UmaProviderProtocol,
+    UsersProviderProtocol,
+    WellKnownProviderProtocol,
 )
 from ..core.types import JsonData
 from ..providers.payloads import (
@@ -69,22 +80,22 @@ from ..services.representations import (
 logger = logging.getLogger(__name__)
 
 
-class BaseService:
+class BaseService[P]:
     """ """
 
     def __init__(
         self,
-        provider: KeycloakProviderProtocol,
+        provider: P,
         validator: KeycloakResponseValidatorProtocol,
     ):
-        self._provider = provider
+        self._provider: P = provider
         self._validator = validator
 
     def validate_response(self, response: KeycloakResponseProtocol) -> JsonData:
         return self._validator.validate(response)
 
 
-class UsersService(BaseService):
+class UsersService(BaseService[UsersProviderProtocol]):
     """ """
 
     async def get_user_raw_async(self, user_id: UUID | str) -> JsonData:
@@ -240,7 +251,7 @@ class UsersService(BaseService):
         return self.validate_response(response)
 
 
-class RolesService(BaseService):
+class RolesService(BaseService[RolesProviderProtocol]):
     """ """
 
     async def get_client_roles_raw_async(self) -> JsonData:
@@ -359,7 +370,7 @@ class RolesService(BaseService):
         return self.validate_response(response)
 
 
-class SessionsService(BaseService):
+class SessionsService(BaseService[SessionsProviderProtocol]):
     async def get_client_sessions_raw_async(
         self, query: PaginationQuery | None = None
     ) -> JsonData:
@@ -480,7 +491,7 @@ class SessionsService(BaseService):
         return self.validate_response(response)
 
 
-class AuthService(BaseService):
+class AuthService(BaseService[AuthProviderProtocol]):
     ###
     # Client Login
     ###
@@ -677,10 +688,10 @@ class AuthService(BaseService):
         return self.validate_response(response)
 
 
-class UmaService(BaseService):
+class UmaService(BaseService[UmaProviderProtocol]):
     def __init__(
         self,
-        provider: KeycloakProviderProtocol,
+        provider: UmaProviderProtocol,
         validator: KeycloakResponseValidatorProtocol,
         uma_permissions_chunk_size: int | None = None,
     ):
@@ -758,7 +769,7 @@ class UmaService(BaseService):
         return list(unique_filtered_results.values())
 
 
-class ClientsService(BaseService):
+class ClientsService(BaseService[ClientsProviderProtocol]):
     async def get_client_raw_async(self) -> JsonData:
         response = await self._provider.get_client_async()
 
@@ -788,7 +799,7 @@ class ClientsService(BaseService):
         return dataclass_from_dict(data, list[ClientRepresentation])
 
 
-class AuthzService(BaseService):
+class AuthzService(BaseService[AuthzProviderProtocol]):
     async def get_client_authz_settings_raw_async(self) -> JsonData:
         response = await self._provider.get_client_authz_settings()
 
@@ -802,7 +813,7 @@ class AuthzService(BaseService):
         return dataclass_from_dict(data, AuthzSettingsRepresentation)
 
 
-class AuthzResourceService(BaseService):
+class AuthzResourceService(BaseService[AuthzResourceProviderProtocol]):
     async def get_resources_raw_async(
         self, query: ResourcesListQuery | None = None
     ) -> JsonData:
@@ -851,7 +862,7 @@ class AuthzResourceService(BaseService):
         return self.validate_response(response)
 
 
-class AuthzScopeService(BaseService):
+class AuthzScopeService(BaseService[AuthzScopeProviderProtocol]):
     async def get_client_authz_scopes_raw_async(self) -> JsonData:
         response = await self._provider.get_client_authz_scopes_async()
 
@@ -863,7 +874,7 @@ class AuthzScopeService(BaseService):
         return dataclass_from_dict(data, list[ScopeRepresentation])
 
 
-class AuthzPermissionService(BaseService):
+class AuthzPermissionService(BaseService[AuthzPermissionProviderProtocol]):
     async def create_client_authz_permission_based_on_resource_async(
         self, payload: PermissionPayload
     ) -> JsonData:
@@ -937,7 +948,7 @@ class AuthzPermissionService(BaseService):
         return self.validate_response(response)
 
 
-class AuthPolicyService(BaseService):
+class AuthPolicyService(BaseService[AuthzPolicyProviderProtocol]):
     async def create_policy_role_async(self, payload: RolePolicyPayload) -> JsonData:
         response = await self._provider.create_policy_role_async(payload=payload)
 
@@ -990,7 +1001,7 @@ class AuthPolicyService(BaseService):
         return data
 
 
-class WellKnownService(BaseService):
+class WellKnownService(BaseService[WellKnownProviderProtocol]):
     ###
     # Certs
     ###
