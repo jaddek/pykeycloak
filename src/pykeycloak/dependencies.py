@@ -5,9 +5,9 @@ from typing import TYPE_CHECKING, Protocol
 from httpx import AsyncClient, AsyncHTTPTransport
 
 from pykeycloak.services.services import (
-    AuthPolicyService,
     AuthService,
     AuthzPermissionService,
+    AuthzPolicyService,
     AuthzResourceService,
     AuthzScopeService,
     AuthzService,
@@ -133,8 +133,8 @@ class KeycloakServiceFactory:
         )
 
     @cached_property
-    def auth_policy(self) -> AuthPolicyService:
-        return AuthPolicyService(
+    def authz_policy(self) -> AuthzPolicyService:
+        return AuthzPolicyService(
             provider=self._provider.authz_policy, validator=self._validator
         )
 

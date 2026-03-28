@@ -9,11 +9,11 @@ async def main():
     await keycloak.auth.client_login_async()
 
     # Get all policies
-    policies = await keycloak.auth_policy.get_policies_async()
+    policies = await keycloak.authz_policy.get_policies_async()
     print(f"Policies: {policies}")
 
     # Get all policies raw
-    policies_raw = await keycloak.auth_policy.get_policies_raw_async()
+    policies_raw = await keycloak.authz_policy.get_policies_raw_async()
     print(f"Policies raw: {policies_raw}")
 
     # NOTE: The following examples show the structure for creating policies,

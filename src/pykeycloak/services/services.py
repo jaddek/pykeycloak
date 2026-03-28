@@ -941,7 +941,7 @@ class AuthzPermissionService(BaseService[AuthzPermissionProviderProtocol]):
         return self.validate_response(response)
 
 
-class AuthPolicyService(BaseService[AuthzPolicyProviderProtocol]):
+class AuthzPolicyService(BaseService[AuthzPolicyProviderProtocol]):
     async def create_policy_role_async(self, payload: RolePolicyPayload) -> JsonData:
         response = await self._provider.create_policy_role_async(payload=payload)
 

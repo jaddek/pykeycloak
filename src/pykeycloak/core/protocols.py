@@ -37,9 +37,9 @@ from pykeycloak.providers.queries import (
 
 if TYPE_CHECKING:
     from pykeycloak.services.services import (
-        AuthPolicyService,
         AuthService,
         AuthzPermissionService,
+        AuthzPolicyService,
         AuthzResourceService,
         AuthzScopeService,
         AuthzService,
@@ -463,7 +463,7 @@ class KeycloakServiceFactoryProtocol(Protocol):
     def authz_scope(self) -> AuthzScopeService: ...
 
     @property
-    def auth_policy(self) -> AuthPolicyService: ...
+    def authz_policy(self) -> AuthzPolicyService: ...
 
     @property
     def well_known(self) -> WellKnownService: ...

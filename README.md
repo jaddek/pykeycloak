@@ -261,10 +261,10 @@ pkc = PyKeycloak()
 # add client ....
 
 permissions = await pkc.get('otago_client').uma.get_uma_permissions_async(
-    access_token=token.auth_token,  # user token
     payload=UMAAuthorizationPayload(
         audience=client.client_id,
-        permissions={'/otago/users': ['view']}
+        subject_token=token.auth_token,  # user token
+        permissions=['otago/users#view']
     )
 )
 ```
