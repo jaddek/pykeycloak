@@ -9,6 +9,7 @@ from pykeycloak.core.helpers import dataclass_from_dict
 from pykeycloak.core.protocols import KeycloakResponseProtocol
 from pykeycloak.core.token_manager import AuthToken, TokenManager
 from pykeycloak.core.urls import (
+    REALM_CLIENT_OPENID_CONFIGURATION,
     REALM_CLIENT_OPENID_URL_AUTH,
     REALM_CLIENT_OPENID_URL_AUTH_DEVICE,
     REALM_CLIENT_OPENID_URL_CERTS,
@@ -17,6 +18,8 @@ from pykeycloak.core.urls import (
     REALM_CLIENT_OPENID_URL_REVOKE,
     REALM_CLIENT_OPENID_URL_TOKEN,
     REALM_CLIENT_OPENID_URL_USERINFO,
+    REALM_CLIENT_UMA2_CONFIGURATION,
+    REALM_ISSUER,
 )
 
 from ._base import KeycloakProviderBase
@@ -166,6 +169,36 @@ class AuthProvider:
             url=self._base.build_url(path=REALM_CLIENT_OPENID_URL_AUTH_DEVICE),
             headers=headers,
             data=data,
+        )
+
+    async def get_issuer_async(self) -> KeycloakResponseProtocol:
+        access_token = await self.get_client_access_token()
+        headers = self._base.openid_bearer_headers(token=access_token)
+
+        return await self._base.request_async(
+            method=HttpMethod.GET,
+            url=self._base.build_url(path=REALM_ISSUER),
+            headers=headers,
+        )
+
+    async def get_openid_configuration_async(self) -> KeycloakResponseProtocol:
+        access_token = await self.get_client_access_token()
+        headers = self._base.openid_bearer_headers(token=access_token)
+
+        return await self._base.request_async(
+            method=HttpMethod.GET,
+            url=self._base.build_url(path=REALM_CLIENT_OPENID_CONFIGURATION),
+            headers=headers,
+        )
+
+    async def get_uma2_configuration_async(self) -> KeycloakResponseProtocol:
+        access_token = await self.get_client_access_token()
+        headers = self._base.openid_bearer_headers(token=access_token)
+
+        return await self._base.request_async(
+            method=HttpMethod.GET,
+            url=self._base.build_url(path=REALM_CLIENT_UMA2_CONFIGURATION),
+            headers=headers,
         )
 
     async def get_certs_async(self) -> KeycloakResponseProtocol:

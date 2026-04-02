@@ -1004,3 +1004,22 @@ class WellKnownService(BaseService[AuthProviderProtocol]):
         response = await self._provider.get_certs_async()
 
         return self.validate_response(response)
+
+    async def get_openid_configuration_async(
+        self,
+    ) -> JsonData:
+        response = await self._provider.get_openid_configuration_async()
+
+        return self.validate_response(response)
+
+    async def get_uma2_configuration_async(
+        self,
+    ) -> JsonData:
+        response = await self._provider.get_uma2_configuration_async()
+
+        return self.validate_response(response)
+
+    async def get_issuer(self) -> JsonData:
+        response = await self._provider.get_issuer_async()
+
+        return self.validate_response(response)

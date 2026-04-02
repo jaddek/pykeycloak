@@ -12,6 +12,14 @@ async def main():
     certs = await keycloak.well_known.get_certs_async()
     print(f"Certificates: {certs}")
 
+    #
+    config = await keycloak.well_known.get_uma2_configuration_async()
+    print(f"Uma2 configuration: {config}")
+
+    #
+    config = await keycloak.well_known.get_openid_configuration_async()
+    print(f"Openid configuration: {config}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
