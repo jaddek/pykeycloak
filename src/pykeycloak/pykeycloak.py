@@ -28,6 +28,7 @@ class PyKeycloak:
         keycloak_http_client: KeycloakHttpClientAsync | None = None,
         keycloak_response_validator: KeycloakResponseValidator | None = None,
     ) -> None:
+        # noinspection PyTypeChecker
         factory = KeycloakServiceFactory(
             provider=KeycloakInMemoryProviderAsync(
                 realm_client=realm_client,

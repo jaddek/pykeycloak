@@ -13,16 +13,18 @@ from pykeycloak.core.exceptions import (
     KeycloakUnprocessableEntityError,
     KeycloakUnsupportedMediaTypeError,
 )
+from pykeycloak.core.response import KeycloakResponseBuilder
 from pykeycloak.core.validator import KeycloakResponseValidator
 
 
-def make_response(status_code, text="", content=b"", json_data=None):
+def make_response(status_code, text="", content=b"", json_data=None, headers=None):
     from unittest.mock import MagicMock
 
     resp = MagicMock()
     resp.status_code = status_code
     resp.text = text
     resp.content = content
+    resp.headers = headers or {}
     if json_data is not None:
         resp.json.return_value = json_data
     else:
@@ -35,32 +37,41 @@ def validator():
     return KeycloakResponseValidator()
 
 
+@pytest.fixture
+def builder():
+    return KeycloakResponseBuilder()
+
+
 class TestValidateSuccess:
-    def test_200_returns_json(self, validator):
+    def test_validate_returns_none_on_success(self, validator):
         resp = make_response(200, text='{"key": "val"}', json_data={"key": "val"})
-        result = validator.validate(resp)
-        assert result == {"key": "val"}
+        assert validator.validate(resp) is None
 
-    def test_201_returns_none(self, validator):
+    def test_build_response_200_parses_json(self, builder):
+        resp = make_response(200, text='{"key": "val"}', json_data={"key": "val"})
+        result = builder.build_response(resp)
+        assert result.body == {"key": "val"}
+
+    def test_build_response_201_body_is_none(self, builder):
         resp = make_response(201, text="")
-        result = validator.validate(resp)
-        assert result is None
+        result = builder.build_response(resp)
+        assert result.body is None
 
-    def test_204_returns_none(self, validator):
+    def test_build_response_204_body_is_none(self, builder):
         resp = make_response(204, text="")
-        result = validator.validate(resp)
-        assert result is None
+        result = builder.build_response(resp)
+        assert result.body is None
 
-    def test_200_empty_body_returns_none(self, validator):
+    def test_build_response_200_empty_body_is_none(self, builder):
         resp = make_response(200, text="   ")
-        result = validator.validate(resp)
-        assert result is None
+        result = builder.build_response(resp)
+        assert result.body is None
 
-    def test_200_malformed_json_raises_decoding_error(self, validator):
+    def test_build_response_malformed_json_raises_decoding_error(self, builder):
         resp = make_response(200, text="not json")
         resp.json.side_effect = ValueError("bad json")
         with pytest.raises(KeycloakDecodingError):
-            validator.validate(resp)
+            builder.build_response(resp)
 
 
 class TestValidateErrors:

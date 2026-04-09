@@ -9,6 +9,7 @@ from pykeycloak.core.protocols import KeycloakResponseProtocol
 from pykeycloak.core.urls import (
     REALM_CLIENT_ROLE_MEMBERS,
     REALM_USER,
+    REALM_USER_IMPERSONATION,
     REALM_USERS_COUNT,
     REALM_USERS_LIST,
 )
@@ -142,4 +143,15 @@ class UsersProvider:
             ),
             headers=self._base.bearer_headers(access_token),
             params=request_query if request_query else {},
+        )
+
+    async def impersonate_async(
+        self,
+        user_id: UUID | str,
+    ) -> KeycloakResponseProtocol:
+        access_token = await self._get_access_token()
+        return await self._base.request_async(
+            method=HttpMethod.POST,
+            url=self._base.build_url(path=REALM_USER_IMPERSONATION, user_id=user_id),
+            headers=self._base.bearer_headers(access_token),
         )

@@ -21,6 +21,7 @@ async def main():
     # Get all of users
     users, count = await keycloak.users.get_all_users_async()
     print(f"Number of users: {count} and received {len(users)}")
+    print(users)
 
     # Get users count
     users_count = await keycloak.users.get_users_count_async()
@@ -41,7 +42,7 @@ async def main():
     )
 
     user_uuid = await keycloak.users.create_user_async(payload=new_user_payload)
-    print(f"Created user: {new_user_payload.id}")
+    print(f"Created user: {user_uuid}")
 
     specific_user = await keycloak.users.get_user_async(user_id=user_uuid)
     print(f"Specific user: {specific_user}")

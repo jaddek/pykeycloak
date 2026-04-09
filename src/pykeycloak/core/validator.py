@@ -1,15 +1,13 @@
-import json
 from collections.abc import Callable
 from functools import wraps
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any
 
-from pykeycloak.core.types import JsonData
+from pykeycloak.core.response import KeycloakResponse, KeycloakResponseBuilder
 
 from ..core.exceptions import (
     KeycloakBadRequestError,
     KeycloakConflictError,
-    KeycloakDecodingError,
     KeycloakError,
     KeycloakException,
     KeycloakForbiddenError,
@@ -37,13 +35,9 @@ class KeycloakResponseValidator:
 
     _SUCCESS_STATUSES = {HTTPStatus.OK, HTTPStatus.CREATED, HTTPStatus.NO_CONTENT}
 
-    _NO_BODY_STATUSES = {HTTPStatus.CREATED, HTTPStatus.NO_CONTENT}
-
-    def validate(self, response: KeycloakResponseProtocol) -> JsonData:
-        if response.status_code in self._SUCCESS_STATUSES:
-            return self._parse_json(response)
-
-        raise self._create_error(response)
+    def validate(self, response: KeycloakResponseProtocol) -> None:
+        if response.status_code not in self._SUCCESS_STATUSES:
+            raise self._create_error(response)
 
     def _create_error(self, response: KeycloakResponseProtocol) -> KeycloakException:
         status = response.status_code
@@ -56,23 +50,16 @@ class KeycloakResponseValidator:
             content=response.content,
         )
 
-    def _parse_json(self, response: KeycloakResponseProtocol) -> JsonData:
-        if response.status_code in self._NO_BODY_STATUSES or not response.text.strip():
-            return None
 
-        try:
-            return response.json()
-        except (json.JSONDecodeError, ValueError) as e:
-            raise KeycloakDecodingError(
-                f"Malformed JSON: {str(e)} | Content: {response.text[:100]}"
-            ) from e
+_builder = KeycloakResponseBuilder()
 
 
 def validate_api_response(method: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(method)
-    async def wrapper(self: Any, *args: Any, **kwargs: Any) -> JsonData:
+    async def wrapper(self: Any, *args: Any, **kwargs: Any) -> KeycloakResponse:
         response = await method(self, *args, **kwargs)
-        return cast(JsonData, self._validator.validate(response))
+        self._validator.validate(response)
+        return _builder.build_response(response)
 
     return wrapper
 

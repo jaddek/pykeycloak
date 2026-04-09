@@ -66,7 +66,7 @@ class KeycloakResponseProtocol(Protocol):
 
 
 class KeycloakResponseValidatorProtocol(Protocol):
-    def validate(self, /, response: KeycloakResponseProtocol) -> JsonData: ...
+    def validate(self, /, response: KeycloakResponseProtocol) -> None: ...
 
 
 class AuthProviderProtocol(Protocol):
@@ -92,6 +92,7 @@ class AuthProviderProtocol(Protocol):
     async def get_issuer_async(self) -> KeycloakResponseProtocol: ...
 
     async def get_openid_configuration_async(self) -> KeycloakResponseProtocol: ...
+
     async def get_uma2_configuration_async(self) -> KeycloakResponseProtocol: ...
 
     async def get_certs_async(self) -> KeycloakResponseProtocol: ...
@@ -160,6 +161,11 @@ class UsersProviderProtocol(Protocol):
         self,
         role_name: str,
         request_query: RoleMembersListQuery | None = None,
+    ) -> KeycloakResponseProtocol: ...
+
+    async def impersonate_async(
+        self,
+        user_id: UUID | str,
     ) -> KeycloakResponseProtocol: ...
 
 

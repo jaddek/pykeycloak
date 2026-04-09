@@ -21,7 +21,7 @@ endif
 ENV_FILE_OPTION := $(foreach f,$(APP_ENV_FILES),--env-file $f)
 
 UV_RUN := make set-python-version;\
-	PYTHONPATH=src uv run
+	PYTHONPATH=src:examples uv run
 
 DC := docker compose
 PYTHON_VER := $(shell tr -d '\n' < .python-version)
@@ -77,8 +77,8 @@ run: ## Run app using uvicorn for local dev
 script-%:
 	$(load_env); $(UV_RUN) $*
 
-scripte-%:
-	$(load_env); $(UV_RUN) ./examples/$*
+scripte:
+	$(load_env); $(UV_RUN) ${SCRIPT}
 
 scriptea:
 	@find ./examples -maxdepth 1 -type f -name "[!_]*.py" -print0 | while IFS= read -r -d '' file; do \
